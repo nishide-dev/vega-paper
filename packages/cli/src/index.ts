@@ -2,6 +2,7 @@
 
 import { Command } from "commander";
 import { registerRenderCommand } from "./commands/render";
+import { registerThemesCommand } from "./commands/themes";
 import { VegaPaperError } from "./core/errors";
 
 const program = new Command();
@@ -12,6 +13,7 @@ program
   .version("0.1.0");
 
 registerRenderCommand(program);
+registerThemesCommand(program);
 
 try {
   await program.parseAsync(process.argv);
