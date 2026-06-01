@@ -1,0 +1,13 @@
+{
+  "name": "@vega-paper/themes",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "bun ../../scripts/run-if-sources.ts build -- bun build ./src/index.ts --outdir dist --target bun",
+    "typecheck": "bun ../../scripts/run-if-sources.ts typecheck -- tsc --noEmit"
+  }
+}
