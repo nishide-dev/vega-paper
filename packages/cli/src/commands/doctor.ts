@@ -12,6 +12,7 @@ type DoctorOptions = {
 
 type WriteOutput = (value: string) => void;
 type RunChecks = () => Promise<DoctorCheck[]>;
+type SetExitCode = (exitCode: 0 | 1) => void;
 
 export function registerDoctorCommand(
   program: Command,
@@ -19,6 +20,9 @@ export function registerDoctorCommand(
     process.stdout.write(value);
   },
   runChecks: RunChecks = runDoctorChecks,
+  setExitCode: SetExitCode = (exitCode) => {
+    process.exitCode = exitCode;
+  },
 ): void {
   program
     .command("doctor")
@@ -44,7 +48,7 @@ export function registerDoctorCommand(
       }
 
       if (exitCode !== 0) {
-        process.exitCode = exitCode;
+        setExitCode(exitCode);
       }
     });
 }

@@ -1,7 +1,8 @@
+import { spawn } from "node:child_process";
 import { access } from "node:fs/promises";
-import { join } from "node:path";
+import { delimiter, join } from "node:path";
 import {
-  resolveVegaCliBinary,
+  resolveVegaCliBinary as resolveInstalledVegaCliBinary,
   type VegaCliBinaryName,
 } from "../backends/external-vega-cli";
 
@@ -65,9 +66,9 @@ function requiredCheck(name: string, value: string | undefined): DoctorCheck {
 
 export const defaultDoctorEnvironment: DoctorEnvironment = {
   getBunVersion: async () => Bun.version,
-  getNodeVersion: async () => process.version,
+  getNodeVersion,
   resolveExecutable,
-  resolveVegaCliBinary,
+  resolveVegaCliBinary: resolveEffectiveVegaCliBinary,
 };
 
 async function resolveExecutable(name: string): Promise<string | undefined> {
@@ -79,4 +80,82 @@ async function resolveExecutable(name: string): Promise<string | undefined> {
   } catch {
     return undefined;
   }
+}
+
+async function resolveEffectiveVegaCliBinary(
+  name: VegaCliBinaryName,
+): Promise<string | undefined> {
+  return (await resolveInstalledVegaCliBinary(name)) ?? resolveExecutableOnPath(name);
+}
+
+export async function resolveExecutableOnPath(
+  name: string,
+): Promise<string | undefined> {
+  const pathValue = process.env.PATH ?? "";
+
+  for (const directory of pathValue.split(delimiter)) {
+    if (!directory) {
+      continue;
+    }
+
+    const candidate = join(directory, name);
+
+    try {
+      await access(candidate);
+      return candidate;
+    } catch {
+      // Keep looking through PATH entries.
+    }
+  }
+
+  return undefined;
+}
+
+async function getNodeVersion(): Promise<string | undefined> {
+  const nodeBinary = await resolveExecutableOnPath("node");
+
+  if (!nodeBinary) {
+    return undefined;
+  }
+
+  return new Promise((resolve) => {
+    const child = spawn(nodeBinary, ["--version"], {
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+    let stdout = "";
+    let stderr = "";
+    let settled = false;
+
+    child.stdout.on("data", (chunk: Buffer) => {
+      stdout += chunk.toString("utf8");
+    });
+
+    child.stderr.on("data", (chunk: Buffer) => {
+      stderr += chunk.toString("utf8");
+    });
+
+    child.on("error", () => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      resolve(undefined);
+    });
+
+    child.on("close", (code) => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+
+      if (code !== 0) {
+        resolve(undefined);
+        return;
+      }
+
+      resolve(stdout.trim() || stderr.trim() || undefined);
+    });
+  });
 }
