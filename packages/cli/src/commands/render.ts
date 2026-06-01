@@ -43,7 +43,7 @@ export function normalizeRenderOptions(
 export function registerRenderCommand(program: Command): void {
   program
     .command("render")
-    .argument("<input>", "Vega or Vega-Lite JSON input path")
+    .argument("<spec>", "Vega or Vega-Lite JSON input path")
     .option("--format <format>", "output format")
     .option("--out <path>", "output file path")
     .option("--theme <name>", "theme name")
