@@ -2,7 +2,10 @@ import { describe, expect, test } from "bun:test";
 import { mkdtemp, mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { renderWithExternalVegaCli } from "../src/backends/external-vega-cli";
+import {
+  renderWithExternalVegaCli,
+  resolveVegaCliBinary,
+} from "../src/backends/external-vega-cli";
 
 describe("renderWithExternalVegaCli", () => {
   test("reports a missing Vega-Lite CLI binary", async () => {
@@ -86,6 +89,33 @@ describe("renderWithExternalVegaCli", () => {
         outputPath: "chart.svg",
         format: "svg",
       });
+    });
+  });
+
+  test("resolves local node_modules bin before Bun package-store bins", async () => {
+    await withTemporaryWorkspace(async (workspace) => {
+      const localBinary = join(workspace, "node_modules", ".bin", "vl2svg");
+      await createExecutable(localBinary, "#!/bin/sh\nexit 0\n");
+      await createExecutable(
+        join(
+          workspace,
+          "node_modules",
+          ".bun",
+          "node_modules",
+          "vega-lite",
+          "bin",
+          "vl2svg",
+        ),
+        "#!/bin/sh\nexit 0\n",
+      );
+
+      expect(await resolveVegaCliBinary("vl2svg")).toBe(localBinary);
+    });
+  });
+
+  test("returns undefined when a Vega CLI binary is not resolvable", async () => {
+    await withTemporaryWorkspace(async () => {
+      expect(await resolveVegaCliBinary("vl2svg")).toBeUndefined();
     });
   });
 });

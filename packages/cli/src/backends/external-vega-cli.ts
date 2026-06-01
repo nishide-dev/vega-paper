@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
-import { access, readdir } from "node:fs/promises";
-import { join } from "node:path";
+import { access, readdir, realpath } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join, sep } from "node:path";
 import { VegaPaperError } from "../core/errors";
 import type { SpecType } from "../core/spec";
 
@@ -11,16 +12,18 @@ export type ExternalVegaCliRenderRequest = {
   format: "svg";
 };
 
+export type VegaCliBinaryName = "vl2svg" | "vg2svg";
+
 export async function renderWithExternalVegaCli(
   request: ExternalVegaCliRenderRequest,
 ): Promise<void> {
   const binary = getRenderBinary(request.specType, request.format);
-  const command = await resolveBinary(binary);
+  const command = (await resolveVegaCliBinary(binary)) ?? binary;
 
   await runBinary(command, binary, [request.inputPath, request.outputPath]);
 }
 
-function getRenderBinary(specType: SpecType, format: "svg"): string {
+function getRenderBinary(specType: SpecType, format: "svg"): VegaCliBinaryName {
   if (format !== "svg") {
     throw new VegaPaperError(
       `Unsupported format "${format}". This MVP supports only "svg".`,
@@ -30,31 +33,45 @@ function getRenderBinary(specType: SpecType, format: "svg"): string {
   return specType === "vega-lite" ? "vl2svg" : "vg2svg";
 }
 
-async function resolveBinary(binary: string): Promise<string> {
-  const localBinary = join("node_modules", ".bin", binary);
+export async function resolveVegaCliBinary(
+  binary: VegaCliBinaryName,
+): Promise<string | undefined> {
+  const localBinary = join(
+    await getWorkspacePath(),
+    "node_modules",
+    ".bin",
+    binary,
+  );
 
   try {
     await access(localBinary);
     return localBinary;
   } catch {
-    const bunBinary = await getBunPackageStoreBinary(binary);
-
-    if (bunBinary) {
-      return bunBinary;
-    }
-
-    return binary;
+    return getBunPackageStoreBinary(binary);
   }
 }
 
-async function getBunPackageStoreBinary(
-  binary: string,
-): Promise<string | undefined> {
-  const packageName = binary.startsWith("vl") ? "vega-lite" : "vega-cli";
+async function getWorkspacePath(): Promise<string> {
+  const cwd = process.cwd();
+  const tempRoot = tmpdir();
 
-  if (binary !== "vl2svg" && binary !== "vg2svg") {
-    return undefined;
+  try {
+    const realTempRoot = await realpath(tempRoot);
+
+    if (cwd === realTempRoot || cwd.startsWith(`${realTempRoot}${sep}`)) {
+      return join(tempRoot, cwd.slice(realTempRoot.length));
+    }
+  } catch {
+    // Fall back to the runtime cwd when the platform temp root is unavailable.
   }
+
+  return cwd;
+}
+
+async function getBunPackageStoreBinary(
+  binary: VegaCliBinaryName,
+): Promise<string | undefined> {
+  const packageName = binary === "vl2svg" ? "vega-lite" : "vega-cli";
 
   const packageStoreRoot = join("node_modules", ".bun");
   const candidates = [
