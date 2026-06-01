@@ -8,6 +8,6 @@
   },
   "scripts": {
     "build": "bun ../../scripts/run-if-sources.ts build -- bun build ./src/index.ts --outdir dist --target bun",
-    "typecheck": "bun ../../scripts/run-if-sources.ts typecheck -- tsc --noEmit"
+    "typecheck": "bun ../../scripts/run-if-sources.ts typecheck -- tsc --noEmit --types bun"
   }
 }
