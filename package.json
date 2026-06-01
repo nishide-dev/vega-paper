@@ -1,0 +1,24 @@
+{
+  "name": "vega-paper-workspace",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "bun scripts/run-if-sources.ts build -- bun run --filter '*' build",
+    "test": "bun test --pass-with-no-tests",
+    "typecheck": "bun scripts/run-if-sources.ts typecheck -- bun run --filter '*' typecheck",
+    "render:example": "bun run packages/cli/src/index.ts render examples/basic-line/chart.vl.json --theme paper-clean --format svg --out examples/basic-line/output.svg"
+  },
+  "dependencies": {
+    "vega-paper": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "latest"
+  },
+  "trustedDependencies": [
+    "canvas"
+  ]
+}

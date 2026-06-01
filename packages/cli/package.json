@@ -1,0 +1,19 @@
+{
+  "name": "vega-paper",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": {
+    "vega-paper": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "bun ../../scripts/run-if-sources.ts build -- bun --eval \"if (await Bun.file('./src/index.ts').exists()) { const proc = Bun.spawn(['bun', 'build', './src/index.ts', '--outdir', 'dist', '--target', 'bun'], { stdout: 'inherit', stderr: 'inherit' }); process.exit(await proc.exited); } else { console.log('No CLI entrypoint found; skipping build'); }\"",
+    "typecheck": "bun ../../scripts/run-if-sources.ts typecheck -- tsc --noEmit --types bun"
+  },
+  "dependencies": {
+    "@vega-paper/themes": "workspace:*",
+    "commander": "latest",
+    "vega": "latest",
+    "vega-cli": "latest",
+    "vega-lite": "latest"
+  }
+}
