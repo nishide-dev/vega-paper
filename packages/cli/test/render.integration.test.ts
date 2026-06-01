@@ -1,5 +1,5 @@
-import { access, mkdir, readFile, rm } from "node:fs/promises";
-import { dirname } from "node:path";
+import { access, mkdir, readFile, readdir, rm } from "node:fs/promises";
+import { dirname, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { renderChart } from "../src/core/render";
 
@@ -16,10 +16,8 @@ describe("render integration", () => {
   });
 
   test("renders the basic Vega-Lite example to SVG", async () => {
-    if (!(await hasLocalVl2Svg())) {
-      console.warn(
-        "Skipping render integration test because node_modules/.bin/vl2svg is unavailable.",
-      );
+    if (!(await hasVegaLiteSvgBinary())) {
+      console.warn("Skipping render integration: no vl2svg binary is installed.");
       return;
     }
 
@@ -36,11 +34,41 @@ describe("render integration", () => {
   });
 });
 
-async function hasLocalVl2Svg(): Promise<boolean> {
+async function hasVegaLiteSvgBinary(): Promise<boolean> {
+  const candidates = [
+    join("node_modules", ".bin", "vl2svg"),
+    join("node_modules", ".bun", "node_modules", "vega-lite", "bin", "vl2svg"),
+  ];
+
   try {
-    await access("node_modules/.bin/vl2svg");
-    return true;
+    const entries = await readdir(join("node_modules", ".bun"));
+    candidates.push(
+      ...entries
+        .filter((entry) => entry.startsWith("vega-lite@"))
+        .map((entry) =>
+          join(
+            "node_modules",
+            ".bun",
+            entry,
+            "node_modules",
+            "vega-lite",
+            "bin",
+            "vl2svg",
+          ),
+        ),
+    );
   } catch {
-    return false;
+    // No Bun package store means this integration test cannot render locally.
   }
+
+  for (const candidate of candidates) {
+    try {
+      await access(candidate);
+      return true;
+    } catch {
+      // Try the next supported install layout.
+    }
+  }
+
+  return false;
 }

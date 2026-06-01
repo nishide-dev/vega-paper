@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { normalizeRenderOptions } from "../src/commands/render";
+import { VegaPaperError } from "../src/core/errors";
 import { renderChart } from "../src/core/render";
 
 describe("normalizeRenderOptions", () => {
@@ -37,10 +38,21 @@ describe("normalizeRenderOptions", () => {
         format: "png",
         out: "chart.png",
       }),
+    ).toThrow(VegaPaperError);
+    expect(() =>
+      normalizeRenderOptions("chart.vl.json", {
+        format: "png",
+        out: "chart.png",
+      }),
     ).toThrow('Unsupported format "png". This MVP supports only "svg".');
   });
 
   test("requires an output path", () => {
+    expect(() =>
+      normalizeRenderOptions("chart.vl.json", {
+        format: "svg",
+      }),
+    ).toThrow(VegaPaperError);
     expect(() =>
       normalizeRenderOptions("chart.vl.json", {
         format: "svg",
@@ -53,8 +65,13 @@ describe("normalizeRenderOptions", () => {
       normalizeRenderOptions("chart.vl.json", {
         out: "chart.out",
       }),
+    ).toThrow(VegaPaperError);
+    expect(() =>
+      normalizeRenderOptions("chart.vl.json", {
+        out: "chart.out",
+      }),
     ).toThrow(
-      'Missing --format <format>. Use "--format svg" or an .svg output path.',
+      'Missing or ambiguous --format <format>. Use "--format svg" or an .svg output path.',
     );
   });
 });
@@ -68,5 +85,16 @@ describe("renderChart", () => {
         format: "svg",
       }),
     ).rejects.toThrow("Input file not found or unreadable: chart.vl.json");
+  });
+
+  test("reports unknown themes as CLI errors", async () => {
+    await expect(
+      renderChart({
+        inputPath: "examples/basic-line/chart.vl.json",
+        outputPath: "examples/basic-line/missing-theme.svg",
+        format: "svg",
+        themeName: "missing-theme",
+      }),
+    ).rejects.toBeInstanceOf(VegaPaperError);
   });
 });

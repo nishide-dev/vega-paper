@@ -4,6 +4,9 @@
   "workspaces": {
     "": {
       "name": "vega-paper-workspace",
+      "dependencies": {
+        "vega-paper": "workspace:*",
+      },
       "devDependencies": {
         "@types/bun": "latest",
         "typescript": "latest",

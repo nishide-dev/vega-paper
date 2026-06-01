@@ -39,6 +39,55 @@ describe("renderWithExternalVegaCli", () => {
       'Vega CLI binary "vg2svg" failed with exit code 2.\nbad spec',
     );
   });
+
+  test("resolves Vega-Lite binary from Bun's package store layout", async () => {
+    await withTemporaryWorkspace(async (workspace) => {
+      await createExecutable(
+        join(
+          workspace,
+          "node_modules",
+          ".bun",
+          "node_modules",
+          "vega-lite",
+          "bin",
+          "vl2svg",
+        ),
+        "#!/bin/sh\nexit 0\n",
+      );
+
+      await renderWithExternalVegaCli({
+        specType: "vega-lite",
+        inputPath: "spec.vl.json",
+        outputPath: "chart.svg",
+        format: "svg",
+      });
+    });
+  });
+
+  test("resolves Vega-Lite binary from Bun's versioned package store layout", async () => {
+    await withTemporaryWorkspace(async (workspace) => {
+      await createExecutable(
+        join(
+          workspace,
+          "node_modules",
+          ".bun",
+          "vega-lite@6.4.3+hash",
+          "node_modules",
+          "vega-lite",
+          "bin",
+          "vl2svg",
+        ),
+        "#!/bin/sh\nexit 0\n",
+      );
+
+      await renderWithExternalVegaCli({
+        specType: "vega-lite",
+        inputPath: "spec.vl.json",
+        outputPath: "chart.svg",
+        format: "svg",
+      });
+    });
+  });
 });
 
 async function withTemporaryWorkspace<T>(

@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { access } from "node:fs/promises";
+import { access, readdir } from "node:fs/promises";
 import { join } from "node:path";
 import { VegaPaperError } from "../core/errors";
 import type { SpecType } from "../core/spec";
@@ -37,8 +37,53 @@ async function resolveBinary(binary: string): Promise<string> {
     await access(localBinary);
     return localBinary;
   } catch {
+    const bunBinary = await getBunPackageStoreBinary(binary);
+
+    if (bunBinary) {
+      return bunBinary;
+    }
+
     return binary;
   }
+}
+
+async function getBunPackageStoreBinary(
+  binary: string,
+): Promise<string | undefined> {
+  const packageName = binary.startsWith("vl") ? "vega-lite" : "vega-cli";
+
+  if (binary !== "vl2svg" && binary !== "vg2svg") {
+    return undefined;
+  }
+
+  const packageStoreRoot = join("node_modules", ".bun");
+  const candidates = [
+    join(packageStoreRoot, "node_modules", packageName, "bin", binary),
+  ];
+
+  try {
+    const entries = await readdir(packageStoreRoot);
+    candidates.push(
+      ...entries
+        .filter((entry) => entry.startsWith(`${packageName}@`))
+        .map((entry) =>
+          join(packageStoreRoot, entry, "node_modules", packageName, "bin", binary),
+        ),
+    );
+  } catch {
+    return undefined;
+  }
+
+  for (const candidate of candidates) {
+    try {
+      await access(candidate);
+      return candidate;
+    } catch {
+      // Keep looking through Bun's possible package-store layouts.
+    }
+  }
+
+  return undefined;
 }
 
 async function runBinary(
