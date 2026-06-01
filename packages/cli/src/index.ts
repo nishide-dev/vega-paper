@@ -1,6 +1,7 @@
 #!/usr/bin/env bun
 
 import { Command } from "commander";
+import { registerDoctorCommand } from "./commands/doctor";
 import { registerRenderCommand } from "./commands/render";
 import { registerThemesCommand } from "./commands/themes";
 import { VegaPaperError } from "./core/errors";
@@ -14,6 +15,7 @@ program
 
 registerRenderCommand(program);
 registerThemesCommand(program);
+registerDoctorCommand(program);
 
 try {
   await program.parseAsync(process.argv);
