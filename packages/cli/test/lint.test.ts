@@ -1,8 +1,11 @@
 import { describe, expect, test } from "bun:test";
+import { Command } from "commander";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { registerLintCommand } from "../src/commands/lint";
 import { lintSpec } from "../src/core/lint";
+import type { LintResult } from "../src/core/lint";
 import { runLintRules } from "../src/core/lint-rules";
 import type { JsonObject, SpecType } from "../src/core/spec";
 
@@ -300,6 +303,83 @@ describe("lintSpec", () => {
   });
 });
 
+describe("lint command", () => {
+  test("prints clean result without setting exit code", async () => {
+    const output = await runLintCommand(["lint", "chart.vl.json"], cleanLintResult());
+
+    expect(output.stdout).toBe("No lint issues found.\n");
+    expect(output.exitCode).toBeUndefined();
+  });
+
+  test("prints human issue summary and table for one warning", async () => {
+    const output = await runLintCommand(
+      ["lint", "chart.vl.json"],
+      createCommandLintResult([
+        {
+          severity: "warning",
+          ruleId: "axis-title-missing",
+          path: "$.encoding.x",
+          message: "X axis is missing a title.",
+        },
+      ]),
+    );
+
+    expect(output.stdout).toContain("1 warning, 0 errors");
+    expect(output.stdout).toContain("severity  rule                path          message");
+    expect(output.stdout).toContain(
+      "warning   axis-title-missing  $.encoding.x  X axis is missing a title.",
+    );
+    expect(output.exitCode).toBeUndefined();
+  });
+
+  test("prints JSON only in JSON mode", async () => {
+    const result = createCommandLintResult([
+      {
+        severity: "warning",
+        ruleId: "axis-title-missing",
+        path: "$.encoding.x",
+        message: "X axis is missing a title.",
+      },
+    ]);
+    const output = await runLintCommand(["lint", "chart.vl.json", "--json"], result);
+
+    expect(JSON.parse(output.stdout)).toEqual(result);
+    expect(output.stdout).not.toContain("warning,");
+  });
+
+  test("sets exit code 1 for errors", async () => {
+    const output = await runLintCommand(
+      ["lint", "chart.vl.json"],
+      createCommandLintResult([
+        {
+          severity: "error",
+          ruleId: "spec-unreadable",
+          path: "$",
+          message: "Could not read chart.vl.json.",
+        },
+      ]),
+    );
+
+    expect(output.exitCode).toBe(1);
+  });
+
+  test("sets exit code 1 for warnings in strict mode", async () => {
+    const output = await runLintCommand(
+      ["lint", "chart.vl.json", "--strict"],
+      createCommandLintResult([
+        {
+          severity: "warning",
+          ruleId: "axis-title-missing",
+          path: "$.encoding.x",
+          message: "X axis is missing a title.",
+        },
+      ]),
+    );
+
+    expect(output.exitCode).toBe(1);
+  });
+});
+
 function runRules(spec: JsonObject, specType: SpecType = "vega-lite") {
   return runLintRules({
     inputPath: "chart.vl.json",
@@ -346,4 +426,47 @@ async function withTemporaryWorkspace(
 
 async function writeJson(path: string, value: unknown) {
   await writeFile(path, JSON.stringify(value), "utf8");
+}
+
+async function runLintCommand(
+  args: string[],
+  result: LintResult,
+): Promise<{ stdout: string; exitCode: 0 | 1 | undefined }> {
+  let stdout = "";
+  let exitCode: 0 | 1 | undefined;
+  const program = new Command();
+
+  program.exitOverride();
+
+  registerLintCommand(
+    program,
+    (value) => {
+      stdout += value;
+    },
+    async () => result,
+    (value) => {
+      exitCode = value;
+    },
+  );
+  await program.parseAsync(["node", "vega-paper", ...args]);
+
+  return { stdout, exitCode };
+}
+
+function cleanLintResult(): LintResult {
+  return createCommandLintResult([]);
+}
+
+function createCommandLintResult(issues: LintResult["issues"]): LintResult {
+  const errorCount = issues.filter((issue) => issue.severity === "error").length;
+  const warningCount = issues.filter(
+    (issue) => issue.severity === "warning",
+  ).length;
+
+  return {
+    ok: errorCount === 0,
+    errorCount,
+    warningCount,
+    issues,
+  };
 }
