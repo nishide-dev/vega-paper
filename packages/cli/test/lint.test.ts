@@ -1,4 +1,8 @@
 import { describe, expect, test } from "bun:test";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { lintSpec } from "../src/core/lint";
 import { runLintRules } from "../src/core/lint-rules";
 import type { JsonObject, SpecType } from "../src/core/spec";
 
@@ -219,6 +223,83 @@ describe("runLintRules", () => {
   });
 });
 
+describe("lintSpec", () => {
+  test("returns a clean result for a clean file", async () => {
+    await withTemporaryWorkspace(async (workspacePath) => {
+      const inputPath = join(workspacePath, "chart.vl.json");
+      await writeJson(inputPath, cleanVegaLiteSpec());
+
+      expect(await lintSpec({ inputPath })).toEqual({
+        ok: true,
+        errorCount: 0,
+        warningCount: 0,
+        issues: [],
+      });
+    });
+  });
+
+  test("returns spec-unreadable for invalid JSON", async () => {
+    await withTemporaryWorkspace(async (workspacePath) => {
+      const inputPath = join(workspacePath, "chart.vl.json");
+      await writeFile(inputPath, "{", "utf8");
+
+      expect(await lintSpec({ inputPath })).toEqual({
+        ok: false,
+        errorCount: 1,
+        warningCount: 0,
+        issues: [
+          {
+            severity: "error",
+            ruleId: "spec-unreadable",
+            path: "$",
+            message: `Could not read ${inputPath}: Invalid JSON in input file: ${inputPath}`,
+            suggestion: "Provide a readable JSON object file.",
+          },
+        ],
+      });
+    });
+  });
+
+  test("returns spec-unknown-type for unknown JSON objects", async () => {
+    await withTemporaryWorkspace(async (workspacePath) => {
+      const inputPath = join(workspacePath, "chart.json");
+      await writeJson(inputPath, { title: "No recognizable spec fields" });
+
+      expect(await lintSpec({ inputPath })).toEqual({
+        ok: false,
+        errorCount: 1,
+        warningCount: 0,
+        issues: [
+          {
+            severity: "error",
+            ruleId: "spec-unknown-type",
+            path: "$",
+            message: "Could not determine whether the input is Vega-Lite or Vega.",
+            suggestion:
+              "Add a Vega/Vega-Lite $schema or recognizable mark/encoding or marks/scales fields.",
+          },
+        ],
+      });
+    });
+  });
+
+  test("returns warnings from static rules", async () => {
+    await withTemporaryWorkspace(async (workspacePath) => {
+      const inputPath = join(workspacePath, "chart.vl.json");
+      const spec = cleanVegaLiteSpec();
+      delete spec.width;
+      await writeJson(inputPath, spec);
+
+      const result = await lintSpec({ inputPath });
+
+      expect(result.ok).toBe(true);
+      expect(result.errorCount).toBe(0);
+      expect(result.warningCount).toBe(1);
+      expect(result.issues[0]?.ruleId).toBe("size-missing");
+    });
+  });
+});
+
 function runRules(spec: JsonObject, specType: SpecType = "vega-lite") {
   return runLintRules({
     inputPath: "chart.vl.json",
@@ -247,4 +328,22 @@ function cleanVegaLiteSpec(overrides: JsonObject = {}): JsonObject {
     },
     ...overrides,
   };
+}
+
+async function withTemporaryWorkspace(
+  callback: (workspacePath: string) => Promise<void>,
+) {
+  const workspacePath = await mkdtemp(
+    join(tmpdir(), "vega-paper-lint-test-"),
+  );
+
+  try {
+    await callback(workspacePath);
+  } finally {
+    await rm(workspacePath, { force: true, recursive: true });
+  }
+}
+
+async function writeJson(path: string, value: unknown) {
+  await writeFile(path, JSON.stringify(value), "utf8");
 }
