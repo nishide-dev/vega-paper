@@ -1,0 +1,24 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "description": "Basic training curve example for VegaPaper.",
+  "data": {
+    "values": [
+      { "epoch": 1, "accuracy": 0.62, "model": "baseline" },
+      { "epoch": 2, "accuracy": 0.68, "model": "baseline" },
+      { "epoch": 3, "accuracy": 0.71, "model": "baseline" },
+      { "epoch": 1, "accuracy": 0.65, "model": "improved" },
+      { "epoch": 2, "accuracy": 0.73, "model": "improved" },
+      { "epoch": 3, "accuracy": 0.79, "model": "improved" }
+    ]
+  },
+  "mark": { "type": "line", "point": true },
+  "encoding": {
+    "x": { "field": "epoch", "type": "quantitative", "title": "Epoch" },
+    "y": {
+      "field": "accuracy",
+      "type": "quantitative",
+      "title": "Accuracy"
+    },
+    "color": { "field": "model", "type": "nominal", "title": "Model" }
+  }
+}
