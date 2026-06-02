@@ -1,0 +1,174 @@
+import { mkdir, writeFile } from "node:fs/promises";
+import { dirname, extname, join, parse } from "node:path";
+import type { Command } from "commander";
+import { VegaPaperError } from "../core/errors";
+import {
+  inferVegaLiteSpec,
+  type InferChartType,
+  type InferRequest,
+  type InferResult,
+} from "../core/infer";
+import { renderChart, type RenderRequest, type RenderResult } from "../core/render";
+
+type InferCommandOptions = {
+  chart?: string;
+  x?: string;
+  y?: string;
+  color?: string;
+  title?: string;
+  width?: string;
+  height?: string;
+  theme?: string;
+  out?: string;
+  specOut?: string;
+};
+
+type WriteOutput = (value: string) => void;
+type RunInfer = (request: InferRequest) => Promise<InferResult>;
+type RunRender = (request: RenderRequest) => Promise<RenderResult>;
+type WriteSpec = (specOutputPath: string, spec: InferResult["spec"]) => Promise<void>;
+
+export function registerInferCommand(
+  program: Command,
+  writeOutput: WriteOutput = (value) => {
+    process.stdout.write(value);
+  },
+  runInfer: RunInfer = inferVegaLiteSpec,
+  runRender: RunRender = renderChart,
+  writeSpec: WriteSpec = writeSpecFile,
+): void {
+  program
+    .command("infer")
+    .argument("<input>", "CSV input path")
+    .description("Generate a Vega-Lite spec from CSV and optionally render SVG")
+    .option("--chart <type>", "chart type: line, bar, or scatter")
+    .option("--x <field>", "x encoding field")
+    .option("--y <field>", "y encoding field")
+    .option("--color <field>", "color encoding field")
+    .option("--title <text>", "chart title")
+    .option("--width <number>", "chart width")
+    .option("--height <number>", "chart height")
+    .option("--theme <name>", "theme name, used only when rendering")
+    .option("--out <path>", "SVG output path")
+    .option("--spec-out <path>", "Vega-Lite spec output path")
+    .action(async (inputPath: string, options: InferCommandOptions) => {
+      const request = normalizeInferOptions(inputPath, options);
+      const result = await runInfer(request);
+
+      try {
+        await writeSpec(request.specOutputPath, result.spec);
+      } catch (error) {
+        throw toSpecWriteError(request.specOutputPath, error);
+      }
+
+      writeOutput(`Wrote ${request.specOutputPath}\n`);
+
+      if (options.out === undefined) {
+        return;
+      }
+
+      const renderResult = await runRender({
+        inputPath: request.specOutputPath,
+        outputPath: options.out,
+        format: "svg",
+        themeName: options.theme,
+      });
+
+      writeOutput(`Rendered ${renderResult.outputPath}\n`);
+    });
+}
+
+export function normalizeInferOptions(
+  inputPath: string,
+  options: InferCommandOptions,
+): InferRequest {
+  const outputPath = options.out;
+  const specOutputPath =
+    options.specOut ?? (outputPath === undefined ? undefined : toSiblingSpecPath(outputPath));
+
+  if (specOutputPath === undefined) {
+    throw new VegaPaperError(
+      'Missing output destination. Use "--spec-out <path>" and/or "--out <path>".',
+    );
+  }
+
+  if (options.theme !== undefined && outputPath === undefined) {
+    throw new VegaPaperError('The "--theme" option requires "--out <path>".');
+  }
+
+  if (outputPath !== undefined && extname(outputPath).toLowerCase() !== ".svg") {
+    throw new VegaPaperError(
+      `Unsupported output path "${outputPath}". This MVP supports only .svg outputs.`,
+    );
+  }
+
+  return {
+    inputPath,
+    chart: parseInferChartType(options.chart),
+    xField: requireOption(options.x, "--x <field>"),
+    yField: requireOption(options.y, "--y <field>"),
+    colorField: options.color,
+    title: options.title,
+    width: parsePositiveDimension(options.width, "--width <number>"),
+    height: parsePositiveDimension(options.height, "--height <number>"),
+    specOutputPath,
+  };
+}
+
+async function writeSpecFile(
+  specOutputPath: string,
+  spec: InferResult["spec"],
+): Promise<void> {
+  await mkdir(dirname(specOutputPath), { recursive: true });
+  await writeFile(specOutputPath, `${JSON.stringify(spec, null, 2)}\n`, "utf8");
+}
+
+function parseInferChartType(chart: string | undefined): InferChartType {
+  const value = requireOption(chart, "--chart <type>");
+
+  if (value === "line" || value === "bar" || value === "scatter") {
+    return value;
+  }
+
+  throw new VegaPaperError(
+    `Unsupported chart type "${value}". Expected one of: line, bar, scatter.`,
+  );
+}
+
+function requireOption(value: string | undefined, flag: string): string {
+  if (value === undefined || value === "") {
+    throw new VegaPaperError(`Missing required option ${flag}.`);
+  }
+
+  return value;
+}
+
+function parsePositiveDimension(
+  value: string | undefined,
+  flag: "--width <number>" | "--height <number>",
+): number | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  const numericValue = Number(value);
+
+  if (!Number.isFinite(numericValue) || numericValue <= 0) {
+    throw new VegaPaperError(`Invalid value for ${flag}. Expected a positive finite number.`);
+  }
+
+  return numericValue;
+}
+
+function toSiblingSpecPath(outputPath: string): string {
+  const parsedPath = parse(outputPath);
+  return join(parsedPath.dir, `${parsedPath.name}.vl.json`);
+}
+
+function toSpecWriteError(specOutputPath: string, error: unknown): VegaPaperError {
+  if (error instanceof VegaPaperError) {
+    return error;
+  }
+
+  return new VegaPaperError(`Could not write generated spec to ${specOutputPath}.`);
+}
