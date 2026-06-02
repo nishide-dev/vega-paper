@@ -1,5 +1,6 @@
 import { runLintRules } from "./lint-rules";
 import { VegaPaperError } from "./errors";
+import { getLintProfile } from "./lint-profiles";
 import { detectSpecType, loadJsonSpec } from "./spec";
 
 export type LintSeverity = "error" | "warning";
@@ -21,9 +22,11 @@ export type LintResult = {
 
 export type LintRequest = {
   inputPath: string;
+  profileName?: string | undefined;
 };
 
 export async function lintSpec(request: LintRequest): Promise<LintResult> {
+  const profile = getLintProfile(request.profileName);
   let spec: Awaited<ReturnType<typeof loadJsonSpec>>;
 
   try {
@@ -70,6 +73,7 @@ export async function lintSpec(request: LintRequest): Promise<LintResult> {
       inputPath: request.inputPath,
       spec,
       specType,
+      profile,
     }),
   );
 }
