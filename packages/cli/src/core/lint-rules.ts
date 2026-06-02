@@ -9,6 +9,11 @@ export type LintRuleContext = {
 
 export type LintRule = (context: LintRuleContext) => LintIssue[];
 
+type VegaLiteUnitSpec = {
+  spec: JsonObject;
+  path: string;
+};
+
 export const paperLintRules: LintRule[] = [
   checkTitleLength,
   checkAxisTitles,
@@ -47,27 +52,30 @@ function checkAxisTitles({ spec, specType }: LintRuleContext): LintIssue[] {
     return [];
   }
 
-  const encoding = getObject(spec, "encoding");
   const issues: LintIssue[] = [];
 
-  for (const channelName of ["x", "y"] as const) {
-    const channel = encoding ? getObject(encoding, channelName) : undefined;
+  for (const unit of collectVegaLiteUnitSpecs(spec)) {
+    const encoding = getObject(unit.spec, "encoding");
 
-    if (!channel || typeof channel.field !== "string") {
-      continue;
+    for (const channelName of ["x", "y"] as const) {
+      const channel = encoding ? getObject(encoding, channelName) : undefined;
+
+      if (!channel || typeof channel.field !== "string") {
+        continue;
+      }
+
+      if (hasExplicitTitle(channel)) {
+        continue;
+      }
+
+      issues.push({
+        severity: "warning",
+        ruleId: "axis-title-missing",
+        path: joinJsonPath(unit.path, `encoding.${channelName}`),
+        message: `${channelName.toUpperCase()} axis is missing a title.`,
+        suggestion: `Add encoding.${channelName}.title.`,
+      });
     }
-
-    if (hasExplicitTitle(channel)) {
-      continue;
-    }
-
-    issues.push({
-      severity: "warning",
-      ruleId: "axis-title-missing",
-      path: `$.encoding.${channelName}`,
-      message: `${channelName.toUpperCase()} axis is missing a title.`,
-      suggestion: `Add encoding.${channelName}.title.`,
-    });
   }
 
   return issues;
@@ -251,6 +259,64 @@ function checkBarYAxisZero({
 function getInlineDataValues(spec: JsonObject): unknown[] | undefined {
   const data = getObject(spec, "data");
   return Array.isArray(data?.values) ? data.values : undefined;
+}
+
+function collectVegaLiteUnitSpecs(rootSpec: JsonObject): VegaLiteUnitSpec[] {
+  const units: VegaLiteUnitSpec[] = [];
+  const visit = (spec: JsonObject, path: string) => {
+    if (isVegaLiteUnitSpec(spec)) {
+      units.push({ spec, path });
+    }
+
+    visitArrayChildren(spec, "layer", path, visit);
+    visitObjectChild(spec, "spec", path, visit);
+    visitArrayChildren(spec, "concat", path, visit);
+    visitArrayChildren(spec, "hconcat", path, visit);
+    visitArrayChildren(spec, "vconcat", path, visit);
+  };
+
+  visit(rootSpec, "$");
+  return units;
+}
+
+function visitArrayChildren(
+  spec: JsonObject,
+  key: string,
+  parentPath: string,
+  visit: (spec: JsonObject, path: string) => void,
+): void {
+  const value = spec[key];
+
+  if (!Array.isArray(value)) {
+    return;
+  }
+
+  for (const [index, child] of value.entries()) {
+    if (isPlainObject(child)) {
+      visit(child, `${parentPath}.${key}[${index}]`);
+    }
+  }
+}
+
+function visitObjectChild(
+  spec: JsonObject,
+  key: string,
+  parentPath: string,
+  visit: (spec: JsonObject, path: string) => void,
+): void {
+  const child = getObject(spec, key);
+
+  if (child) {
+    visit(child, joinJsonPath(parentPath, key));
+  }
+}
+
+function isVegaLiteUnitSpec(spec: JsonObject): boolean {
+  return isPlainObject(spec.encoding) || spec.mark !== undefined;
+}
+
+function joinJsonPath(parentPath: string, childPath: string): string {
+  return parentPath === "$" ? `$.${childPath}` : `${parentPath}.${childPath}`;
 }
 
 function getObject(value: JsonObject, key: string): JsonObject | undefined {

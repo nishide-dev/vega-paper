@@ -210,6 +210,168 @@ describe("runLintRules", () => {
     expect(runRules(spec)).toEqual([]);
   });
 
+  test("warns for missing axis titles inside layered Vega-Lite specs", () => {
+    const spec = cleanVegaLiteSpec({
+      data: {
+        values: [
+          { epoch: 1, accuracy: 0.62, loss: 0.41 },
+          { epoch: 2, accuracy: 0.68, loss: 0.36 },
+        ],
+      },
+      layer: [
+        {
+          mark: "line",
+          encoding: {
+            x: { field: "epoch", type: "quantitative" },
+            y: { field: "accuracy", type: "quantitative" },
+          },
+        },
+        {
+          mark: "line",
+          encoding: {
+            x: { field: "epoch", type: "quantitative", title: "Epoch" },
+            y: { field: "loss", type: "quantitative" },
+          },
+        },
+      ],
+    });
+    delete spec.mark;
+    delete spec.encoding;
+
+    expect(
+      runRules(spec)
+        .filter((issue) => issue.ruleId === "axis-title-missing")
+        .map((issue) => issue.path),
+    ).toEqual([
+      "$.layer[0].encoding.x",
+      "$.layer[0].encoding.y",
+      "$.layer[1].encoding.y",
+    ]);
+  });
+
+  test("warns for missing axis titles inside facet and repeat specs", () => {
+    const facetSpec = cleanVegaLiteSpec({
+      facet: { field: "model", type: "nominal" },
+      spec: {
+        mark: "point",
+        encoding: {
+          x: { field: "epoch", type: "quantitative" },
+          y: { field: "accuracy", type: "quantitative", title: "Accuracy" },
+        },
+      },
+    });
+    delete facetSpec.mark;
+    delete facetSpec.encoding;
+
+    const repeatSpec = cleanVegaLiteSpec({
+      repeat: ["accuracy", "loss"],
+      spec: {
+        mark: "line",
+        encoding: {
+          x: { field: "epoch", type: "quantitative", title: "Epoch" },
+          y: { field: "accuracy", type: "quantitative" },
+        },
+      },
+    });
+    delete repeatSpec.mark;
+    delete repeatSpec.encoding;
+
+    expect(
+      runRules(facetSpec)
+        .filter((issue) => issue.ruleId === "axis-title-missing")
+        .map((issue) => issue.path),
+    ).toEqual(["$.spec.encoding.x"]);
+    expect(
+      runRules(repeatSpec)
+        .filter((issue) => issue.ruleId === "axis-title-missing")
+        .map((issue) => issue.path),
+    ).toEqual(["$.spec.encoding.y"]);
+  });
+
+  test("warns for missing axis titles inside concat specs", () => {
+    const spec = cleanVegaLiteSpec({
+      concat: [
+        {
+          mark: "line",
+          encoding: {
+            x: { field: "epoch", type: "quantitative" },
+            y: { field: "accuracy", type: "quantitative", title: "Accuracy" },
+          },
+        },
+      ],
+      hconcat: [
+        {
+          mark: "point",
+          encoding: {
+            x: { field: "epoch", type: "quantitative", title: "Epoch" },
+            y: { field: "accuracy", type: "quantitative" },
+          },
+        },
+      ],
+      vconcat: [
+        {
+          mark: "bar",
+          encoding: {
+            x: { field: "epoch", type: "ordinal" },
+            y: { field: "accuracy", type: "quantitative", title: "Accuracy" },
+          },
+        },
+      ],
+    });
+    delete spec.mark;
+    delete spec.encoding;
+
+    expect(
+      runRules(spec)
+        .filter((issue) => issue.ruleId === "axis-title-missing")
+        .map((issue) => issue.path),
+    ).toEqual([
+      "$.concat[0].encoding.x",
+      "$.hconcat[0].encoding.y",
+      "$.vconcat[0].encoding.x",
+    ]);
+  });
+
+  test("recurses through nested composed Vega-Lite specs", () => {
+    const spec = cleanVegaLiteSpec({
+      layer: [
+        {
+          facet: { field: "model", type: "nominal" },
+          spec: {
+            mark: "point",
+            encoding: {
+              x: { field: "epoch", type: "quantitative" },
+              y: { field: "accuracy", type: "quantitative", title: "Accuracy" },
+            },
+          },
+        },
+      ],
+    });
+    delete spec.mark;
+    delete spec.encoding;
+
+    expect(
+      runRules(spec)
+        .filter((issue) => issue.ruleId === "axis-title-missing")
+        .map((issue) => issue.path),
+    ).toEqual(["$.layer[0].spec.encoding.x"]);
+  });
+
+  test("ignores malformed composition fields without throwing", () => {
+    const spec = cleanVegaLiteSpec({
+      layer: { not: "an array" },
+      facet: { spec: "not an object" },
+      repeat: { spec: null },
+      concat: ["not an object"],
+      hconcat: [null],
+      vconcat: [{ mark: "point" }],
+    });
+    delete spec.mark;
+    delete spec.encoding;
+
+    expect(runRules(spec)).toEqual([]);
+  });
+
   test("does not run Vega-Lite-only rules for Vega specs", () => {
     expect(
       runRules(
