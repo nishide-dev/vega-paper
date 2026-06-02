@@ -1,14 +1,19 @@
 import type { Command } from "commander";
 import { lintSpec, type LintResult } from "../core/lint";
 import { formatTable, toPrettyJson } from "../core/format";
+import { getLintProfile } from "../core/lint-profiles";
 
 type LintOptions = {
   json?: boolean;
+  profile?: string;
   strict?: boolean;
 };
 
 type WriteOutput = (value: string) => void;
-type RunLint = (inputPath: string) => Promise<LintResult>;
+type RunLint = (
+  inputPath: string,
+  profileName: string | undefined,
+) => Promise<LintResult>;
 type SetExitCode = (exitCode: 0 | 1) => void;
 
 export function registerLintCommand(
@@ -16,7 +21,8 @@ export function registerLintCommand(
   writeOutput: WriteOutput = (value) => {
     process.stdout.write(value);
   },
-  runLint: RunLint = (inputPath) => lintSpec({ inputPath }),
+  runLint: RunLint = (inputPath, profileName) =>
+    lintSpec({ inputPath, profileName }),
   setExitCode: SetExitCode = (exitCode) => {
     process.exitCode = exitCode;
   },
@@ -26,9 +32,14 @@ export function registerLintCommand(
     .argument("<spec>", "Vega or Vega-Lite JSON input path")
     .description("Check a Vega or Vega-Lite spec for paper figure issues")
     .option("--json", "print JSON")
+    .option("--profile <name>", "lint profile: paper, web, or acl")
     .option("--strict", "exit with code 1 when warnings are present")
     .action(async (inputPath: string, options: LintOptions) => {
-      const result = await runLint(inputPath);
+      if (options.profile !== undefined) {
+        getLintProfile(options.profile);
+      }
+
+      const result = await runLint(inputPath, options.profile);
       const exitCode = getLintExitCode(result, Boolean(options.strict));
 
       if (options.json) {

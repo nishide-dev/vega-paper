@@ -1,10 +1,12 @@
 import type { LintIssue } from "./lint";
+import type { LintProfile } from "./lint-profiles";
 import type { JsonObject, SpecType } from "./spec";
 
 export type LintRuleContext = {
   inputPath: string;
   spec: JsonObject;
   specType: SpecType;
+  profile: LintProfile;
 };
 
 export type LintRule = (context: LintRuleContext) => LintIssue[];
@@ -29,10 +31,10 @@ export function runLintRules(context: LintRuleContext): LintIssue[] {
   return paperLintRules.flatMap((rule) => rule(context));
 }
 
-function checkTitleLength({ spec }: LintRuleContext): LintIssue[] {
+function checkTitleLength({ spec, profile }: LintRuleContext): LintIssue[] {
   const titleText = getTitleText(spec.title);
 
-  if (!titleText || titleText.length <= 90) {
+  if (!titleText || titleText.length <= profile.titleMaxLength) {
     return [];
   }
 
@@ -41,7 +43,7 @@ function checkTitleLength({ spec }: LintRuleContext): LintIssue[] {
       severity: "warning",
       ruleId: "title-too-long",
       path: "$.title",
-      message: "Title is longer than 90 characters.",
+      message: `Title is longer than ${profile.titleMaxLength} characters.`,
       suggestion: "Shorten the title or move detail into the caption.",
     },
   ];
@@ -105,27 +107,33 @@ function checkSizePresence({ spec }: LintRuleContext): LintIssue[] {
   ];
 }
 
-function checkSizeRange({ spec }: LintRuleContext): LintIssue[] {
+function checkSizeRange({ spec, profile }: LintRuleContext): LintIssue[] {
   const issues: LintIssue[] = [];
   const width = getNumber(spec, "width");
   const height = getNumber(spec, "height");
 
-  if (width !== undefined && (width < 180 || width > 720)) {
+  if (
+    width !== undefined &&
+    (width < profile.widthRange.min || width > profile.widthRange.max)
+  ) {
     issues.push({
       severity: "warning",
       ruleId: "size-out-of-range",
       path: "$.width",
-      message: `Width ${width} is outside the paper range 180-720.`,
-      suggestion: "Choose a width that maps cleanly to paper column sizes.",
+      message: `Width ${width} is outside the ${profile.name} range ${profile.widthRange.min}-${profile.widthRange.max}.`,
+      suggestion: "Choose a width that fits the target output.",
     });
   }
 
-  if (height !== undefined && (height < 120 || height > 540)) {
+  if (
+    height !== undefined &&
+    (height < profile.heightRange.min || height > profile.heightRange.max)
+  ) {
     issues.push({
       severity: "warning",
       ruleId: "size-out-of-range",
       path: "$.height",
-      message: `Height ${height} is outside the paper range 120-540.`,
+      message: `Height ${height} is outside the ${profile.name} range ${profile.heightRange.min}-${profile.heightRange.max}.`,
       suggestion: "Choose a height that keeps labels readable without wasting space.",
     });
   }
@@ -133,10 +141,10 @@ function checkSizeRange({ spec }: LintRuleContext): LintIssue[] {
   return issues;
 }
 
-function checkInlineDataSize({ spec }: LintRuleContext): LintIssue[] {
+function checkInlineDataSize({ spec, profile }: LintRuleContext): LintIssue[] {
   const values = getInlineDataValues(spec);
 
-  if (!values || values.length <= 500) {
+  if (!values || values.length <= profile.maxInlineRows) {
     return [];
   }
 
@@ -154,6 +162,7 @@ function checkInlineDataSize({ spec }: LintRuleContext): LintIssue[] {
 function checkLegendCategoryCount({
   spec,
   specType,
+  profile,
 }: LintRuleContext): LintIssue[] {
   if (specType !== "vega-lite") {
     return [];
@@ -186,7 +195,7 @@ function checkLegendCategoryCount({
       }
     }
 
-    if (categories.size <= 12) {
+    if (categories.size <= profile.maxColorCategories) {
       continue;
     }
 
@@ -202,7 +211,7 @@ function checkLegendCategoryCount({
   return issues;
 }
 
-function checkFontSizes({ spec }: LintRuleContext): LintIssue[] {
+function checkFontSizes({ spec, profile }: LintRuleContext): LintIssue[] {
   const checks = [
     "$.config.axis.labelFontSize",
     "$.config.axis.titleFontSize",
@@ -213,7 +222,7 @@ function checkFontSizes({ spec }: LintRuleContext): LintIssue[] {
   return checks.flatMap((path) => {
     const value = getPathNumber(spec, path);
 
-    if (value === undefined || value >= 8) {
+    if (value === undefined || value >= profile.minFontSize) {
       return [];
     }
 
@@ -222,8 +231,8 @@ function checkFontSizes({ spec }: LintRuleContext): LintIssue[] {
         severity: "warning",
         ruleId: "font-size-small",
         path,
-        message: `Font size ${value} is smaller than 8.`,
-        suggestion: "Use font sizes of at least 8 for paper figures.",
+        message: `Font size ${value} is smaller than ${profile.minFontSize}.`,
+        suggestion: `Use font sizes of at least ${profile.minFontSize} for ${profile.name} figures.`,
       },
     ];
   });

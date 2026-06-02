@@ -6,6 +6,7 @@ import { join } from "node:path";
 import { registerLintCommand } from "../src/commands/lint";
 import { lintSpec } from "../src/core/lint";
 import type { LintResult } from "../src/core/lint";
+import { getLintProfile, type LintProfileName } from "../src/core/lint-profiles";
 import { runLintRules } from "../src/core/lint-rules";
 import type { JsonObject, SpecType } from "../src/core/spec";
 
@@ -98,6 +99,40 @@ describe("runLintRules", () => {
     ]);
   });
 
+  test("uses profile-specific size ranges", () => {
+    const spec = cleanVegaLiteSpec({ width: 1000, height: 700 });
+
+    expect(
+      runRules(spec, "vega-lite", "paper")
+        .filter((issue) => issue.ruleId === "size-out-of-range")
+        .map((issue) => issue.path),
+    ).toEqual(["$.width", "$.height"]);
+    expect(
+      runRules(spec, "vega-lite", "web").filter(
+        (issue) => issue.ruleId === "size-out-of-range",
+      ),
+    ).toEqual([]);
+  });
+
+  test("uses profile-specific title length thresholds", () => {
+    const spec = cleanVegaLiteSpec({
+      title: "A".repeat(100),
+    });
+
+    expect(runRules(spec, "vega-lite", "paper")).toContainEqual({
+      severity: "warning",
+      ruleId: "title-too-long",
+      path: "$.title",
+      message: "Title is longer than 90 characters.",
+      suggestion: "Shorten the title or move detail into the caption.",
+    });
+    expect(
+      runRules(spec, "vega-lite", "web").filter(
+        (issue) => issue.ruleId === "title-too-long",
+      ),
+    ).toEqual([]);
+  });
+
   test("warns when inline data is large", () => {
     const spec = cleanVegaLiteSpec({
       data: {
@@ -115,6 +150,26 @@ describe("runLintRules", () => {
       message: "Inline data has 501 rows.",
       suggestion: "Use external data or pre-aggregate before rendering.",
     });
+  });
+
+  test("uses profile-specific inline data row thresholds", () => {
+    const spec = cleanVegaLiteSpec({
+      data: {
+        values: Array.from({ length: 400 }, (_, index) => ({
+          epoch: index,
+          accuracy: index / 100,
+        })),
+      },
+    });
+
+    expect(
+      runRules(spec, "vega-lite", "acl").map((issue) => issue.ruleId),
+    ).toContain("inline-data-large");
+    expect(
+      runRules(spec, "vega-lite", "paper").filter(
+        (issue) => issue.ruleId === "inline-data-large",
+      ),
+    ).toEqual([]);
   });
 
   test("warns when color has too many categories", () => {
@@ -140,6 +195,32 @@ describe("runLintRules", () => {
       message: 'Color field "model" has 13 categories.',
       suggestion: "Reduce categories, facet the chart, or group less important values.",
     });
+  });
+
+  test("uses profile-specific legend category thresholds", () => {
+    const spec = cleanVegaLiteSpec({
+      data: {
+        values: Array.from({ length: 13 }, (_, index) => ({
+          epoch: index,
+          accuracy: index / 100,
+          model: `model-${index}`,
+        })),
+      },
+      encoding: {
+        x: { field: "epoch", type: "quantitative", title: "Epoch" },
+        y: { field: "accuracy", type: "quantitative", title: "Accuracy" },
+        color: { field: "model", type: "nominal", title: "Model" },
+      },
+    });
+
+    expect(
+      runRules(spec, "vega-lite", "acl").map((issue) => issue.ruleId),
+    ).toContain("legend-too-many-categories");
+    expect(
+      runRules(spec, "vega-lite", "web").filter(
+        (issue) => issue.ruleId === "legend-too-many-categories",
+      ),
+    ).toEqual([]);
   });
 
   test("warns when layered color encoding has too many categories from root data", () => {
@@ -253,6 +334,23 @@ describe("runLintRules", () => {
       "$.config.axis.labelFontSize",
       "$.config.legend.titleFontSize",
     ]);
+  });
+
+  test("uses profile-specific minimum font sizes", () => {
+    const spec = cleanVegaLiteSpec({
+      config: {
+        axis: { labelFontSize: 8 },
+      },
+    });
+
+    expect(
+      runRules(spec, "vega-lite", "acl").map((issue) => issue.ruleId),
+    ).toContain("font-size-small");
+    expect(
+      runRules(spec, "vega-lite", "paper").filter(
+        (issue) => issue.ruleId === "font-size-small",
+      ),
+    ).toEqual([]);
   });
 
   test("warns when bar chart y zero behavior is missing", () => {
@@ -607,6 +705,43 @@ describe("lintSpec", () => {
       expect(result.issues[0]?.ruleId).toBe("size-missing");
     });
   });
+
+  test("uses profile thresholds when linting files", async () => {
+    await withTemporaryWorkspace(async (workspacePath) => {
+      const inputPath = join(workspacePath, "chart.vl.json");
+      await writeJson(inputPath, cleanVegaLiteSpec({ width: 1000, height: 700 }));
+
+      const paperResult = await lintSpec({ inputPath, profileName: "paper" });
+      const webResult = await lintSpec({ inputPath, profileName: "web" });
+
+      expect(
+        paperResult.issues
+          .filter((issue) => issue.ruleId === "size-out-of-range")
+          .map((issue) => issue.path),
+      ).toEqual(["$.width", "$.height"]);
+      expect(
+        webResult.issues.filter(
+          (issue) => issue.ruleId === "size-out-of-range",
+        ),
+      ).toEqual([]);
+    });
+  });
+
+  test("rejects unknown profiles before loading files", async () => {
+    await withTemporaryWorkspace(async (workspacePath) => {
+      const inputPath = join(workspacePath, "missing.vl.json");
+
+      try {
+        await lintSpec({ inputPath, profileName: "unknown" });
+        throw new Error("Expected lintSpec to reject");
+      } catch (error) {
+        expect(error).toBeInstanceOf(Error);
+        expect((error as Error).message).toBe(
+          'Unknown lint profile "unknown". Expected one of: paper, web, acl.',
+        );
+      }
+    });
+  });
 });
 
 describe("lint command", () => {
@@ -615,6 +750,40 @@ describe("lint command", () => {
 
     expect(output.stdout).toBe("No lint issues found.\n");
     expect(output.exitCode).toBeUndefined();
+  });
+
+  test("passes profile option to lint runner", async () => {
+    let receivedInputPath: string | undefined;
+    let receivedProfileName: string | undefined;
+
+    const output = await runLintCommandWithRunner(
+      ["lint", "chart.vl.json", "--profile", "acl"],
+      async (inputPath, profileName) => {
+        receivedInputPath = inputPath;
+        receivedProfileName = profileName;
+        return cleanLintResult();
+      },
+    );
+
+    expect(output.stdout).toBe("No lint issues found.\n");
+    expect(output.exitCode).toBeUndefined();
+    expect(receivedInputPath).toBe("chart.vl.json");
+    expect(receivedProfileName).toBe("acl");
+  });
+
+  test("propagates unknown profile errors", async () => {
+    try {
+      await runLintCommandWithRunner(
+        ["lint", "chart.vl.json", "--profile", "unknown"],
+        async () => cleanLintResult(),
+      );
+      throw new Error("Expected command to reject");
+    } catch (error) {
+      expect(error).toBeInstanceOf(Error);
+      expect((error as Error).message).toBe(
+        'Unknown lint profile "unknown". Expected one of: paper, web, acl.',
+      );
+    }
   });
 
   test("prints human issue summary and table for one warning", async () => {
@@ -686,11 +855,16 @@ describe("lint command", () => {
   });
 });
 
-function runRules(spec: JsonObject, specType: SpecType = "vega-lite") {
+function runRules(
+  spec: JsonObject,
+  specType: SpecType = "vega-lite",
+  profileName: LintProfileName = "paper",
+) {
   return runLintRules({
     inputPath: "chart.vl.json",
     spec,
     specType,
+    profile: getLintProfile(profileName),
   });
 }
 
@@ -738,6 +912,13 @@ async function runLintCommand(
   args: string[],
   result: LintResult,
 ): Promise<{ stdout: string; exitCode: 0 | 1 | undefined }> {
+  return runLintCommandWithRunner(args, async () => result);
+}
+
+async function runLintCommandWithRunner(
+  args: string[],
+  runLint: (inputPath: string, profileName: string | undefined) => Promise<LintResult>,
+): Promise<{ stdout: string; exitCode: 0 | 1 | undefined }> {
   let stdout = "";
   let exitCode: 0 | 1 | undefined;
   const program = new Command();
@@ -749,7 +930,7 @@ async function runLintCommand(
     (value) => {
       stdout += value;
     },
-    async () => result,
+    runLint,
     (value) => {
       exitCode = value;
     },
