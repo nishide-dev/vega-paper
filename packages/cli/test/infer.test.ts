@@ -44,6 +44,33 @@ describe("parseCsv", () => {
     });
   });
 
+  test("parses CRLF-delimited CSV input", () => {
+    expect(parseCsv("year,value\r\n2020,10\r\n2021,15\r\n")).toEqual({
+      header: ["year", "value"],
+      rows: [
+        ["2020", "10"],
+        ["2021", "15"],
+      ],
+    });
+  });
+
+  test("parses multiline quoted cells", () => {
+    expect(parseCsv('name,notes\nAlice,"line 1\nline 2"\nBob,"single line"\n'))
+      .toEqual({
+        header: ["name", "notes"],
+        rows: [
+          ["Alice", "line 1\nline 2"],
+          ["Bob", "single line"],
+        ],
+      });
+  });
+
+  test("rejects unterminated quoted fields", () => {
+    expect(() => parseCsv('name,notes\nAlice,"missing end quote')).toThrow(
+      VegaPaperError,
+    );
+  });
+
   test("rejects empty CSV input", () => {
     expect(() => parseCsv("\n\n")).toThrow(VegaPaperError);
   });
@@ -139,6 +166,28 @@ describe("inferVegaLiteSpec", () => {
       encoding: {
         x: { field: "quarter", type: "nominal" },
         y: { field: "status", type: "nominal" },
+      },
+    });
+  });
+
+  test("infers nominal types for x and y fields that contain only empty values", async () => {
+    const workspace = await createWorkspace();
+    const inputPath = join(workspace, "data.csv");
+
+    await Bun.write(inputPath, "x,y\n,\n,\n");
+
+    const result = await inferVegaLiteSpec({
+      inputPath,
+      chart: "scatter",
+      xField: "x",
+      yField: "y",
+      specOutputPath: join(workspace, "chart.vl.json"),
+    });
+
+    expect(result.spec).toMatchObject({
+      encoding: {
+        x: { field: "x", type: "nominal" },
+        y: { field: "y", type: "nominal" },
       },
     });
   });

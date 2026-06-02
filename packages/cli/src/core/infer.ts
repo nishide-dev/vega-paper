@@ -153,6 +153,8 @@ function findFieldIndex(header: string[], field: string): number {
 }
 
 function inferFieldType(rows: string[][], index: number): InferFieldType {
+  let sawNonEmptyValue = false;
+
   const isQuantitative = rows.every((row) => {
     const trimmedValue = getCell(row, index).trim();
 
@@ -160,8 +162,13 @@ function inferFieldType(rows: string[][], index: number): InferFieldType {
       return true;
     }
 
+    sawNonEmptyValue = true;
     return Number.isFinite(Number(trimmedValue));
   });
+
+  if (!sawNonEmptyValue) {
+    return "nominal";
+  }
 
   return isQuantitative ? "quantitative" : "nominal";
 }
@@ -260,7 +267,11 @@ function parseCsvRows(contents: string): string[][] {
     rowHasContent = true;
   }
 
-  if (inQuotes || rowHasContent || currentField !== "" || currentRow.length > 0) {
+  if (inQuotes) {
+    throw new VegaPaperError("CSV contains an unterminated quoted field.");
+  }
+
+  if (rowHasContent || currentField !== "" || currentRow.length > 0) {
     pushRow();
   }
 
