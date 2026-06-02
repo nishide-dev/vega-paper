@@ -118,6 +118,11 @@ export function normalizeInferOptions(
   options: InferCommandOptions,
 ): InferRequest {
   const outputPath = options.out;
+
+  if (options.strict && options.lintProfile === undefined) {
+    throw new VegaPaperError('The "--strict" option requires "--lint-profile <name>".');
+  }
+
   const specOutputPath =
     options.specOut ?? (outputPath === undefined ? undefined : toSiblingSpecPath(outputPath));
 
@@ -129,10 +134,6 @@ export function normalizeInferOptions(
 
   if (options.theme !== undefined && outputPath === undefined) {
     throw new VegaPaperError('The "--theme" option requires "--out <path>".');
-  }
-
-  if (options.strict && options.lintProfile === undefined) {
-    throw new VegaPaperError('The "--strict" option requires "--lint-profile <name>".');
   }
 
   if (outputPath !== undefined && extname(outputPath).toLowerCase() !== ".svg") {

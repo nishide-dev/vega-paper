@@ -407,7 +407,10 @@ describe("infer command", () => {
         ],
         {
           ...calls,
-          infer: async () => createInferResult("../results.csv"),
+          infer: async (request) => {
+            calls.inferCalls.push(request);
+            return createInferResult("../results.csv");
+          },
           writeSpec: async () => {
             calls.writeSpecCalls += 1;
           },
@@ -421,6 +424,7 @@ describe("infer command", () => {
       new VegaPaperError('Unknown lint profile "unknown". Expected one of: paper, web, acl.'),
     );
 
+    expect(calls.inferCalls).toEqual([]);
     expect(calls.lintCalls).toEqual([]);
     expect(calls.writeSpecCalls).toBe(0);
   });
