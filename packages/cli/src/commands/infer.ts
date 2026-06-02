@@ -26,6 +26,7 @@ type InferCommandOptions = {
 type WriteOutput = (value: string) => void;
 type RunInfer = (request: InferRequest) => Promise<InferResult>;
 type RunRender = (request: RenderRequest) => Promise<RenderResult>;
+type WriteSpec = (specOutputPath: string, spec: InferResult["spec"]) => Promise<void>;
 
 export function registerInferCommand(
   program: Command,
@@ -34,14 +35,15 @@ export function registerInferCommand(
   },
   runInfer: RunInfer = inferVegaLiteSpec,
   runRender: RunRender = renderChart,
+  writeSpec: WriteSpec = writeSpecFile,
 ): void {
   program
     .command("infer")
     .argument("<input>", "CSV input path")
     .description("Generate a Vega-Lite spec from CSV and optionally render SVG")
-    .requiredOption("--chart <type>", "chart type: line, bar, or scatter")
-    .requiredOption("--x <field>", "x encoding field")
-    .requiredOption("--y <field>", "y encoding field")
+    .option("--chart <type>", "chart type: line, bar, or scatter")
+    .option("--x <field>", "x encoding field")
+    .option("--y <field>", "y encoding field")
     .option("--color <field>", "color encoding field")
     .option("--title <text>", "chart title")
     .option("--width <number>", "chart width")
@@ -53,7 +55,12 @@ export function registerInferCommand(
       const request = normalizeInferOptions(inputPath, options);
       const result = await runInfer(request);
 
-      await writeSpecFile(request.specOutputPath, result.spec);
+      try {
+        await writeSpec(request.specOutputPath, result.spec);
+      } catch (error) {
+        throw toSpecWriteError(request.specOutputPath, error);
+      }
+
       writeOutput(`Wrote ${request.specOutputPath}\n`);
 
       if (options.out === undefined) {
@@ -108,7 +115,10 @@ export function normalizeInferOptions(
   };
 }
 
-async function writeSpecFile(specOutputPath: string, spec: InferResult["spec"]): Promise<void> {
+async function writeSpecFile(
+  specOutputPath: string,
+  spec: InferResult["spec"],
+): Promise<void> {
   await mkdir(dirname(specOutputPath), { recursive: true });
   await writeFile(specOutputPath, `${JSON.stringify(spec, null, 2)}\n`, "utf8");
 }
@@ -153,4 +163,12 @@ function parsePositiveDimension(
 function toSiblingSpecPath(outputPath: string): string {
   const parsedPath = parse(outputPath);
   return join(parsedPath.dir, `${parsedPath.name}.vl.json`);
+}
+
+function toSpecWriteError(specOutputPath: string, error: unknown): VegaPaperError {
+  if (error instanceof VegaPaperError) {
+    return error;
+  }
+
+  return new VegaPaperError(`Could not write generated spec to ${specOutputPath}.`);
 }

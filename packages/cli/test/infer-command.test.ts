@@ -1,10 +1,11 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Command } from "commander";
 import { registerInferCommand } from "../src/commands/infer";
 import { VegaPaperError } from "../src/core/errors";
+import { inferVegaLiteSpec } from "../src/core/infer";
 import type { InferResult } from "../src/core/infer";
 import type { RenderResult } from "../src/core/render";
 
@@ -239,6 +240,47 @@ describe("infer command", () => {
     );
   });
 
+  test("rejects missing --chart, --x, and --y with VegaPaperError", async () => {
+    await expect(
+      runInferCommand([
+        "infer",
+        "results.csv",
+        "--x",
+        "epoch",
+        "--y",
+        "score",
+        "--spec-out",
+        "chart.vl.json",
+      ]),
+    ).rejects.toThrow(new VegaPaperError('Missing required option --chart <type>.'));
+
+    await expect(
+      runInferCommand([
+        "infer",
+        "results.csv",
+        "--chart",
+        "line",
+        "--y",
+        "score",
+        "--spec-out",
+        "chart.vl.json",
+      ]),
+    ).rejects.toThrow(new VegaPaperError('Missing required option --x <field>.'));
+
+    await expect(
+      runInferCommand([
+        "infer",
+        "results.csv",
+        "--chart",
+        "line",
+        "--x",
+        "epoch",
+        "--spec-out",
+        "chart.vl.json",
+      ]),
+    ).rejects.toThrow(new VegaPaperError('Missing required option --y <field>.'));
+  });
+
   test("rejects non-svg --out paths", async () => {
     await expect(
       runInferCommand([
@@ -258,6 +300,69 @@ describe("infer command", () => {
         'Unsupported output path "chart.png". This MVP supports only .svg outputs.',
       ),
     );
+  });
+
+  test("wraps spec write failures in VegaPaperError", async () => {
+    await expect(
+      runInferCommand(
+        [
+          "infer",
+          "results.csv",
+          "--chart",
+          "line",
+          "--x",
+          "epoch",
+          "--y",
+          "score",
+          "--spec-out",
+          "/tmp/chart.vl.json",
+        ],
+        {
+          infer: async () => createInferResult("../results.csv"),
+          writeSpec: async () => {
+            throw new Error("EACCES");
+          },
+        },
+      ),
+    ).rejects.toThrow(
+      new VegaPaperError("Could not write generated spec to /tmp/chart.vl.json."),
+    );
+  });
+
+  test("runs the real infer path and writes a generated spec", async () => {
+    const workspace = await createWorkspace();
+    const inputPath = join(workspace, "results.csv");
+    const specOutputPath = join(workspace, "figures", "chart.vl.json");
+
+    await writeFile(inputPath, "epoch,f1,model\n1,0.61,base\n2,0.68,large\n", "utf8");
+
+    await runInferCommand([
+      "infer",
+      inputPath,
+      "--chart",
+      "line",
+      "--x",
+      "epoch",
+      "--y",
+      "f1",
+      "--color",
+      "model",
+      "--spec-out",
+      specOutputPath,
+    ]);
+
+    expect(await readSpec(specOutputPath)).toEqual({
+      $schema: "https://vega.github.io/schema/vega-lite/v6.json",
+      data: { url: "../results.csv" },
+      mark: "line",
+      width: 360,
+      height: 240,
+      encoding: {
+        x: { field: "epoch", type: "quantitative" },
+        y: { field: "f1", type: "quantitative" },
+        color: { field: "model", type: "nominal" },
+      },
+    });
   });
 });
 
@@ -279,6 +384,7 @@ type InferCommandHarness = {
     format: "svg";
     themeName?: string | undefined;
   }) => Promise<RenderResult>;
+  writeSpec?: (specOutputPath: string, spec: InferResult["spec"]) => Promise<void>;
   inferCalls?: Array<Record<string, unknown>>;
   renderCalls?: Array<Record<string, unknown>>;
 };
@@ -297,8 +403,9 @@ async function runInferCommand(
     (value) => {
       stdout += value;
     },
-    harness.infer,
+    harness.infer ?? inferVegaLiteSpec,
     harness.render,
+    harness.writeSpec,
   );
 
   await program.parseAsync(["node", "vega-paper", ...args]);
