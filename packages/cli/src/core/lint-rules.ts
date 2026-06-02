@@ -159,42 +159,47 @@ function checkLegendCategoryCount({
     return [];
   }
 
-  const encoding = getObject(spec, "encoding");
-  const color = encoding ? getObject(encoding, "color") : undefined;
-  const field = typeof color?.field === "string" ? color.field : undefined;
-  const values = getInlineDataValues(spec);
+  const issues: LintIssue[] = [];
+  const rootValues = getInlineDataValues(spec);
 
-  if (!field || !values) {
-    return [];
-  }
+  for (const unit of collectVegaLiteUnitSpecs(spec)) {
+    const encoding = getObject(unit.spec, "encoding");
+    const color = encoding ? getObject(encoding, "color") : undefined;
+    const field = typeof color?.field === "string" ? color.field : undefined;
+    const values = getLegendCategoryValues(unit.spec, rootValues);
 
-  const categories = new Set<string>();
-
-  for (const row of values) {
-    if (!isPlainObject(row)) {
+    if (!field || !values) {
       continue;
     }
 
-    const value = row[field];
+    const categories = new Set<string>();
 
-    if (typeof value === "string" || typeof value === "number") {
-      categories.add(String(value));
+    for (const row of values) {
+      if (!isPlainObject(row)) {
+        continue;
+      }
+
+      const value = row[field];
+
+      if (typeof value === "string" || typeof value === "number") {
+        categories.add(String(value));
+      }
     }
-  }
 
-  if (categories.size <= 12) {
-    return [];
-  }
+    if (categories.size <= 12) {
+      continue;
+    }
 
-  return [
-    {
+    issues.push({
       severity: "warning",
       ruleId: "legend-too-many-categories",
-      path: "$.encoding.color",
+      path: joinJsonPath(unit.path, "encoding.color"),
       message: `Color field "${field}" has ${categories.size} categories.`,
       suggestion: "Reduce categories, facet the chart, or group less important values.",
-    },
-  ];
+    });
+  }
+
+  return issues;
 }
 
 function checkFontSizes({ spec }: LintRuleContext): LintIssue[] {
@@ -259,6 +264,23 @@ function checkBarYAxisZero({
 function getInlineDataValues(spec: JsonObject): unknown[] | undefined {
   const data = getObject(spec, "data");
   return Array.isArray(data?.values) ? data.values : undefined;
+}
+
+function hasDataDefinition(spec: JsonObject): boolean {
+  return spec.data !== undefined;
+}
+
+function getLegendCategoryValues(
+  unitSpec: JsonObject,
+  rootValues: unknown[] | undefined,
+): unknown[] | undefined {
+  const unitValues = getInlineDataValues(unitSpec);
+
+  if (unitValues) {
+    return unitValues;
+  }
+
+  return hasDataDefinition(unitSpec) ? undefined : rootValues;
 }
 
 function collectVegaLiteUnitSpecs(rootSpec: JsonObject): VegaLiteUnitSpec[] {

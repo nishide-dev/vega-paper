@@ -142,6 +142,105 @@ describe("runLintRules", () => {
     });
   });
 
+  test("warns when layered color encoding has too many categories from root data", () => {
+    const spec = cleanVegaLiteSpec({
+      data: {
+        values: Array.from({ length: 13 }, (_, index) => ({
+          epoch: index,
+          accuracy: index / 100,
+          model: `model-${index}`,
+        })),
+      },
+      layer: [
+        {
+          mark: "line",
+          encoding: {
+            x: { field: "epoch", type: "quantitative", title: "Epoch" },
+            y: { field: "accuracy", type: "quantitative", title: "Accuracy" },
+            color: { field: "model", type: "nominal", title: "Model" },
+          },
+        },
+      ],
+    });
+    delete spec.mark;
+    delete spec.encoding;
+
+    expect(runRules(spec)).toContainEqual({
+      severity: "warning",
+      ruleId: "legend-too-many-categories",
+      path: "$.layer[0].encoding.color",
+      message: 'Color field "model" has 13 categories.',
+      suggestion: "Reduce categories, facet the chart, or group less important values.",
+    });
+  });
+
+  test("prefers child inline data for composed legend category counts", () => {
+    const spec = cleanVegaLiteSpec({
+      data: {
+        values: Array.from({ length: 13 }, (_, index) => ({
+          epoch: index,
+          accuracy: index / 100,
+          model: `root-${index}`,
+        })),
+      },
+      layer: [
+        {
+          data: {
+            values: [
+              { epoch: 1, accuracy: 0.62, model: "baseline" },
+              { epoch: 2, accuracy: 0.68, model: "baseline" },
+            ],
+          },
+          mark: "line",
+          encoding: {
+            x: { field: "epoch", type: "quantitative", title: "Epoch" },
+            y: { field: "accuracy", type: "quantitative", title: "Accuracy" },
+            color: { field: "model", type: "nominal", title: "Model" },
+          },
+        },
+      ],
+    });
+    delete spec.mark;
+    delete spec.encoding;
+
+    expect(
+      runRules(spec).filter(
+        (issue) => issue.ruleId === "legend-too-many-categories",
+      ),
+    ).toEqual([]);
+  });
+
+  test("skips composed legend category counts for child non-inline data", () => {
+    const spec = cleanVegaLiteSpec({
+      data: {
+        values: Array.from({ length: 13 }, (_, index) => ({
+          epoch: index,
+          accuracy: index / 100,
+          model: `root-${index}`,
+        })),
+      },
+      layer: [
+        {
+          data: { url: "child.csv" },
+          mark: "line",
+          encoding: {
+            x: { field: "epoch", type: "quantitative", title: "Epoch" },
+            y: { field: "accuracy", type: "quantitative", title: "Accuracy" },
+            color: { field: "model", type: "nominal", title: "Model" },
+          },
+        },
+      ],
+    });
+    delete spec.mark;
+    delete spec.encoding;
+
+    expect(
+      runRules(spec).filter(
+        (issue) => issue.ruleId === "legend-too-many-categories",
+      ),
+    ).toEqual([]);
+  });
+
   test("warns when configured font sizes are too small", () => {
     const spec = cleanVegaLiteSpec({
       config: {
