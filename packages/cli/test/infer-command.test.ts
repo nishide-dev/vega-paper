@@ -6,9 +6,9 @@ import { Command } from "commander";
 import { registerInferCommand } from "../src/commands/infer";
 import { VegaPaperError } from "../src/core/errors";
 import { inferVegaLiteSpec } from "../src/core/infer";
-import type { InferResult } from "../src/core/infer";
+import type { InferRequest, InferResult } from "../src/core/infer";
 import type { LintResult } from "../src/core/lint";
-import type { RenderResult } from "../src/core/render";
+import type { RenderRequest, RenderResult } from "../src/core/render";
 
 const temporaryDirectories: string[] = [];
 
@@ -245,12 +245,13 @@ describe("infer command", () => {
     expect(calls.renderCalls).toHaveLength(1);
   });
 
-  test("stops before render when lint returns an error", async () => {
+  test("sets a failing exit code and stops before render when lint returns an error", async () => {
     const workspace = await createWorkspace();
     const outputPath = join(workspace, "figures", "chart.svg");
+    const specOutputPath = join(workspace, "figures", "chart.vl.json");
     const calls = createSpies();
 
-    await runInferCommand(
+    const output = await runInferCommand(
       [
         "infer",
         "results.csv",
@@ -284,7 +285,9 @@ describe("infer command", () => {
       },
     );
 
+    expect(output.exitCode).toBe(1);
     expect(calls.renderCalls).toEqual([]);
+    expect(await readSpec(specOutputPath)).toEqual(createInferResult("../results.csv").spec);
   });
 
   test("treats warnings as blocking only in strict mode", async () => {
@@ -300,7 +303,7 @@ describe("infer command", () => {
     ]);
 
     const strictCalls = createSpies();
-    await runInferCommand(
+    const strictOutput = await runInferCommand(
       [
         "infer",
         "results.csv",
@@ -327,10 +330,11 @@ describe("infer command", () => {
       },
     );
 
+    expect(strictOutput.exitCode).toBe(1);
     expect(strictCalls.renderCalls).toEqual([]);
 
     const nonStrictCalls = createSpies();
-    await runInferCommand(
+    const nonStrictOutput = await runInferCommand(
       [
         "infer",
         "results.csv",
@@ -356,6 +360,7 @@ describe("infer command", () => {
       },
     );
 
+    expect(nonStrictOutput.exitCode).toBeUndefined();
     expect(nonStrictCalls.renderCalls).toHaveLength(1);
   });
 
@@ -379,7 +384,44 @@ describe("infer command", () => {
     );
   });
 
-  test("prints the same lint summary output when issues are present", async () => {
+  test("rejects unknown lint profiles before lint execution", async () => {
+    const workspace = await createWorkspace();
+    const specOutputPath = join(workspace, "figures", "chart.vl.json");
+    const calls = createSpies();
+
+    await expect(
+      runInferCommand(
+        [
+          "infer",
+          "results.csv",
+          "--chart",
+          "line",
+          "--x",
+          "epoch",
+          "--y",
+          "score",
+          "--lint-profile",
+          "unknown",
+          "--spec-out",
+          specOutputPath,
+        ],
+        {
+          ...calls,
+          infer: async () => createInferResult("../results.csv"),
+          lint: async (inputPath, profileName) => {
+            calls.lintCalls.push({ inputPath, profileName });
+            return cleanLintResult();
+          },
+        },
+      ),
+    ).rejects.toThrow(
+      new VegaPaperError('Unknown lint profile "unknown". Expected one of: paper, web, acl.'),
+    );
+
+    expect(calls.lintCalls).toEqual([]);
+  });
+
+  test("prints lint human output and still renders for non-strict warnings", async () => {
     const workspace = await createWorkspace();
     const outputPath = join(workspace, "figures", "chart.svg");
 
@@ -418,6 +460,8 @@ describe("infer command", () => {
 
     expect(output.stdout).toContain("1 warning, 0 errors");
     expect(output.stdout).toContain("axis-title-missing");
+    expect(output.stdout).toContain(`Rendered ${outputPath}`);
+    expect(output.exitCode).toBeUndefined();
   });
 
   test("rejects --theme without --out", async () => {
@@ -587,23 +631,8 @@ describe("infer command", () => {
 });
 
 type InferCommandHarness = {
-  infer?: (request: {
-    inputPath: string;
-    chart: "line" | "bar" | "scatter";
-    xField: string;
-    yField: string;
-    colorField?: string | undefined;
-    title?: string | undefined;
-    width?: number | undefined;
-    height?: number | undefined;
-    specOutputPath: string;
-  }) => Promise<InferResult>;
-  render?: (request: {
-    inputPath: string;
-    outputPath: string;
-    format: "svg";
-    themeName?: string | undefined;
-  }) => Promise<RenderResult>;
+  infer?: (request: InferRequest) => Promise<InferResult>;
+  render?: (request: RenderRequest) => Promise<RenderResult>;
   lint?: (
     inputPath: string,
     profileName: string | undefined,
@@ -617,13 +646,14 @@ type InferCommandHarness = {
 async function runInferCommand(
   args: string[],
   harness: InferCommandHarness = {},
-): Promise<{ stdout: string }> {
+): Promise<{ stdout: string; exitCode: 0 | 1 | undefined }> {
   let stdout = "";
+  let exitCode: 0 | 1 | undefined;
   const program = new Command();
 
   program.exitOverride();
 
-  registerInferCommandWithLint(
+  registerInferCommand(
     program,
     (value) => {
       stdout += value;
@@ -632,11 +662,14 @@ async function runInferCommand(
     harness.render,
     harness.writeSpec,
     harness.lint,
+    (value) => {
+      exitCode = value;
+    },
   );
 
   await program.parseAsync(["node", "vega-paper", ...args]);
 
-  return { stdout };
+  return { stdout, exitCode };
 }
 
 async function createWorkspace(): Promise<string> {
@@ -666,10 +699,14 @@ function createInferResult(dataUrl: string): InferResult {
 }
 
 function createLintResult(issues: LintResult["issues"]): LintResult {
+  const errorCount = issues.filter((issue) => issue.severity === "error").length;
+  const warningCount = issues.filter((issue) => issue.severity === "warning").length;
+
   return {
+    ok: errorCount === 0,
     issues,
-    warningCount: issues.filter((issue) => issue.severity === "warning").length,
-    errorCount: issues.filter((issue) => issue.severity === "error").length,
+    warningCount,
+    errorCount,
   };
 }
 
@@ -678,9 +715,9 @@ function cleanLintResult(): LintResult {
 }
 
 function createSpies(): {
-  inferCalls: Array<Record<string, unknown>>;
+  inferCalls: InferRequest[];
   lintCalls: Array<{ inputPath: string; profileName: string | undefined }>;
-  renderCalls: Array<Record<string, unknown>>;
+  renderCalls: RenderRequest[];
 } {
   return {
     inferCalls: [],
@@ -688,12 +725,3 @@ function createSpies(): {
     renderCalls: [],
   };
 }
-
-const registerInferCommandWithLint = registerInferCommand as typeof registerInferCommand & ((
-  program: Command,
-  writeOutput?: (value: string) => void,
-  runInfer?: InferCommandHarness["infer"],
-  runRender?: InferCommandHarness["render"],
-  writeSpec?: InferCommandHarness["writeSpec"],
-  runLint?: InferCommandHarness["lint"],
-) => void);

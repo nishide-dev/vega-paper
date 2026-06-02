@@ -68,7 +68,7 @@ export function getLintExitCode(result: LintResult, strict: boolean): 0 | 1 {
   return 0;
 }
 
-function formatHumanLintResult(result: LintResult): string {
+export function formatHumanLintResult(result: LintResult): string {
   const summary = `${formatCount(result.warningCount, "warning")}, ${formatCount(
     result.errorCount,
     "error",
