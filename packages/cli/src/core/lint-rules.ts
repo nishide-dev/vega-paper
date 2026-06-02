@@ -233,32 +233,40 @@ function checkBarYAxisZero({
   spec,
   specType,
 }: LintRuleContext): LintIssue[] {
-  if (specType !== "vega-lite" || !isBarMark(spec.mark)) {
+  if (specType !== "vega-lite") {
     return [];
   }
 
-  const encoding = getObject(spec, "encoding");
-  const y = encoding ? getObject(encoding, "y") : undefined;
+  const issues: LintIssue[] = [];
 
-  if (!y || y.type !== "quantitative") {
-    return [];
-  }
+  for (const unit of collectVegaLiteUnitSpecs(spec)) {
+    if (!isBarMark(unit.spec.mark)) {
+      continue;
+    }
 
-  const scale = getObject(y, "scale");
+    const encoding = getObject(unit.spec, "encoding");
+    const y = encoding ? getObject(encoding, "y") : undefined;
 
-  if (scale?.zero === true) {
-    return [];
-  }
+    if (!y || y.type !== "quantitative") {
+      continue;
+    }
 
-  return [
-    {
+    const scale = getObject(y, "scale");
+
+    if (scale?.zero === true) {
+      continue;
+    }
+
+    issues.push({
       severity: "warning",
       ruleId: "bar-y-axis-zero-missing",
-      path: "$.encoding.y.scale",
+      path: joinJsonPath(unit.path, "encoding.y.scale"),
       message: "Bar charts with quantitative y should explicitly include zero.",
       suggestion: "Set encoding.y.scale.zero to true unless there is a documented reason not to.",
-    },
-  ];
+    });
+  }
+
+  return issues;
 }
 
 function getInlineDataValues(spec: JsonObject): unknown[] | undefined {

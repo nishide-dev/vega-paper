@@ -273,6 +273,51 @@ describe("runLintRules", () => {
     });
   });
 
+  test("warns when layered bar chart quantitative y omits explicit zero", () => {
+    const spec = cleanVegaLiteSpec({
+      layer: [
+        {
+          mark: "bar",
+          encoding: {
+            x: { field: "epoch", type: "ordinal", title: "Epoch" },
+            y: { field: "accuracy", type: "quantitative", title: "Accuracy" },
+          },
+        },
+      ],
+    });
+    delete spec.mark;
+    delete spec.encoding;
+
+    expect(runRules(spec)).toContainEqual({
+      severity: "warning",
+      ruleId: "bar-y-axis-zero-missing",
+      path: "$.layer[0].encoding.y.scale",
+      message: "Bar charts with quantitative y should explicitly include zero.",
+      suggestion: "Set encoding.y.scale.zero to true unless there is a documented reason not to.",
+    });
+  });
+
+  test("does not infer parent bar marks for composed bar zero checks", () => {
+    const spec = cleanVegaLiteSpec({
+      mark: "bar",
+      layer: [
+        {
+          encoding: {
+            x: { field: "epoch", type: "ordinal", title: "Epoch" },
+            y: { field: "accuracy", type: "quantitative", title: "Accuracy" },
+          },
+        },
+      ],
+    });
+    delete spec.encoding;
+
+    expect(
+      runRules(spec)
+        .filter((issue) => issue.ruleId === "bar-y-axis-zero-missing")
+        .map((issue) => issue.path),
+    ).toEqual([]);
+  });
+
   test("does not warn at rule boundaries", () => {
     const categories = Array.from(
       { length: 12 },
