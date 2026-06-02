@@ -9,6 +9,11 @@ export type LintRuleContext = {
 
 export type LintRule = (context: LintRuleContext) => LintIssue[];
 
+type VegaLiteUnitSpec = {
+  spec: JsonObject;
+  path: string;
+};
+
 export const paperLintRules: LintRule[] = [
   checkTitleLength,
   checkAxisTitles,
@@ -47,27 +52,30 @@ function checkAxisTitles({ spec, specType }: LintRuleContext): LintIssue[] {
     return [];
   }
 
-  const encoding = getObject(spec, "encoding");
   const issues: LintIssue[] = [];
 
-  for (const channelName of ["x", "y"] as const) {
-    const channel = encoding ? getObject(encoding, channelName) : undefined;
+  for (const unit of collectVegaLiteUnitSpecs(spec)) {
+    const encoding = getObject(unit.spec, "encoding");
 
-    if (!channel || typeof channel.field !== "string") {
-      continue;
+    for (const channelName of ["x", "y"] as const) {
+      const channel = encoding ? getObject(encoding, channelName) : undefined;
+
+      if (!channel || typeof channel.field !== "string") {
+        continue;
+      }
+
+      if (hasExplicitTitle(channel)) {
+        continue;
+      }
+
+      issues.push({
+        severity: "warning",
+        ruleId: "axis-title-missing",
+        path: joinJsonPath(unit.path, `encoding.${channelName}`),
+        message: `${channelName.toUpperCase()} axis is missing a title.`,
+        suggestion: `Add encoding.${channelName}.title.`,
+      });
     }
-
-    if (hasExplicitTitle(channel)) {
-      continue;
-    }
-
-    issues.push({
-      severity: "warning",
-      ruleId: "axis-title-missing",
-      path: `$.encoding.${channelName}`,
-      message: `${channelName.toUpperCase()} axis is missing a title.`,
-      suggestion: `Add encoding.${channelName}.title.`,
-    });
   }
 
   return issues;
@@ -151,42 +159,47 @@ function checkLegendCategoryCount({
     return [];
   }
 
-  const encoding = getObject(spec, "encoding");
-  const color = encoding ? getObject(encoding, "color") : undefined;
-  const field = typeof color?.field === "string" ? color.field : undefined;
-  const values = getInlineDataValues(spec);
+  const issues: LintIssue[] = [];
+  const rootValues = getInlineDataValues(spec);
 
-  if (!field || !values) {
-    return [];
-  }
+  for (const unit of collectVegaLiteUnitSpecs(spec)) {
+    const encoding = getObject(unit.spec, "encoding");
+    const color = encoding ? getObject(encoding, "color") : undefined;
+    const field = typeof color?.field === "string" ? color.field : undefined;
+    const values = getLegendCategoryValues(unit.spec, rootValues);
 
-  const categories = new Set<string>();
-
-  for (const row of values) {
-    if (!isPlainObject(row)) {
+    if (!field || !values) {
       continue;
     }
 
-    const value = row[field];
+    const categories = new Set<string>();
 
-    if (typeof value === "string" || typeof value === "number") {
-      categories.add(String(value));
+    for (const row of values) {
+      if (!isPlainObject(row)) {
+        continue;
+      }
+
+      const value = row[field];
+
+      if (typeof value === "string" || typeof value === "number") {
+        categories.add(String(value));
+      }
     }
-  }
 
-  if (categories.size <= 12) {
-    return [];
-  }
+    if (categories.size <= 12) {
+      continue;
+    }
 
-  return [
-    {
+    issues.push({
       severity: "warning",
       ruleId: "legend-too-many-categories",
-      path: "$.encoding.color",
+      path: joinJsonPath(unit.path, "encoding.color"),
       message: `Color field "${field}" has ${categories.size} categories.`,
       suggestion: "Reduce categories, facet the chart, or group less important values.",
-    },
-  ];
+    });
+  }
+
+  return issues;
 }
 
 function checkFontSizes({ spec }: LintRuleContext): LintIssue[] {
@@ -220,37 +233,120 @@ function checkBarYAxisZero({
   spec,
   specType,
 }: LintRuleContext): LintIssue[] {
-  if (specType !== "vega-lite" || !isBarMark(spec.mark)) {
+  if (specType !== "vega-lite") {
     return [];
   }
 
-  const encoding = getObject(spec, "encoding");
-  const y = encoding ? getObject(encoding, "y") : undefined;
+  const issues: LintIssue[] = [];
 
-  if (!y || y.type !== "quantitative") {
-    return [];
-  }
+  for (const unit of collectVegaLiteUnitSpecs(spec)) {
+    if (!isBarMark(unit.spec.mark)) {
+      continue;
+    }
 
-  const scale = getObject(y, "scale");
+    const encoding = getObject(unit.spec, "encoding");
+    const y = encoding ? getObject(encoding, "y") : undefined;
 
-  if (scale?.zero === true) {
-    return [];
-  }
+    if (!y || y.type !== "quantitative") {
+      continue;
+    }
 
-  return [
-    {
+    const scale = getObject(y, "scale");
+
+    if (scale?.zero === true) {
+      continue;
+    }
+
+    issues.push({
       severity: "warning",
       ruleId: "bar-y-axis-zero-missing",
-      path: "$.encoding.y.scale",
+      path: joinJsonPath(unit.path, "encoding.y.scale"),
       message: "Bar charts with quantitative y should explicitly include zero.",
       suggestion: "Set encoding.y.scale.zero to true unless there is a documented reason not to.",
-    },
-  ];
+    });
+  }
+
+  return issues;
 }
 
 function getInlineDataValues(spec: JsonObject): unknown[] | undefined {
   const data = getObject(spec, "data");
   return Array.isArray(data?.values) ? data.values : undefined;
+}
+
+function hasDataDefinition(spec: JsonObject): boolean {
+  return spec.data !== undefined;
+}
+
+function getLegendCategoryValues(
+  unitSpec: JsonObject,
+  rootValues: unknown[] | undefined,
+): unknown[] | undefined {
+  const unitValues = getInlineDataValues(unitSpec);
+
+  if (unitValues) {
+    return unitValues;
+  }
+
+  return hasDataDefinition(unitSpec) ? undefined : rootValues;
+}
+
+function collectVegaLiteUnitSpecs(rootSpec: JsonObject): VegaLiteUnitSpec[] {
+  const units: VegaLiteUnitSpec[] = [];
+  const visit = (spec: JsonObject, path: string) => {
+    if (isVegaLiteUnitSpec(spec)) {
+      units.push({ spec, path });
+    }
+
+    visitArrayChildren(spec, "layer", path, visit);
+    visitObjectChild(spec, "spec", path, visit);
+    visitArrayChildren(spec, "concat", path, visit);
+    visitArrayChildren(spec, "hconcat", path, visit);
+    visitArrayChildren(spec, "vconcat", path, visit);
+  };
+
+  visit(rootSpec, "$");
+  return units;
+}
+
+function visitArrayChildren(
+  spec: JsonObject,
+  key: string,
+  parentPath: string,
+  visit: (spec: JsonObject, path: string) => void,
+): void {
+  const value = spec[key];
+
+  if (!Array.isArray(value)) {
+    return;
+  }
+
+  for (const [index, child] of value.entries()) {
+    if (isPlainObject(child)) {
+      visit(child, `${parentPath}.${key}[${index}]`);
+    }
+  }
+}
+
+function visitObjectChild(
+  spec: JsonObject,
+  key: string,
+  parentPath: string,
+  visit: (spec: JsonObject, path: string) => void,
+): void {
+  const child = getObject(spec, key);
+
+  if (child) {
+    visit(child, joinJsonPath(parentPath, key));
+  }
+}
+
+function isVegaLiteUnitSpec(spec: JsonObject): boolean {
+  return isPlainObject(spec.encoding) || spec.mark !== undefined;
+}
+
+function joinJsonPath(parentPath: string, childPath: string): string {
+  return parentPath === "$" ? `$.${childPath}` : `${parentPath}.${childPath}`;
 }
 
 function getObject(value: JsonObject, key: string): JsonObject | undefined {

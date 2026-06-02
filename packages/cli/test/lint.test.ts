@@ -142,6 +142,105 @@ describe("runLintRules", () => {
     });
   });
 
+  test("warns when layered color encoding has too many categories from root data", () => {
+    const spec = cleanVegaLiteSpec({
+      data: {
+        values: Array.from({ length: 13 }, (_, index) => ({
+          epoch: index,
+          accuracy: index / 100,
+          model: `model-${index}`,
+        })),
+      },
+      layer: [
+        {
+          mark: "line",
+          encoding: {
+            x: { field: "epoch", type: "quantitative", title: "Epoch" },
+            y: { field: "accuracy", type: "quantitative", title: "Accuracy" },
+            color: { field: "model", type: "nominal", title: "Model" },
+          },
+        },
+      ],
+    });
+    delete spec.mark;
+    delete spec.encoding;
+
+    expect(runRules(spec)).toContainEqual({
+      severity: "warning",
+      ruleId: "legend-too-many-categories",
+      path: "$.layer[0].encoding.color",
+      message: 'Color field "model" has 13 categories.',
+      suggestion: "Reduce categories, facet the chart, or group less important values.",
+    });
+  });
+
+  test("prefers child inline data for composed legend category counts", () => {
+    const spec = cleanVegaLiteSpec({
+      data: {
+        values: Array.from({ length: 13 }, (_, index) => ({
+          epoch: index,
+          accuracy: index / 100,
+          model: `root-${index}`,
+        })),
+      },
+      layer: [
+        {
+          data: {
+            values: [
+              { epoch: 1, accuracy: 0.62, model: "baseline" },
+              { epoch: 2, accuracy: 0.68, model: "baseline" },
+            ],
+          },
+          mark: "line",
+          encoding: {
+            x: { field: "epoch", type: "quantitative", title: "Epoch" },
+            y: { field: "accuracy", type: "quantitative", title: "Accuracy" },
+            color: { field: "model", type: "nominal", title: "Model" },
+          },
+        },
+      ],
+    });
+    delete spec.mark;
+    delete spec.encoding;
+
+    expect(
+      runRules(spec).filter(
+        (issue) => issue.ruleId === "legend-too-many-categories",
+      ),
+    ).toEqual([]);
+  });
+
+  test("skips composed legend category counts for child non-inline data", () => {
+    const spec = cleanVegaLiteSpec({
+      data: {
+        values: Array.from({ length: 13 }, (_, index) => ({
+          epoch: index,
+          accuracy: index / 100,
+          model: `root-${index}`,
+        })),
+      },
+      layer: [
+        {
+          data: { url: "child.csv" },
+          mark: "line",
+          encoding: {
+            x: { field: "epoch", type: "quantitative", title: "Epoch" },
+            y: { field: "accuracy", type: "quantitative", title: "Accuracy" },
+            color: { field: "model", type: "nominal", title: "Model" },
+          },
+        },
+      ],
+    });
+    delete spec.mark;
+    delete spec.encoding;
+
+    expect(
+      runRules(spec).filter(
+        (issue) => issue.ruleId === "legend-too-many-categories",
+      ),
+    ).toEqual([]);
+  });
+
   test("warns when configured font sizes are too small", () => {
     const spec = cleanVegaLiteSpec({
       config: {
@@ -172,6 +271,51 @@ describe("runLintRules", () => {
       message: "Bar charts with quantitative y should explicitly include zero.",
       suggestion: "Set encoding.y.scale.zero to true unless there is a documented reason not to.",
     });
+  });
+
+  test("warns when layered bar chart quantitative y omits explicit zero", () => {
+    const spec = cleanVegaLiteSpec({
+      layer: [
+        {
+          mark: "bar",
+          encoding: {
+            x: { field: "epoch", type: "ordinal", title: "Epoch" },
+            y: { field: "accuracy", type: "quantitative", title: "Accuracy" },
+          },
+        },
+      ],
+    });
+    delete spec.mark;
+    delete spec.encoding;
+
+    expect(runRules(spec)).toContainEqual({
+      severity: "warning",
+      ruleId: "bar-y-axis-zero-missing",
+      path: "$.layer[0].encoding.y.scale",
+      message: "Bar charts with quantitative y should explicitly include zero.",
+      suggestion: "Set encoding.y.scale.zero to true unless there is a documented reason not to.",
+    });
+  });
+
+  test("does not infer parent bar marks for composed bar zero checks", () => {
+    const spec = cleanVegaLiteSpec({
+      mark: "bar",
+      layer: [
+        {
+          encoding: {
+            x: { field: "epoch", type: "ordinal", title: "Epoch" },
+            y: { field: "accuracy", type: "quantitative", title: "Accuracy" },
+          },
+        },
+      ],
+    });
+    delete spec.encoding;
+
+    expect(
+      runRules(spec)
+        .filter((issue) => issue.ruleId === "bar-y-axis-zero-missing")
+        .map((issue) => issue.path),
+    ).toEqual([]);
   });
 
   test("does not warn at rule boundaries", () => {
@@ -206,6 +350,168 @@ describe("runLintRules", () => {
         },
       },
     });
+
+    expect(runRules(spec)).toEqual([]);
+  });
+
+  test("warns for missing axis titles inside layered Vega-Lite specs", () => {
+    const spec = cleanVegaLiteSpec({
+      data: {
+        values: [
+          { epoch: 1, accuracy: 0.62, loss: 0.41 },
+          { epoch: 2, accuracy: 0.68, loss: 0.36 },
+        ],
+      },
+      layer: [
+        {
+          mark: "line",
+          encoding: {
+            x: { field: "epoch", type: "quantitative" },
+            y: { field: "accuracy", type: "quantitative" },
+          },
+        },
+        {
+          mark: "line",
+          encoding: {
+            x: { field: "epoch", type: "quantitative", title: "Epoch" },
+            y: { field: "loss", type: "quantitative" },
+          },
+        },
+      ],
+    });
+    delete spec.mark;
+    delete spec.encoding;
+
+    expect(
+      runRules(spec)
+        .filter((issue) => issue.ruleId === "axis-title-missing")
+        .map((issue) => issue.path),
+    ).toEqual([
+      "$.layer[0].encoding.x",
+      "$.layer[0].encoding.y",
+      "$.layer[1].encoding.y",
+    ]);
+  });
+
+  test("warns for missing axis titles inside facet and repeat specs", () => {
+    const facetSpec = cleanVegaLiteSpec({
+      facet: { field: "model", type: "nominal" },
+      spec: {
+        mark: "point",
+        encoding: {
+          x: { field: "epoch", type: "quantitative" },
+          y: { field: "accuracy", type: "quantitative", title: "Accuracy" },
+        },
+      },
+    });
+    delete facetSpec.mark;
+    delete facetSpec.encoding;
+
+    const repeatSpec = cleanVegaLiteSpec({
+      repeat: ["accuracy", "loss"],
+      spec: {
+        mark: "line",
+        encoding: {
+          x: { field: "epoch", type: "quantitative", title: "Epoch" },
+          y: { field: "accuracy", type: "quantitative" },
+        },
+      },
+    });
+    delete repeatSpec.mark;
+    delete repeatSpec.encoding;
+
+    expect(
+      runRules(facetSpec)
+        .filter((issue) => issue.ruleId === "axis-title-missing")
+        .map((issue) => issue.path),
+    ).toEqual(["$.spec.encoding.x"]);
+    expect(
+      runRules(repeatSpec)
+        .filter((issue) => issue.ruleId === "axis-title-missing")
+        .map((issue) => issue.path),
+    ).toEqual(["$.spec.encoding.y"]);
+  });
+
+  test("warns for missing axis titles inside concat specs", () => {
+    const spec = cleanVegaLiteSpec({
+      concat: [
+        {
+          mark: "line",
+          encoding: {
+            x: { field: "epoch", type: "quantitative" },
+            y: { field: "accuracy", type: "quantitative", title: "Accuracy" },
+          },
+        },
+      ],
+      hconcat: [
+        {
+          mark: "point",
+          encoding: {
+            x: { field: "epoch", type: "quantitative", title: "Epoch" },
+            y: { field: "accuracy", type: "quantitative" },
+          },
+        },
+      ],
+      vconcat: [
+        {
+          mark: "bar",
+          encoding: {
+            x: { field: "epoch", type: "ordinal" },
+            y: { field: "accuracy", type: "quantitative", title: "Accuracy" },
+          },
+        },
+      ],
+    });
+    delete spec.mark;
+    delete spec.encoding;
+
+    expect(
+      runRules(spec)
+        .filter((issue) => issue.ruleId === "axis-title-missing")
+        .map((issue) => issue.path),
+    ).toEqual([
+      "$.concat[0].encoding.x",
+      "$.hconcat[0].encoding.y",
+      "$.vconcat[0].encoding.x",
+    ]);
+  });
+
+  test("recurses through nested composed Vega-Lite specs", () => {
+    const spec = cleanVegaLiteSpec({
+      layer: [
+        {
+          facet: { field: "model", type: "nominal" },
+          spec: {
+            mark: "point",
+            encoding: {
+              x: { field: "epoch", type: "quantitative" },
+              y: { field: "accuracy", type: "quantitative", title: "Accuracy" },
+            },
+          },
+        },
+      ],
+    });
+    delete spec.mark;
+    delete spec.encoding;
+
+    expect(
+      runRules(spec)
+        .filter((issue) => issue.ruleId === "axis-title-missing")
+        .map((issue) => issue.path),
+    ).toEqual(["$.layer[0].spec.encoding.x"]);
+  });
+
+  test("ignores malformed composition fields without throwing", () => {
+    const spec = cleanVegaLiteSpec({
+      layer: { not: "an array" },
+      facet: { spec: "not an object" },
+      repeat: { spec: null },
+      concat: ["not an object"],
+      hconcat: [null],
+      vconcat: [{ mark: "point" }],
+    });
+    delete spec.mark;
+    delete spec.encoding;
 
     expect(runRules(spec)).toEqual([]);
   });
