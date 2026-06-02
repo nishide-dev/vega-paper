@@ -2,6 +2,7 @@
 
 import { Command } from "commander";
 import { registerDoctorCommand } from "./commands/doctor";
+import { registerInferCommand } from "./commands/infer";
 import { registerLintCommand } from "./commands/lint";
 import { registerRenderCommand } from "./commands/render";
 import { registerThemesCommand } from "./commands/themes";
@@ -15,6 +16,7 @@ program
   .version("0.1.0");
 
 registerRenderCommand(program);
+registerInferCommand(program);
 registerLintCommand(program);
 registerThemesCommand(program);
 registerDoctorCommand(program);
