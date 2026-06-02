@@ -29,15 +29,15 @@ The next slice extends those Vega-Lite-specific rules to common composed Vega-Li
 The traversal should inspect unit specs under:
 
 - `layer[]`
-- `facet.spec`
-- `repeat.spec`
+- `spec` when paired with top-level `facet`
+- `spec` when paired with top-level `repeat`
 - `concat[]`
 - `hconcat[]`
 - `vconcat[]`
 
-Traversal is recursive, so nested shapes such as `layer[0].facet.spec` are supported when each step has the expected object or array shape.
+Traversal is recursive, so nested shapes such as a faceted child under `layer[0].spec` are supported when each step has the expected object or array shape.
 
-Malformed composition fields are ignored rather than reported by this slice. For example, a non-array `layer` or non-object `facet.spec` should not crash linting.
+Malformed composition fields are ignored rather than reported by this slice. For example, a non-array `layer` or non-object `spec` child should not crash linting.
 
 ## Rule Scope
 
@@ -72,8 +72,8 @@ type VegaLiteUnitSpec = {
 
 1. The root spec itself when it looks like a unit spec.
 2. Items under `layer[]`.
-3. `facet.spec`.
-4. `repeat.spec`.
+3. `spec` children used by faceted specs.
+4. `spec` children used by repeated specs.
 5. Items under `concat[]`.
 6. Items under `hconcat[]`.
 7. Items under `vconcat[]`.
@@ -84,8 +84,8 @@ Each unit-level rule uses the collected unit specs and prefixes issue paths with
 
 ```text
 $.layer[0].encoding.x
-$.facet.spec.encoding.y
-$.repeat.spec.encoding.y.scale
+$.spec.encoding.y
+$.spec.encoding.y.scale
 $.hconcat[1].encoding.color
 ```
 
@@ -119,12 +119,12 @@ This slice should not introduce new `error` severity rules. It only improves cov
 Add focused tests in `packages/cli/test/lint.test.ts` for:
 
 - `layer[0]` and `layer[1]` axis title warnings with paths such as `$.layer[0].encoding.x`.
-- `facet.spec.encoding.x` axis title warnings.
-- `repeat.spec.encoding.y` axis title warnings.
+- `spec.encoding.x` axis title warnings for faceted specs.
+- `spec.encoding.y` axis title warnings for repeated specs.
 - `concat[0]`, `hconcat[0]`, and `vconcat[0]` child specs.
 - `legend-too-many-categories` using root `data.values` for a layer child.
 - `bar-y-axis-zero-missing` inside a layer child.
-- Nested composition, such as `layer[0].facet.spec`.
+- Nested composition, such as a faceted unit under `layer[0].spec`.
 - Malformed composition fields are ignored without throwing.
 - Vega specs still skip Vega-Lite-only traversal.
 
