@@ -731,11 +731,15 @@ describe("lintSpec", () => {
     await withTemporaryWorkspace(async (workspacePath) => {
       const inputPath = join(workspacePath, "missing.vl.json");
 
-      await expect(
-        lintSpec({ inputPath, profileName: "unknown" }),
-      ).rejects.toThrow(
-        'Unknown lint profile "unknown". Expected one of: paper, web, acl.',
-      );
+      try {
+        await lintSpec({ inputPath, profileName: "unknown" });
+        throw new Error("Expected lintSpec to reject");
+      } catch (error) {
+        expect(error).toBeInstanceOf(Error);
+        expect((error as Error).message).toBe(
+          'Unknown lint profile "unknown". Expected one of: paper, web, acl.',
+        );
+      }
     });
   });
 });
@@ -746,6 +750,40 @@ describe("lint command", () => {
 
     expect(output.stdout).toBe("No lint issues found.\n");
     expect(output.exitCode).toBeUndefined();
+  });
+
+  test("passes profile option to lint runner", async () => {
+    let receivedInputPath: string | undefined;
+    let receivedProfileName: string | undefined;
+
+    const output = await runLintCommandWithRunner(
+      ["lint", "chart.vl.json", "--profile", "acl"],
+      async (inputPath, profileName) => {
+        receivedInputPath = inputPath;
+        receivedProfileName = profileName;
+        return cleanLintResult();
+      },
+    );
+
+    expect(output.stdout).toBe("No lint issues found.\n");
+    expect(output.exitCode).toBeUndefined();
+    expect(receivedInputPath).toBe("chart.vl.json");
+    expect(receivedProfileName).toBe("acl");
+  });
+
+  test("propagates unknown profile errors", async () => {
+    try {
+      await runLintCommandWithRunner(
+        ["lint", "chart.vl.json", "--profile", "unknown"],
+        async () => cleanLintResult(),
+      );
+      throw new Error("Expected command to reject");
+    } catch (error) {
+      expect(error).toBeInstanceOf(Error);
+      expect((error as Error).message).toBe(
+        'Unknown lint profile "unknown". Expected one of: paper, web, acl.',
+      );
+    }
   });
 
   test("prints human issue summary and table for one warning", async () => {
@@ -874,6 +912,13 @@ async function runLintCommand(
   args: string[],
   result: LintResult,
 ): Promise<{ stdout: string; exitCode: 0 | 1 | undefined }> {
+  return runLintCommandWithRunner(args, async () => result);
+}
+
+async function runLintCommandWithRunner(
+  args: string[],
+  runLint: (inputPath: string, profileName: string | undefined) => Promise<LintResult>,
+): Promise<{ stdout: string; exitCode: 0 | 1 | undefined }> {
   let stdout = "";
   let exitCode: 0 | 1 | undefined;
   const program = new Command();
@@ -885,7 +930,7 @@ async function runLintCommand(
     (value) => {
       stdout += value;
     },
-    async () => result,
+    runLint,
     (value) => {
       exitCode = value;
     },
