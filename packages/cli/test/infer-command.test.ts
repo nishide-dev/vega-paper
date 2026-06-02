@@ -7,6 +7,7 @@ import { registerInferCommand } from "../src/commands/infer";
 import { VegaPaperError } from "../src/core/errors";
 import { inferVegaLiteSpec } from "../src/core/infer";
 import type { InferResult } from "../src/core/infer";
+import type { LintResult } from "../src/core/lint";
 import type { RenderResult } from "../src/core/render";
 
 const temporaryDirectories: string[] = [];
@@ -200,6 +201,225 @@ describe("infer command", () => {
     ]);
   });
 
+  test("runs lint on the saved spec path before rendering", async () => {
+    const workspace = await createWorkspace();
+    const outputPath = join(workspace, "figures", "chart.svg");
+    const specOutputPath = join(workspace, "figures", "chart.vl.json");
+    const calls = createSpies();
+
+    await runInferCommand(
+      [
+        "infer",
+        "results.csv",
+        "--chart",
+        "line",
+        "--x",
+        "epoch",
+        "--y",
+        "score",
+        "--lint-profile",
+        "paper",
+        "--out",
+        outputPath,
+      ],
+      {
+        ...calls,
+        infer: async (request) => {
+          calls.inferCalls.push(request);
+          return createInferResult("../results.csv");
+        },
+        lint: async (inputPath, profileName) => {
+          calls.lintCalls.push({ inputPath, profileName });
+          return cleanLintResult();
+        },
+        render: async (request) => {
+          calls.renderCalls.push(request);
+          return { outputPath: request.outputPath, warnings: [] };
+        },
+      },
+    );
+
+    expect(calls.lintCalls).toEqual([
+      { inputPath: specOutputPath, profileName: "paper" },
+    ]);
+    expect(calls.renderCalls).toHaveLength(1);
+  });
+
+  test("stops before render when lint returns an error", async () => {
+    const workspace = await createWorkspace();
+    const outputPath = join(workspace, "figures", "chart.svg");
+    const calls = createSpies();
+
+    await runInferCommand(
+      [
+        "infer",
+        "results.csv",
+        "--chart",
+        "line",
+        "--x",
+        "epoch",
+        "--y",
+        "score",
+        "--lint-profile",
+        "paper",
+        "--out",
+        outputPath,
+      ],
+      {
+        ...calls,
+        infer: async () => createInferResult("../results.csv"),
+        lint: async () =>
+          createLintResult([
+            {
+              severity: "error",
+              ruleId: "size-out-of-range",
+              path: "$.width",
+              message: "Width is too large.",
+            },
+          ]),
+        render: async (request) => {
+          calls.renderCalls.push(request);
+          return { outputPath: request.outputPath, warnings: [] };
+        },
+      },
+    );
+
+    expect(calls.renderCalls).toEqual([]);
+  });
+
+  test("treats warnings as blocking only in strict mode", async () => {
+    const workspace = await createWorkspace();
+    const outputPath = join(workspace, "figures", "chart.svg");
+    const warningResult = createLintResult([
+      {
+        severity: "warning",
+        ruleId: "axis-title-missing",
+        path: "$.encoding.x",
+        message: "Axis title is missing.",
+      },
+    ]);
+
+    const strictCalls = createSpies();
+    await runInferCommand(
+      [
+        "infer",
+        "results.csv",
+        "--chart",
+        "line",
+        "--x",
+        "epoch",
+        "--y",
+        "score",
+        "--lint-profile",
+        "paper",
+        "--strict",
+        "--out",
+        outputPath,
+      ],
+      {
+        ...strictCalls,
+        infer: async () => createInferResult("../results.csv"),
+        lint: async () => warningResult,
+        render: async (request) => {
+          strictCalls.renderCalls.push(request);
+          return { outputPath: request.outputPath, warnings: [] };
+        },
+      },
+    );
+
+    expect(strictCalls.renderCalls).toEqual([]);
+
+    const nonStrictCalls = createSpies();
+    await runInferCommand(
+      [
+        "infer",
+        "results.csv",
+        "--chart",
+        "line",
+        "--x",
+        "epoch",
+        "--y",
+        "score",
+        "--lint-profile",
+        "paper",
+        "--out",
+        outputPath,
+      ],
+      {
+        ...nonStrictCalls,
+        infer: async () => createInferResult("../results.csv"),
+        lint: async () => warningResult,
+        render: async (request) => {
+          nonStrictCalls.renderCalls.push(request);
+          return { outputPath: request.outputPath, warnings: [] };
+        },
+      },
+    );
+
+    expect(nonStrictCalls.renderCalls).toHaveLength(1);
+  });
+
+  test("rejects --strict without --lint-profile", async () => {
+    await expect(
+      runInferCommand([
+        "infer",
+        "results.csv",
+        "--chart",
+        "line",
+        "--x",
+        "epoch",
+        "--y",
+        "score",
+        "--strict",
+        "--spec-out",
+        "chart.vl.json",
+      ]),
+    ).rejects.toThrow(
+      new VegaPaperError('The "--strict" option requires "--lint-profile <name>".'),
+    );
+  });
+
+  test("prints the same lint summary output when issues are present", async () => {
+    const workspace = await createWorkspace();
+    const outputPath = join(workspace, "figures", "chart.svg");
+
+    const output = await runInferCommand(
+      [
+        "infer",
+        "results.csv",
+        "--chart",
+        "line",
+        "--x",
+        "epoch",
+        "--y",
+        "score",
+        "--lint-profile",
+        "paper",
+        "--out",
+        outputPath,
+      ],
+      {
+        infer: async () => createInferResult("../results.csv"),
+        lint: async () =>
+          createLintResult([
+            {
+              severity: "warning",
+              ruleId: "axis-title-missing",
+              path: "$.encoding.x",
+              message: "Axis title is missing.",
+            },
+          ]),
+        render: async (request) => ({
+          outputPath: request.outputPath,
+          warnings: [],
+        }),
+      },
+    );
+
+    expect(output.stdout).toContain("1 warning, 0 errors");
+    expect(output.stdout).toContain("axis-title-missing");
+  });
+
   test("rejects --theme without --out", async () => {
     await expect(
       runInferCommand([
@@ -384,8 +604,13 @@ type InferCommandHarness = {
     format: "svg";
     themeName?: string | undefined;
   }) => Promise<RenderResult>;
+  lint?: (
+    inputPath: string,
+    profileName: string | undefined,
+  ) => Promise<LintResult>;
   writeSpec?: (specOutputPath: string, spec: InferResult["spec"]) => Promise<void>;
   inferCalls?: Array<Record<string, unknown>>;
+  lintCalls?: Array<{ inputPath: string; profileName: string | undefined }>;
   renderCalls?: Array<Record<string, unknown>>;
 };
 
@@ -398,7 +623,7 @@ async function runInferCommand(
 
   program.exitOverride();
 
-  registerInferCommand(
+  registerInferCommandWithLint(
     program,
     (value) => {
       stdout += value;
@@ -406,6 +631,7 @@ async function runInferCommand(
     harness.infer ?? inferVegaLiteSpec,
     harness.render,
     harness.writeSpec,
+    harness.lint,
   );
 
   await program.parseAsync(["node", "vega-paper", ...args]);
@@ -439,12 +665,35 @@ function createInferResult(dataUrl: string): InferResult {
   };
 }
 
+function createLintResult(issues: LintResult["issues"]): LintResult {
+  return {
+    issues,
+    warningCount: issues.filter((issue) => issue.severity === "warning").length,
+    errorCount: issues.filter((issue) => issue.severity === "error").length,
+  };
+}
+
+function cleanLintResult(): LintResult {
+  return createLintResult([]);
+}
+
 function createSpies(): {
   inferCalls: Array<Record<string, unknown>>;
+  lintCalls: Array<{ inputPath: string; profileName: string | undefined }>;
   renderCalls: Array<Record<string, unknown>>;
 } {
   return {
     inferCalls: [],
+    lintCalls: [],
     renderCalls: [],
   };
 }
+
+const registerInferCommandWithLint = registerInferCommand as typeof registerInferCommand & ((
+  program: Command,
+  writeOutput?: (value: string) => void,
+  runInfer?: InferCommandHarness["infer"],
+  runRender?: InferCommandHarness["render"],
+  writeSpec?: InferCommandHarness["writeSpec"],
+  runLint?: InferCommandHarness["lint"],
+) => void);
