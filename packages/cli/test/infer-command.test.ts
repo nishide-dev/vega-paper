@@ -408,6 +408,9 @@ describe("infer command", () => {
         {
           ...calls,
           infer: async () => createInferResult("../results.csv"),
+          writeSpec: async () => {
+            calls.writeSpecCalls += 1;
+          },
           lint: async (inputPath, profileName) => {
             calls.lintCalls.push({ inputPath, profileName });
             return cleanLintResult();
@@ -419,6 +422,7 @@ describe("infer command", () => {
     );
 
     expect(calls.lintCalls).toEqual([]);
+    expect(calls.writeSpecCalls).toBe(0);
   });
 
   test("prints lint human output and still renders for non-strict warnings", async () => {
@@ -718,10 +722,12 @@ function createSpies(): {
   inferCalls: InferRequest[];
   lintCalls: Array<{ inputPath: string; profileName: string | undefined }>;
   renderCalls: RenderRequest[];
+  writeSpecCalls: number;
 } {
   return {
     inferCalls: [],
     lintCalls: [],
     renderCalls: [],
+    writeSpecCalls: 0,
   };
 }

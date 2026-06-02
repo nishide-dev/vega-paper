@@ -69,6 +69,10 @@ export function registerInferCommand(
     .option("--lint-profile <name>", "lint profile: paper, web, or acl")
     .option("--strict", "exit with code 1 when warnings are present")
     .action(async (inputPath: string, options: InferCommandOptions) => {
+      if (options.lintProfile !== undefined) {
+        getLintProfile(options.lintProfile);
+      }
+
       const request = normalizeInferOptions(inputPath, options);
       const result = await runInfer(request);
 
@@ -81,8 +85,6 @@ export function registerInferCommand(
       writeOutput(`Wrote ${request.specOutputPath}\n`);
 
       if (options.lintProfile !== undefined) {
-        getLintProfile(options.lintProfile);
-
         const lintResult = await runLint(request.specOutputPath, options.lintProfile);
         const lintExitCode = getLintExitCode(lintResult, Boolean(options.strict));
 
