@@ -20,6 +20,7 @@ export type InferRequest = {
   yType?: VegaLiteFieldType | undefined;
   colorType?: VegaLiteFieldType | undefined;
   inlineData?: boolean | undefined;
+  facetField?: string | undefined;
 };
 
 export type InferResult = {
@@ -71,6 +72,9 @@ export async function inferVegaLiteSpec(
     request.colorField === undefined
       ? undefined
       : findFieldIndex(tabular.header, request.colorField);
+  if (request.facetField !== undefined) {
+    findFieldIndex(tabular.header, request.facetField);
+  }
 
   const encoding: {
     x: { field: string; type: VegaLiteFieldType };
@@ -98,14 +102,29 @@ export async function inferVegaLiteSpec(
     ? { values: buildInlineValues(tabular) }
     : { url: toRelativeDataUrl(request.specOutputPath, request.inputPath) };
 
-  const spec: JsonObject = {
-    $schema: VEGA_LITE_SCHEMA,
-    data,
+  const innerSpec: JsonObject = {
     mark: MARK_BY_CHART[chart],
     width: request.width ?? DEFAULT_WIDTH,
     height: request.height ?? DEFAULT_HEIGHT,
     encoding,
   };
+
+  const spec: JsonObject =
+    request.facetField === undefined
+      ? {
+          $schema: VEGA_LITE_SCHEMA,
+          data,
+          ...innerSpec,
+        }
+      : {
+          $schema: VEGA_LITE_SCHEMA,
+          data,
+          facet: {
+            field: request.facetField,
+            type: "nominal",
+          },
+          spec: innerSpec,
+        };
 
   if (request.title !== undefined) {
     spec.title = request.title;

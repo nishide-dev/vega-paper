@@ -31,6 +31,7 @@ type InferCommandOptions = {
   yType?: string;
   colorType?: string;
   inlineData?: boolean;
+  facet?: string;
 };
 
 type WriteOutput = (value: string) => void;
@@ -65,6 +66,7 @@ export function registerInferCommand(
     .option("--x <field>", "x encoding field")
     .option("--y <field>", "y encoding field")
     .option("--color <field>", "color encoding field")
+    .option("--facet <field>", "split chart into small multiples by field")
     .option("--title <text>", "chart title")
     .option("--width <number>", "chart width")
     .option("--height <number>", "chart height")
@@ -159,6 +161,16 @@ export function normalizeInferOptions(
     throw new VegaPaperError('The "--color-type" option requires "--color <field>".');
   }
 
+  if (
+    options.facet !== undefined &&
+    options.color !== undefined &&
+    options.facet === options.color
+  ) {
+    throw new VegaPaperError(
+      'The "--facet" and "--color" options must use different fields.',
+    );
+  }
+
   return {
     inputPath,
     chart: parseInferChartType(options.chart),
@@ -173,6 +185,7 @@ export function normalizeInferOptions(
     yType,
     colorType,
     inlineData: options.inlineData === true ? true : undefined,
+    facetField: options.facet,
   };
 }
 
