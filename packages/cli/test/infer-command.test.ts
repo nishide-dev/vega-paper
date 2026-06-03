@@ -726,6 +726,38 @@ describe("infer command", () => {
     ]);
   });
 
+  test("passes --y-type through to InferRequest", async () => {
+    const calls = createSpies();
+
+    await runInferCommand(
+      [
+        "infer",
+        "results.csv",
+        "--chart",
+        "line",
+        "--x",
+        "epoch",
+        "--y",
+        "score",
+        "--y-type",
+        "nominal",
+        "--spec-out",
+        "out.vl.json",
+      ],
+      {
+        ...calls,
+        infer: async (request) => {
+          calls.inferCalls.push(request);
+          return createInferResult("../results.csv");
+        },
+      },
+    );
+
+    expect(calls.inferCalls).toEqual([
+      expect.objectContaining({ yType: "nominal" }),
+    ]);
+  });
+
   test("passes --color-type through to InferRequest", async () => {
     const calls = createSpies();
 

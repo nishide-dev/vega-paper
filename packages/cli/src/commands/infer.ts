@@ -222,7 +222,7 @@ const VALID_FIELD_TYPES = ["quantitative", "nominal", "ordinal", "temporal"] as 
 
 function parseFieldType(
   value: string | undefined,
-  flag: string,
+  flag: "--x-type" | "--y-type" | "--color-type",
 ): VegaLiteFieldType | undefined {
   if (value === undefined) return undefined;
   if ((VALID_FIELD_TYPES as readonly string[]).includes(value)) {
