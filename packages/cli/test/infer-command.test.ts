@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { access, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Command } from "commander";
@@ -1380,6 +1380,191 @@ describe("infer command", () => {
       'The "--facet" field must differ from --x, --y, and --color on heatmap charts.',
     );
   });
+
+  test("writes sibling figure meta when --out renders successfully", async () => {
+    const workspace = await createWorkspace();
+    const outputPath = join(workspace, "figures", "chart.svg");
+    const metaOutputPath = join(workspace, "figures", "chart.meta.json");
+    const calls = createSpies();
+
+    const { stdout } = await runInferCommand(
+      [
+        "infer",
+        "results.csv",
+        "--chart",
+        "line",
+        "--x",
+        "epoch",
+        "--y",
+        "score",
+        "--color",
+        "model",
+        "--title",
+        "Training F1",
+        "--out",
+        outputPath,
+      ],
+      {
+        ...calls,
+        infer: async () => createInferResult("../results.csv"),
+        render: async (request) => {
+          calls.renderCalls.push(request);
+          return { outputPath: request.outputPath, warnings: [] };
+        },
+      },
+    );
+
+    const meta = (await readMeta(metaOutputPath)) as {
+      generatedBy: string;
+      input: string;
+      output: string;
+      specOut: string;
+      infer: Record<string, unknown>;
+      theme?: string;
+    };
+
+    expect(stdout).toContain(`Wrote ${metaOutputPath}`);
+    expect(meta.generatedBy).toBe("vega-paper");
+    expect(meta.input).toBe("results.csv");
+    expect(meta.output).toBe(outputPath);
+    expect(meta.specOut).toBe(join(workspace, "figures", "chart.vl.json"));
+    expect(meta.infer).toEqual({
+      chart: "line",
+      x: "epoch",
+      y: "score",
+      color: "model",
+      title: "Training F1",
+    });
+    expect(meta.theme).toBeUndefined();
+  });
+
+  test("includes theme in figure meta when --theme is provided", async () => {
+    const workspace = await createWorkspace();
+    const outputPath = join(workspace, "figures", "chart.svg");
+    const metaOutputPath = join(workspace, "figures", "chart.meta.json");
+
+    await runInferCommand(
+      [
+        "infer",
+        "results.csv",
+        "--chart",
+        "line",
+        "--x",
+        "epoch",
+        "--y",
+        "score",
+        "--theme",
+        "paper-clean",
+        "--out",
+        outputPath,
+      ],
+      {
+        infer: async () => createInferResult("../results.csv"),
+        render: async (request) => ({ outputPath: request.outputPath, warnings: [] }),
+      },
+    );
+
+    const meta = (await readMeta(metaOutputPath)) as { theme?: string };
+    expect(meta.theme).toBe("paper-clean");
+  });
+
+  test("records explicit --spec-out in figure meta", async () => {
+    const workspace = await createWorkspace();
+    const specOutputPath = join(workspace, "specs", "custom.vl.json");
+    const outputPath = join(workspace, "figures", "chart.svg");
+    const metaOutputPath = join(workspace, "figures", "chart.meta.json");
+
+    await runInferCommand(
+      [
+        "infer",
+        "results.csv",
+        "--chart",
+        "scatter",
+        "--x",
+        "epoch",
+        "--y",
+        "score",
+        "--spec-out",
+        specOutputPath,
+        "--out",
+        outputPath,
+      ],
+      {
+        infer: async () => createInferResult("../results.csv"),
+        render: async (request) => ({ outputPath: request.outputPath, warnings: [] }),
+      },
+    );
+
+    const meta = (await readMeta(metaOutputPath)) as { specOut: string };
+    expect(meta.specOut).toBe(specOutputPath);
+  });
+
+  test("does not write figure meta when only --spec-out is provided", async () => {
+    const workspace = await createWorkspace();
+    const specOutputPath = join(workspace, "figures", "chart.vl.json");
+    const metaOutputPath = join(workspace, "figures", "chart.meta.json");
+    const calls = createSpies();
+
+    await runInferCommand(
+      [
+        "infer",
+        "results.csv",
+        "--chart",
+        "line",
+        "--x",
+        "epoch",
+        "--y",
+        "score",
+        "--spec-out",
+        specOutputPath,
+      ],
+      {
+        ...calls,
+        infer: async () => createInferResult("../results.csv"),
+      },
+    );
+
+    await expect(access(metaOutputPath)).rejects.toThrow();
+  });
+
+  test("does not write figure meta when strict lint fails before render", async () => {
+    const workspace = await createWorkspace();
+    const outputPath = join(workspace, "figures", "chart.svg");
+    const metaOutputPath = join(workspace, "figures", "chart.meta.json");
+    const warningResult = createLintResult([
+      {
+        severity: "warning",
+        ruleId: "axis-title-missing",
+        path: "$.encoding.x",
+        message: "Axis title is missing.",
+      },
+    ]);
+
+    await runInferCommand(
+      [
+        "infer",
+        "results.csv",
+        "--chart",
+        "line",
+        "--x",
+        "epoch",
+        "--y",
+        "score",
+        "--lint-profile",
+        "paper",
+        "--strict",
+        "--out",
+        outputPath,
+      ],
+      {
+        infer: async () => createInferResult("../results.csv"),
+        lint: async () => warningResult,
+        render: async (request) => ({ outputPath: request.outputPath, warnings: [] }),
+      },
+    );
+
+    await expect(access(metaOutputPath)).rejects.toThrow();
+  });
 });
 
 type InferCommandHarness = {
@@ -1387,9 +1572,11 @@ type InferCommandHarness = {
   render?: (request: RenderRequest) => Promise<RenderResult>;
   lint?: (inputPath: string, profileName: string | undefined) => Promise<LintResult>;
   writeSpec?: (specOutputPath: string, spec: InferResult["spec"]) => Promise<void>;
+  writeFigureMeta?: (metaOutputPath: string, meta: unknown) => Promise<void>;
   inferCalls?: Array<Record<string, unknown>>;
   lintCalls?: Array<{ inputPath: string; profileName: string | undefined }>;
   renderCalls?: Array<Record<string, unknown>>;
+  writeFigureMetaCalls?: Array<{ metaOutputPath: string; meta: unknown }>;
 };
 
 async function runInferCommand(
@@ -1414,6 +1601,7 @@ async function runInferCommand(
     (value) => {
       exitCode = value;
     },
+    harness.writeFigureMeta,
   );
 
   await program.parseAsync(["node", "vega-paper", ...args]);
@@ -1428,6 +1616,10 @@ async function createWorkspace(): Promise<string> {
 }
 
 async function readSpec(path: string): Promise<unknown> {
+  return JSON.parse(await readFile(path, "utf8")) as unknown;
+}
+
+async function readMeta(path: string): Promise<unknown> {
   return JSON.parse(await readFile(path, "utf8")) as unknown;
 }
 

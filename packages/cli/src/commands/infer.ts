@@ -3,6 +3,13 @@ import { dirname, extname, join, parse } from "node:path";
 import type { Command } from "commander";
 import { VegaPaperError } from "../core/errors";
 import {
+  buildFigureMeta,
+  type FigureMeta,
+  resolveVegaDependencyVersions,
+  toSiblingMetaPath,
+  writeFigureMeta,
+} from "../core/figure-meta";
+import {
   type InferAggregateMethod,
   type InferChartType,
   type InferRequest,
@@ -43,6 +50,7 @@ type RunLint = (inputPath: string, profileName: string | undefined) => Promise<L
 type RunRender = (request: RenderRequest) => Promise<RenderResult>;
 type SetExitCode = (exitCode: 0 | 1) => void;
 type WriteSpec = (specOutputPath: string, spec: InferResult["spec"]) => Promise<void>;
+type WriteFigureMeta = (metaOutputPath: string, meta: FigureMeta) => Promise<void>;
 
 export function registerInferCommand(
   program: Command,
@@ -56,6 +64,7 @@ export function registerInferCommand(
   setExitCode: SetExitCode = (exitCode) => {
     process.exitCode = exitCode;
   },
+  writeFigureMetaFile: WriteFigureMeta = writeFigureMeta,
 ): void {
   program
     .command("infer")
@@ -124,6 +133,25 @@ export function registerInferCommand(
         });
 
         writeOutput(`Rendered ${renderResult.outputPath}\n`);
+
+        const metaOutputPath = toSiblingMetaPath(options.out);
+        const versions = await resolveVegaDependencyVersions();
+        const meta = buildFigureMeta({
+          inputPath,
+          outputPath: options.out,
+          specOutPath: options.specOut ?? toSiblingSpecPath(options.out),
+          chart: request.chart,
+          options,
+          versions,
+        });
+
+        try {
+          await writeFigureMetaFile(metaOutputPath, meta);
+        } catch (error) {
+          throw toMetaWriteError(metaOutputPath, error);
+        }
+
+        writeOutput(`Wrote ${metaOutputPath}\n`);
       }
     });
 }
@@ -415,4 +443,12 @@ function toSpecWriteError(specOutputPath: string, error: unknown): VegaPaperErro
   }
 
   return new VegaPaperError(`Could not write generated spec to ${specOutputPath}.`);
+}
+
+function toMetaWriteError(metaOutputPath: string, error: unknown): VegaPaperError {
+  if (error instanceof VegaPaperError) {
+    return error;
+  }
+
+  return new VegaPaperError(`Could not write figure meta to ${metaOutputPath}.`);
 }
