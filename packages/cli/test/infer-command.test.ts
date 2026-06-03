@@ -245,6 +245,59 @@ describe("infer command", () => {
     expect(calls.renderCalls).toHaveLength(1);
   });
 
+  test("prefers explicit --spec-out as the lint target when rendering", async () => {
+    const workspace = await createWorkspace();
+    const outputPath = join(workspace, "figures", "chart.svg");
+    const specOutputPath = join(workspace, "specs", "custom.vl.json");
+    const calls = createSpies();
+
+    await runInferCommand(
+      [
+        "infer",
+        "results.csv",
+        "--chart",
+        "line",
+        "--x",
+        "epoch",
+        "--y",
+        "score",
+        "--lint-profile",
+        "paper",
+        "--spec-out",
+        specOutputPath,
+        "--out",
+        outputPath,
+      ],
+      {
+        ...calls,
+        infer: async (request) => {
+          calls.inferCalls.push(request);
+          return createInferResult("../results.csv");
+        },
+        lint: async (inputPath, profileName) => {
+          calls.lintCalls.push({ inputPath, profileName });
+          return cleanLintResult();
+        },
+        render: async (request) => {
+          calls.renderCalls.push(request);
+          return { outputPath: request.outputPath, warnings: [] };
+        },
+      },
+    );
+
+    expect(calls.lintCalls).toEqual([
+      { inputPath: specOutputPath, profileName: "paper" },
+    ]);
+    expect(calls.renderCalls).toEqual([
+      {
+        inputPath: specOutputPath,
+        outputPath,
+        format: "svg",
+        themeName: undefined,
+      },
+    ]);
+  });
+
   test("sets a failing exit code and stops before render when lint returns an error", async () => {
     const workspace = await createWorkspace();
     const outputPath = join(workspace, "figures", "chart.svg");
@@ -376,8 +429,6 @@ describe("infer command", () => {
         "--y",
         "score",
         "--strict",
-        "--spec-out",
-        "chart.vl.json",
       ]),
     ).rejects.toThrow(
       new VegaPaperError('The "--strict" option requires "--lint-profile <name>".'),
