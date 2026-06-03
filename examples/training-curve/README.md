@@ -1,6 +1,6 @@
 # Training curve (infer)
 
-CSV inputs for `vega-paper infer` line charts. `data.csv` has one row per epoch and model. `runs.csv` has duplicate keys so `--aggregate` is meaningful.
+CSV inputs for `vega-paper infer` line charts. `data.csv` has one row per epoch and model. `runs.csv` has duplicate keys so `--aggregate` is meaningful. `data-with-error.csv` adds a symmetric standard-error column for `--error-band`.
 
 ## Line chart (clean data)
 
@@ -25,6 +25,21 @@ vega-paper infer examples/training-curve/runs.csv \
   --aggregate mean \
   --title "Training F1 (mean over runs)" \
   --spec-out examples/training-curve/chart-aggregate.vl.json
+```
+
+## Line chart with error band
+
+`f1_se` is a symmetric error magnitude mapped to `encoding.yError`. Do not combine with `--aggregate`.
+
+```bash
+vega-paper infer examples/training-curve/data-with-error.csv \
+  --chart line \
+  --x epoch \
+  --y f1 \
+  --color model \
+  --error-band f1_se \
+  --title "Training F1 with standard error" \
+  --spec-out examples/training-curve/chart-error-band.vl.json
 ```
 
 ## Render
