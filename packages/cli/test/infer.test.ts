@@ -587,6 +587,83 @@ describe("inferVegaLiteSpec", () => {
       },
     });
   });
+
+  test("wraps spec in top-level facet when facetField is set", async () => {
+    const workspace = await createWorkspace();
+    const inputPath = join(workspace, "data.csv");
+    const specOutputPath = join(workspace, "chart.vl.json");
+
+    await Bun.write(inputPath, "epoch,f1,model\n1,0.61,a\n2,0.68,a\n1,0.64,b\n2,0.71,b\n");
+
+    const result = await inferVegaLiteSpec({
+      inputPath,
+      chart: "line",
+      xField: "epoch",
+      yField: "f1",
+      facetField: "model",
+      specOutputPath,
+    });
+
+    expect(result.spec).toEqual({
+      $schema: "https://vega.github.io/schema/vega-lite/v6.json",
+      data: { url: "data.csv" },
+      facet: { field: "model", type: "nominal" },
+      spec: {
+        mark: "line",
+        width: 360,
+        height: 240,
+        encoding: {
+          x: { field: "epoch", type: "quantitative" },
+          y: { field: "f1", type: "quantitative" },
+        },
+      },
+    });
+  });
+
+  test("supports facet with a distinct color field", async () => {
+    const workspace = await createWorkspace();
+    const inputPath = join(workspace, "data.csv");
+    const specOutputPath = join(workspace, "chart.vl.json");
+
+    await Bun.write(inputPath, "epoch,f1,split,series\n1,0.61,a,x\n2,0.68,a,x\n");
+
+    const result = await inferVegaLiteSpec({
+      inputPath,
+      chart: "line",
+      xField: "epoch",
+      yField: "f1",
+      facetField: "split",
+      colorField: "series",
+      specOutputPath,
+    });
+
+    expect(result.spec).toMatchObject({
+      facet: { field: "split", type: "nominal" },
+      spec: {
+        encoding: {
+          color: { field: "series", type: "nominal" },
+        },
+      },
+    });
+  });
+
+  test("rejects missing facet fields", async () => {
+    const workspace = await createWorkspace();
+    const inputPath = join(workspace, "data.csv");
+
+    await Bun.write(inputPath, "epoch,f1\n1,0.61\n");
+
+    await expect(
+      inferVegaLiteSpec({
+        inputPath,
+        chart: "line",
+        xField: "epoch",
+        yField: "f1",
+        facetField: "missing-facet",
+        specOutputPath: join(workspace, "chart.vl.json"),
+      }),
+    ).rejects.toThrow('Field "missing-facet" was not found.');
+  });
 });
 
 async function createWorkspace(): Promise<string> {

@@ -985,6 +985,77 @@ describe("infer command", () => {
       },
     ]);
   });
+
+  test("passes facetField when --facet is provided", async () => {
+    const workspace = await createWorkspace();
+    const specOutputPath = join(workspace, "chart.vl.json");
+    const calls = createSpies();
+
+    await runInferCommand(
+      [
+        "infer",
+        "results.csv",
+        "--chart",
+        "line",
+        "--x",
+        "epoch",
+        "--y",
+        "f1",
+        "--facet",
+        "model",
+        "--spec-out",
+        specOutputPath,
+      ],
+      {
+        infer: async (request) => {
+          calls.inferCalls.push(request);
+          return createInferResult("../results.csv");
+        },
+        writeSpec: async () => {
+          calls.writeSpecCalls += 1;
+        },
+      },
+    );
+
+    expect(calls.inferCalls).toEqual([
+      {
+        inputPath: "results.csv",
+        chart: "line",
+        xField: "epoch",
+        yField: "f1",
+        facetField: "model",
+        specOutputPath,
+      },
+    ]);
+  });
+
+  test("rejects --facet and --color on the same field", async () => {
+    const workspace = await createWorkspace();
+    const specOutputPath = join(workspace, "chart.vl.json");
+
+    await expect(
+      runInferCommand(
+        [
+          "infer",
+          "results.csv",
+          "--chart",
+          "line",
+          "--x",
+          "epoch",
+          "--y",
+          "f1",
+          "--facet",
+          "model",
+          "--color",
+          "model",
+          "--spec-out",
+          specOutputPath,
+        ],
+      ),
+    ).rejects.toThrow(
+      'The "--facet" and "--color" options must use different fields.',
+    );
+  });
 });
 
 type InferCommandHarness = {
