@@ -74,6 +74,10 @@ bun run packages/cli/src/index.ts lint figures/f1.vl.json --lint-profile paper
 
 See [`examples/`](examples/) for copy-paste commands.
 
+## AI Skill
+
+Agents can follow [`skills/vega-paper/SKILL.md`](skills/vega-paper/SKILL.md) for infer-first workflows, lint revision loops, and figure meta sidecars. For Cursor, symlink `skills/vega-paper` to `.cursor/skills/vega-paper` (see the skill file).
+
 ## Development
 
 | Script | Description |
@@ -92,6 +96,7 @@ Note: `bun run check` is **code** quality (Biome). `vega-paper lint` is **figure
 ```text
 packages/cli/      vega-paper CLI
 packages/themes/   paper, ACL, shadcn-light, monochrome-print themes
+skills/            agent skills (vega-paper workflow)
 examples/          sample data, reference specs, and READMEs
 docs/superpowers/  design specs and implementation plans
 ```
