@@ -1311,6 +1311,103 @@ describe("infer command", () => {
     );
   });
 
+  test("passes errorBandField when --error-band is provided", async () => {
+    const workspace = await createWorkspace();
+    const specOutputPath = join(workspace, "chart.vl.json");
+    const calls = createSpies();
+
+    await runInferCommand(
+      [
+        "infer",
+        "results.csv",
+        "--chart",
+        "line",
+        "--x",
+        "epoch",
+        "--y",
+        "f1",
+        "--error-band",
+        "f1_se",
+        "--spec-out",
+        specOutputPath,
+      ],
+      {
+        infer: async (request) => {
+          calls.inferCalls.push(request);
+          return createInferResult("../results.csv");
+        },
+        writeSpec: async () => {
+          calls.writeSpecCalls += 1;
+        },
+      },
+    );
+
+    expect(calls.inferCalls).toEqual([
+      {
+        inputPath: "results.csv",
+        chart: "line",
+        xField: "epoch",
+        yField: "f1",
+        errorBandField: "f1_se",
+        specOutputPath,
+      },
+    ]);
+  });
+
+  test("rejects error-band with aggregate", async () => {
+    const workspace = await createWorkspace();
+    const specOutputPath = join(workspace, "chart.vl.json");
+
+    await expect(
+      runInferCommand(
+        [
+          "infer",
+          "results.csv",
+          "--chart",
+          "line",
+          "--x",
+          "epoch",
+          "--y",
+          "f1",
+          "--error-band",
+          "f1_se",
+          "--aggregate",
+          "mean",
+          "--spec-out",
+          specOutputPath,
+        ],
+      ),
+    ).rejects.toThrow(
+      'The "--error-band" option cannot be used with --aggregate.',
+    );
+  });
+
+  test("rejects error-band when it matches --y", async () => {
+    const workspace = await createWorkspace();
+    const specOutputPath = join(workspace, "chart.vl.json");
+
+    await expect(
+      runInferCommand(
+        [
+          "infer",
+          "results.csv",
+          "--chart",
+          "line",
+          "--x",
+          "epoch",
+          "--y",
+          "f1",
+          "--error-band",
+          "f1",
+          "--spec-out",
+          specOutputPath,
+        ],
+      ),
+    ).rejects.toThrow(
+      'The "--error-band" field must differ from --x and --y.',
+    );
+  });
+
   test("rejects heatmap when --facet matches --x", async () => {
     const workspace = await createWorkspace();
     const specOutputPath = join(workspace, "chart.vl.json");

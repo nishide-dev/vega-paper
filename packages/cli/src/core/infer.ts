@@ -36,6 +36,7 @@ export type InferRequest = {
   inlineData?: boolean | undefined;
   facetField?: string | undefined;
   aggregateMethod?: InferAggregateMethod | undefined;
+  errorBandField?: string | undefined;
 };
 
 export type InferResult = {
@@ -104,11 +105,16 @@ export async function inferVegaLiteSpec(
   if (request.facetField !== undefined) {
     findFieldIndex(tabular.header, request.facetField);
   }
+  if (request.errorBandField !== undefined) {
+    assertErrorBandSupported(chart, request);
+    findFieldIndex(tabular.header, request.errorBandField);
+  }
 
   let encoding: {
     x: InferEncodingChannel;
     y: InferEncodingChannel;
     color?: InferEncodingChannel;
+    yError?: InferEncodingChannel;
   };
 
   if (chart === "boxplot" && request.aggregateMethod !== undefined) {
@@ -175,6 +181,13 @@ export async function inferVegaLiteSpec(
       encoding.color = {
         field: request.colorField,
         type: request.colorType ?? "nominal",
+      };
+    }
+
+    if (request.errorBandField !== undefined) {
+      encoding.yError = {
+        field: request.errorBandField,
+        type: "quantitative",
       };
     }
   }
@@ -395,6 +408,26 @@ function normalizeJsonCell(value: unknown, key: string): string {
   }
 
   return String(value);
+}
+
+function assertErrorBandSupported(chart: InferChartType, request: InferRequest): void {
+  if (request.aggregateMethod !== undefined) {
+    throw new VegaPaperError(
+      'The "--error-band" option cannot be used with --aggregate.',
+    );
+  }
+
+  if (chart === "heatmap") {
+    throw new VegaPaperError(
+      'The "--error-band" option cannot be used with --chart heatmap.',
+    );
+  }
+
+  if (chart === "boxplot") {
+    throw new VegaPaperError(
+      'The "--error-band" option cannot be used with --chart boxplot.',
+    );
+  }
 }
 
 function buildAggregateTransform(
