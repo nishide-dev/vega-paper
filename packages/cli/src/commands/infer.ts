@@ -34,6 +34,7 @@ type InferCommandOptions = {
   inlineData?: boolean;
   facet?: string;
   aggregate?: string;
+  errorBand?: string;
 };
 
 type WriteOutput = (value: string) => void;
@@ -75,6 +76,10 @@ export function registerInferCommand(
     .option(
       "--aggregate <method>",
       "aggregate measure before plotting: mean, median, sum, count, min, or max",
+    )
+    .option(
+      "--error-band <field>",
+      "symmetric error magnitude for y (maps to encoding.yError)",
     )
     .option("--title <text>", "chart title")
     .option("--width <number>", "chart width")
@@ -189,8 +194,15 @@ export function normalizeInferOptions(
     );
   }
 
+  if (options.errorBand !== undefined && aggregateMethod !== undefined) {
+    throw new VegaPaperError(
+      'The "--error-band" option cannot be used with --aggregate.',
+    );
+  }
+
   validateHeatmapOptions(chart, options);
   validateBoxplotOptions(chart, options);
+  validateErrorBandOptions(chart, options);
 
   return {
     inputPath,
@@ -208,6 +220,7 @@ export function normalizeInferOptions(
     inlineData: options.inlineData === true ? true : undefined,
     facetField: options.facet,
     aggregateMethod,
+    errorBandField: options.errorBand,
   };
 }
 
@@ -276,6 +289,72 @@ function validateBoxplotOptions(
   if (options.facet !== undefined && (options.facet === x || options.facet === y)) {
     throw new VegaPaperError(
       'The "--facet" field must differ from --x and --y on boxplot charts.',
+    );
+  }
+}
+
+function validateErrorBandOptions(
+  chart: InferChartType,
+  options: InferCommandOptions,
+): void {
+  const errorBand = options.errorBand;
+
+  if (errorBand === undefined) {
+    return;
+  }
+
+  if (chart === "heatmap") {
+    throw new VegaPaperError(
+      'The "--error-band" option cannot be used with --chart heatmap.',
+    );
+  }
+
+  if (chart === "boxplot") {
+    throw new VegaPaperError(
+      'The "--error-band" option cannot be used with --chart boxplot.',
+    );
+  }
+
+  const x = requireOption(options.x, "--x <field>");
+  const y = requireOption(options.y, "--y <field>");
+  const color = options.color;
+
+  if (errorBand === x || errorBand === y) {
+    throw new VegaPaperError(
+      color === undefined
+        ? 'The "--error-band" field must differ from --x and --y.'
+        : 'The "--error-band" field must differ from --x, --y, and --color.',
+    );
+  }
+
+  if (color !== undefined && errorBand === color) {
+    throw new VegaPaperError(
+      'The "--error-band" field must differ from --x, --y, and --color.',
+    );
+  }
+
+  if (options.facet === undefined) {
+    return;
+  }
+
+  if (color !== undefined) {
+    if (
+      options.facet === x ||
+      options.facet === y ||
+      options.facet === color ||
+      options.facet === errorBand
+    ) {
+      throw new VegaPaperError(
+        'The "--facet" field must differ from --x, --y, --color, and --error-band.',
+      );
+    }
+
+    return;
+  }
+
+  if (options.facet === x || options.facet === y || options.facet === errorBand) {
+    throw new VegaPaperError(
+      'The "--facet" field must differ from --x, --y, and --error-band.',
     );
   }
 }

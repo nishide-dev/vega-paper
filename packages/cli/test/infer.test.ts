@@ -906,6 +906,95 @@ describe("inferVegaLiteSpec", () => {
     );
   });
 
+  test("adds yError encoding when errorBandField is set on a line chart", async () => {
+    const workspace = await createWorkspace();
+    const inputPath = join(workspace, "data.csv");
+    const specOutputPath = join(workspace, "chart.vl.json");
+
+    await Bun.write(inputPath, "epoch,f1,f1_se\n1,0.61,0.02\n2,0.68,0.015\n");
+
+    const result = await inferVegaLiteSpec({
+      inputPath,
+      chart: "line",
+      xField: "epoch",
+      yField: "f1",
+      errorBandField: "f1_se",
+      specOutputPath,
+    });
+
+    expect(result.spec.encoding).toMatchObject({
+      y: { field: "f1", type: "quantitative" },
+      yError: { field: "f1_se", type: "quantitative" },
+    });
+  });
+
+  test("places yError on inner spec when facet and errorBandField are set", async () => {
+    const workspace = await createWorkspace();
+    const inputPath = join(workspace, "data.csv");
+    const specOutputPath = join(workspace, "chart.vl.json");
+
+    await Bun.write(inputPath, "epoch,f1,f1_se,split\n1,0.61,0.02,a\n");
+
+    const result = await inferVegaLiteSpec({
+      inputPath,
+      chart: "line",
+      xField: "epoch",
+      yField: "f1",
+      errorBandField: "f1_se",
+      facetField: "split",
+      specOutputPath,
+    });
+
+    expect(result.spec.encoding).toBeUndefined();
+    expect(result.spec.spec).toMatchObject({
+      encoding: {
+        yError: { field: "f1_se", type: "quantitative" },
+      },
+    });
+  });
+
+  test("rejects error-band with aggregate in the request", async () => {
+    const workspace = await createWorkspace();
+    const inputPath = join(workspace, "data.csv");
+
+    await Bun.write(inputPath, "epoch,f1,f1_se\n1,0.61,0.02\n");
+
+    await expect(
+      inferVegaLiteSpec({
+        inputPath,
+        chart: "line",
+        xField: "epoch",
+        yField: "f1",
+        errorBandField: "f1_se",
+        aggregateMethod: "mean",
+        specOutputPath: join(workspace, "chart.vl.json"),
+      }),
+    ).rejects.toThrow(
+      'The "--error-band" option cannot be used with --aggregate.',
+    );
+  });
+
+  test("rejects error-band with heatmap in the request", async () => {
+    const workspace = await createWorkspace();
+    const inputPath = join(workspace, "data.csv");
+
+    await Bun.write(inputPath, "x,y,v,se\na,b,1,0.1\n");
+
+    await expect(
+      inferVegaLiteSpec({
+        inputPath,
+        chart: "heatmap",
+        xField: "x",
+        yField: "y",
+        colorField: "v",
+        errorBandField: "se",
+        specOutputPath: join(workspace, "chart.vl.json"),
+      }),
+    ).rejects.toThrow(
+      'The "--error-band" option cannot be used with --chart heatmap.',
+    );
+  });
+
   test("rejects heatmap without a color field in the request", async () => {
     const workspace = await createWorkspace();
     const inputPath = join(workspace, "data.csv");
