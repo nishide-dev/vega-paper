@@ -6,6 +6,14 @@ export type InferChartType = "line" | "bar" | "scatter" | "area" | "heatmap";
 
 export type VegaLiteFieldType = "quantitative" | "nominal" | "ordinal" | "temporal";
 
+export type InferAggregateMethod =
+  | "mean"
+  | "median"
+  | "sum"
+  | "count"
+  | "min"
+  | "max";
+
 export type InferRequest = {
   inputPath: string;
   chart: InferChartType;
@@ -21,6 +29,7 @@ export type InferRequest = {
   colorType?: VegaLiteFieldType | undefined;
   inlineData?: boolean | undefined;
   facetField?: string | undefined;
+  aggregateMethod?: InferAggregateMethod | undefined;
 };
 
 export type InferResult = {
@@ -136,6 +145,10 @@ export async function inferVegaLiteSpec(
     height: request.height ?? DEFAULT_HEIGHT,
     encoding,
   };
+
+  if (request.aggregateMethod !== undefined) {
+    innerSpec.transform = [buildAggregateTransform(chart, request)];
+  }
 
   const spec: JsonObject =
     request.facetField === undefined
@@ -338,6 +351,36 @@ function normalizeJsonCell(value: unknown, key: string): string {
   }
 
   return String(value);
+}
+
+function buildAggregateTransform(
+  chart: InferChartType,
+  request: InferRequest,
+): JsonObject {
+  const method = request.aggregateMethod;
+
+  if (method === undefined) {
+    throw new VegaPaperError("Aggregate method is required to build transform.");
+  }
+
+  const isHeatmap = chart === "heatmap";
+  const measureField = isHeatmap ? request.colorField! : request.yField;
+  const groupby = isHeatmap
+    ? [request.xField, request.yField]
+    : [
+        request.xField,
+        ...(request.colorField !== undefined ? [request.colorField] : []),
+      ];
+
+  const aggregateEntry: JsonObject =
+    method === "count"
+      ? { op: "count", as: measureField }
+      : { op: method, field: measureField, as: measureField };
+
+  return {
+    aggregate: [aggregateEntry],
+    groupby,
+  };
 }
 
 function parseChartType(chart: string): InferChartType {

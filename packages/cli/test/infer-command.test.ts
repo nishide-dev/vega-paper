@@ -1148,6 +1148,78 @@ describe("infer command", () => {
     ).rejects.toThrow("Heatmap requires distinct --x, --y, and --color fields.");
   });
 
+  test("passes aggregateMethod when --aggregate is provided", async () => {
+    const workspace = await createWorkspace();
+    const specOutputPath = join(workspace, "chart.vl.json");
+    const calls = createSpies();
+
+    await runInferCommand(
+      [
+        "infer",
+        "results.csv",
+        "--chart",
+        "line",
+        "--x",
+        "epoch",
+        "--y",
+        "f1",
+        "--color",
+        "model",
+        "--aggregate",
+        "mean",
+        "--spec-out",
+        specOutputPath,
+      ],
+      {
+        infer: async (request) => {
+          calls.inferCalls.push(request);
+          return createInferResult("../results.csv");
+        },
+        writeSpec: async () => {
+          calls.writeSpecCalls += 1;
+        },
+      },
+    );
+
+    expect(calls.inferCalls).toEqual([
+      {
+        inputPath: "results.csv",
+        chart: "line",
+        xField: "epoch",
+        yField: "f1",
+        colorField: "model",
+        aggregateMethod: "mean",
+        specOutputPath,
+      },
+    ]);
+  });
+
+  test("rejects invalid --aggregate values", async () => {
+    const workspace = await createWorkspace();
+    const specOutputPath = join(workspace, "chart.vl.json");
+
+    await expect(
+      runInferCommand(
+        [
+          "infer",
+          "results.csv",
+          "--chart",
+          "line",
+          "--x",
+          "epoch",
+          "--y",
+          "f1",
+          "--aggregate",
+          "invalid",
+          "--spec-out",
+          specOutputPath,
+        ],
+      ),
+    ).rejects.toThrow(
+      'Invalid value "invalid" for --aggregate. Expected one of: mean, median, sum, count, min, max.',
+    );
+  });
+
   test("rejects heatmap when --facet matches --x", async () => {
     const workspace = await createWorkspace();
     const specOutputPath = join(workspace, "chart.vl.json");
