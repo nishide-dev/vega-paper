@@ -871,6 +871,80 @@ describe("infer command", () => {
       },
     });
   });
+
+  test("passes inlineData when --inline-data is provided", async () => {
+    const workspace = await createWorkspace();
+    const specOutputPath = join(workspace, "chart.vl.json");
+    const calls = createSpies();
+
+    await runInferCommand(
+      [
+        "infer",
+        "results.json",
+        "--chart",
+        "line",
+        "--x",
+        "epoch",
+        "--y",
+        "f1",
+        "--inline-data",
+        "--spec-out",
+        specOutputPath,
+      ],
+      {
+        infer: async (request) => {
+          calls.inferCalls.push(request);
+          return createInferResult("../results.json");
+        },
+        writeSpec: async () => {
+          calls.writeSpecCalls += 1;
+        },
+      },
+    );
+
+    expect(calls.inferCalls).toEqual([
+      {
+        inputPath: "results.json",
+        chart: "line",
+        xField: "epoch",
+        yField: "f1",
+        specOutputPath,
+        inlineData: true,
+      },
+    ]);
+  });
+
+  test("omits inlineData when --inline-data is not provided", async () => {
+    const workspace = await createWorkspace();
+    const specOutputPath = join(workspace, "chart.vl.json");
+    const calls = createSpies();
+
+    await runInferCommand(
+      [
+        "infer",
+        "results.csv",
+        "--chart",
+        "line",
+        "--x",
+        "epoch",
+        "--y",
+        "f1",
+        "--spec-out",
+        specOutputPath,
+      ],
+      {
+        infer: async (request) => {
+          calls.inferCalls.push(request);
+          return createInferResult("../results.csv");
+        },
+        writeSpec: async () => {
+          calls.writeSpecCalls += 1;
+        },
+      },
+    );
+
+    expect(calls.inferCalls[0]?.inlineData).toBeUndefined();
+  });
 });
 
 type InferCommandHarness = {

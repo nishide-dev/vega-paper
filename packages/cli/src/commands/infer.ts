@@ -30,6 +30,7 @@ type InferCommandOptions = {
   xType?: string;
   yType?: string;
   colorType?: string;
+  inlineData?: boolean;
 };
 
 type WriteOutput = (value: string) => void;
@@ -58,8 +59,8 @@ export function registerInferCommand(
 ): void {
   program
     .command("infer")
-    .argument("<input>", "CSV input path")
-    .description("Generate a Vega-Lite spec from CSV and optionally render SVG")
+    .argument("<input>", "CSV or JSON input path")
+    .description("Generate a Vega-Lite spec from CSV or JSON and optionally render SVG")
     .option("--chart <type>", "chart type: line, bar, or scatter")
     .option("--x <field>", "x encoding field")
     .option("--y <field>", "y encoding field")
@@ -73,6 +74,7 @@ export function registerInferCommand(
     .option("--x-type <type>", "override inferred type for x encoding")
     .option("--y-type <type>", "override inferred type for y encoding")
     .option("--color-type <type>", "override color encoding type")
+    .option("--inline-data", "embed parsed data in the generated spec as data.values")
     .option("--lint-profile <name>", "lint profile: paper, web, or acl")
     .option("--strict", "exit with code 1 when warnings are present when linting")
     .action(async (inputPath: string, options: InferCommandOptions) => {
@@ -170,6 +172,7 @@ export function normalizeInferOptions(
     xType,
     yType,
     colorType,
+    inlineData: options.inlineData === true ? true : undefined,
   };
 }
 
