@@ -4,7 +4,7 @@ import { VegaPaperError } from "../core/errors";
 import {
   buildRenderFigureMeta,
   type FigureMeta,
-  resolveVegaDependencyVersions,
+  resolveFigureMetaVersions,
   toSiblingMetaPath,
   writeFigureMeta,
 } from "../core/figure-meta";
@@ -71,7 +71,7 @@ export function registerRenderCommand(
       writeOutput(`Rendered ${result.outputPath}\n`);
 
       const metaOutputPath = toSiblingMetaPath(request.outputPath);
-      const versions = await resolveVegaDependencyVersions();
+      const versions = await resolveFigureMetaVersions();
       const meta = buildRenderFigureMeta({
         inputPath,
         outputPath: request.outputPath,

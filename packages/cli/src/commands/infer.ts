@@ -5,7 +5,7 @@ import { VegaPaperError } from "../core/errors";
 import {
   buildFigureMeta,
   type FigureMeta,
-  resolveVegaDependencyVersions,
+  resolveFigureMetaVersions,
   toSiblingMetaPath,
   writeFigureMeta,
 } from "../core/figure-meta";
@@ -135,7 +135,7 @@ export function registerInferCommand(
         writeOutput(`Rendered ${renderResult.outputPath}\n`);
 
         const metaOutputPath = toSiblingMetaPath(options.out);
-        const versions = await resolveVegaDependencyVersions();
+        const versions = await resolveFigureMetaVersions();
         const meta = buildFigureMeta({
           inputPath,
           outputPath: options.out,

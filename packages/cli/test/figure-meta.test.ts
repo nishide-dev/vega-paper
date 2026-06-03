@@ -3,7 +3,7 @@ import {
   buildFigureMeta,
   buildInferSnapshot,
   buildRenderFigureMeta,
-  resolveVegaDependencyVersions,
+  resolveFigureMetaVersions,
   toSiblingMetaPath,
 } from "../src/core/figure-meta";
 
@@ -81,6 +81,7 @@ describe("buildFigureMeta", () => {
       },
       createdAt: new Date("2026-06-03T12:00:00.000Z"),
       versions: {
+        vegaPaperVersion: "0.1.0",
         vegaVersion: "6.2.0",
         vegaLiteVersion: "6.4.1",
       },
@@ -93,6 +94,7 @@ describe("buildFigureMeta", () => {
       output: "examples/training-curve/output.svg",
       specOut: "examples/training-curve/chart.vl.json",
       createdAt: "2026-06-03T12:00:00.000Z",
+      vegaPaperVersion: "0.1.0",
       vegaVersion: "6.2.0",
       vegaLiteVersion: "6.4.1",
       infer: {
@@ -118,6 +120,7 @@ describe("buildFigureMeta", () => {
       },
       createdAt: new Date("2026-06-03T12:00:00.000Z"),
       versions: {
+        vegaPaperVersion: "0.1.0",
         vegaVersion: "6.2.0",
         vegaLiteVersion: "6.4.1",
       },
@@ -134,6 +137,7 @@ describe("buildRenderFigureMeta", () => {
       outputPath: "figures/f1.svg",
       createdAt: new Date("2026-06-03T12:00:00.000Z"),
       versions: {
+        vegaPaperVersion: "0.1.0",
         vegaVersion: "6.2.0",
         vegaLiteVersion: "6.4.1",
       },
@@ -145,6 +149,7 @@ describe("buildRenderFigureMeta", () => {
       input: "chart.vl.json",
       output: "figures/f1.svg",
       createdAt: "2026-06-03T12:00:00.000Z",
+      vegaPaperVersion: "0.1.0",
       vegaVersion: "6.2.0",
       vegaLiteVersion: "6.4.1",
     });
@@ -157,6 +162,7 @@ describe("buildRenderFigureMeta", () => {
       themeName: "paper-clean",
       createdAt: new Date("2026-06-03T12:00:00.000Z"),
       versions: {
+        vegaPaperVersion: "0.1.0",
         vegaVersion: "6.2.0",
         vegaLiteVersion: "6.4.1",
       },
@@ -166,10 +172,11 @@ describe("buildRenderFigureMeta", () => {
   });
 });
 
-describe("resolveVegaDependencyVersions", () => {
-  test("reads installed vega package versions", async () => {
-    const versions = await resolveVegaDependencyVersions();
+describe("resolveFigureMetaVersions", () => {
+  test("reads installed package versions", async () => {
+    const versions = await resolveFigureMetaVersions();
 
+    expect(versions.vegaPaperVersion).toBe("0.1.0");
     expect(versions.vegaVersion.length).toBeGreaterThan(0);
     expect(versions.vegaLiteVersion.length).toBeGreaterThan(0);
   });
