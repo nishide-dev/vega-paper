@@ -4,6 +4,7 @@ import type { Command } from "commander";
 import { VegaPaperError } from "../core/errors";
 import {
   inferVegaLiteSpec,
+  type InferAggregateMethod,
   type InferChartType,
   type InferRequest,
   type InferResult,
@@ -32,6 +33,7 @@ type InferCommandOptions = {
   colorType?: string;
   inlineData?: boolean;
   facet?: string;
+  aggregate?: string;
 };
 
 type WriteOutput = (value: string) => void;
@@ -67,6 +69,10 @@ export function registerInferCommand(
     .option("--y <field>", "y encoding field")
     .option("--color <field>", "color encoding field")
     .option("--facet <field>", "split chart into small multiples by field")
+    .option(
+      "--aggregate <method>",
+      "aggregate measure before plotting: mean, median, sum, count, min, or max",
+    )
     .option("--title <text>", "chart title")
     .option("--width <number>", "chart width")
     .option("--height <number>", "chart height")
@@ -189,6 +195,7 @@ export function normalizeInferOptions(
     colorType,
     inlineData: options.inlineData === true ? true : undefined,
     facetField: options.facet,
+    aggregateMethod: parseInferAggregateMethod(options.aggregate),
   };
 }
 
@@ -243,6 +250,31 @@ function validateHeatmapOptions(
       );
     }
   }
+}
+
+const VALID_AGGREGATE_METHODS = [
+  "mean",
+  "median",
+  "sum",
+  "count",
+  "min",
+  "max",
+] as const;
+
+function parseInferAggregateMethod(
+  value: string | undefined,
+): InferAggregateMethod | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if ((VALID_AGGREGATE_METHODS as readonly string[]).includes(value)) {
+    return value as InferAggregateMethod;
+  }
+
+  throw new VegaPaperError(
+    `Invalid value "${value}" for --aggregate. Expected one of: ${VALID_AGGREGATE_METHODS.join(", ")}.`,
+  );
 }
 
 function requireOption(value: string | undefined, flag: string): string {

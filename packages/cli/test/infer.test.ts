@@ -691,6 +691,139 @@ describe("inferVegaLiteSpec", () => {
     });
   });
 
+  test("adds aggregate transform on flat line chart when aggregateMethod is mean", async () => {
+    const workspace = await createWorkspace();
+    const inputPath = join(workspace, "data.csv");
+    const specOutputPath = join(workspace, "chart.vl.json");
+
+    await Bun.write(
+      inputPath,
+      "epoch,f1,model\n1,0.61,a\n1,0.62,a\n2,0.68,a\n",
+    );
+
+    const result = await inferVegaLiteSpec({
+      inputPath,
+      chart: "line",
+      xField: "epoch",
+      yField: "f1",
+      colorField: "model",
+      aggregateMethod: "mean",
+      specOutputPath,
+    });
+
+    expect(result.spec.transform).toEqual([
+      {
+        aggregate: [{ op: "mean", field: "f1", as: "f1" }],
+        groupby: ["epoch", "model"],
+      },
+    ]);
+  });
+
+  test("groups only by x when aggregate is set without color", async () => {
+    const workspace = await createWorkspace();
+    const inputPath = join(workspace, "data.csv");
+    const specOutputPath = join(workspace, "chart.vl.json");
+
+    await Bun.write(inputPath, "epoch,f1\n1,0.61\n1,0.62\n2,0.68\n");
+
+    const result = await inferVegaLiteSpec({
+      inputPath,
+      chart: "line",
+      xField: "epoch",
+      yField: "f1",
+      aggregateMethod: "sum",
+      specOutputPath,
+    });
+
+    expect(result.spec.transform).toEqual([
+      {
+        aggregate: [{ op: "sum", field: "f1", as: "f1" }],
+        groupby: ["epoch"],
+      },
+    ]);
+  });
+
+  test("uses row-count aggregate without field when aggregateMethod is count", async () => {
+    const workspace = await createWorkspace();
+    const inputPath = join(workspace, "data.csv");
+    const specOutputPath = join(workspace, "chart.vl.json");
+
+    await Bun.write(inputPath, "epoch,f1\n1,0.61\n1,0.62\n2,0.68\n");
+
+    const result = await inferVegaLiteSpec({
+      inputPath,
+      chart: "line",
+      xField: "epoch",
+      yField: "f1",
+      aggregateMethod: "count",
+      specOutputPath,
+    });
+
+    expect(result.spec.transform).toEqual([
+      {
+        aggregate: [{ op: "count", as: "f1" }],
+        groupby: ["epoch"],
+      },
+    ]);
+  });
+
+  test("places aggregate transform on inner spec when facet is set", async () => {
+    const workspace = await createWorkspace();
+    const inputPath = join(workspace, "data.csv");
+    const specOutputPath = join(workspace, "chart.vl.json");
+
+    await Bun.write(
+      inputPath,
+      "epoch,f1,split,model\n1,0.61,a,x\n1,0.62,a,x\n2,0.68,a,x\n",
+    );
+
+    const result = await inferVegaLiteSpec({
+      inputPath,
+      chart: "line",
+      xField: "epoch",
+      yField: "f1",
+      facetField: "split",
+      colorField: "model",
+      aggregateMethod: "mean",
+      specOutputPath,
+    });
+
+    expect(result.spec.transform).toBeUndefined();
+    expect(result.spec.spec).toMatchObject({
+      transform: [
+        {
+          aggregate: [{ op: "mean", field: "f1", as: "f1" }],
+          groupby: ["epoch", "model"],
+        },
+      ],
+    });
+  });
+
+  test("aggregates heatmap color with groupby x and y", async () => {
+    const workspace = await createWorkspace();
+    const inputPath = join(workspace, "data.csv");
+    const specOutputPath = join(workspace, "chart.vl.json");
+
+    await Bun.write(inputPath, "col,row,value\na,x,1\na,x,2\nb,y,3\n");
+
+    const result = await inferVegaLiteSpec({
+      inputPath,
+      chart: "heatmap",
+      xField: "col",
+      yField: "row",
+      colorField: "value",
+      aggregateMethod: "sum",
+      specOutputPath,
+    });
+
+    expect(result.spec.transform).toEqual([
+      {
+        aggregate: [{ op: "sum", field: "value", as: "value" }],
+        groupby: ["col", "row"],
+      },
+    ]);
+  });
+
   test("rejects heatmap without a color field in the request", async () => {
     const workspace = await createWorkspace();
     const inputPath = join(workspace, "data.csv");
