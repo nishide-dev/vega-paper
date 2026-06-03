@@ -379,6 +379,29 @@ describe("inferVegaLiteSpec", () => {
       },
     });
   });
+
+  test("yType ordinal overrides quantitative inference for numeric y field", async () => {
+    const workspace = await createWorkspace();
+    const inputPath = join(workspace, "data.csv");
+    const specOutputPath = join(workspace, "chart.vl.json");
+
+    await Bun.write(inputPath, "label,score\nA,1\nB,2\n");
+
+    const result = await inferVegaLiteSpec({
+      inputPath,
+      chart: "bar",
+      xField: "label",
+      yField: "score",
+      specOutputPath,
+      yType: "ordinal",
+    });
+
+    expect(result.spec).toMatchObject({
+      encoding: {
+        y: { field: "score", type: "ordinal" },
+      },
+    });
+  });
 });
 
 async function createWorkspace(): Promise<string> {

@@ -30,7 +30,7 @@ export type ParsedCsv = {
   rows: string[][];
 };
 
-type InferFieldType = "quantitative" | "nominal";
+type InferredFieldType = "quantitative" | "nominal";
 
 const DEFAULT_WIDTH = 360;
 const DEFAULT_HEIGHT = 240;
@@ -157,7 +157,7 @@ function findFieldIndex(header: string[], field: string): number {
   return index;
 }
 
-function inferFieldType(rows: string[][], index: number): InferFieldType {
+function inferFieldType(rows: string[][], index: number): InferredFieldType {
   let sawNonEmptyValue = false;
 
   const isQuantitative = rows.every((row) => {
