@@ -7,6 +7,7 @@ import {
   type InferChartType,
   type InferRequest,
   type InferResult,
+  type VegaLiteFieldType,
 } from "../core/infer";
 import { lintSpec, type LintResult } from "../core/lint";
 import { getLintProfile } from "../core/lint-profiles";
@@ -26,6 +27,9 @@ type InferCommandOptions = {
   specOut?: string;
   lintProfile?: string;
   strict?: boolean;
+  xType?: string;
+  yType?: string;
+  colorType?: string;
 };
 
 type WriteOutput = (value: string) => void;
@@ -66,6 +70,9 @@ export function registerInferCommand(
     .option("--theme <name>", "theme name, used only when rendering")
     .option("--out <path>", "SVG output path")
     .option("--spec-out <path>", "Vega-Lite spec output path")
+    .option("--x-type <type>", "override inferred type for x encoding")
+    .option("--y-type <type>", "override inferred type for y encoding")
+    .option("--color-type <type>", "override color encoding type")
     .option("--lint-profile <name>", "lint profile: paper, web, or acl")
     .option("--strict", "exit with code 1 when warnings are present when linting")
     .action(async (inputPath: string, options: InferCommandOptions) => {
@@ -142,6 +149,14 @@ export function normalizeInferOptions(
     );
   }
 
+  const xType = parseFieldType(options.xType, "--x-type");
+  const yType = parseFieldType(options.yType, "--y-type");
+  const colorType = parseFieldType(options.colorType, "--color-type");
+
+  if (colorType !== undefined && options.color === undefined) {
+    throw new VegaPaperError('The "--color-type" option requires "--color <field>".');
+  }
+
   return {
     inputPath,
     chart: parseInferChartType(options.chart),
@@ -152,6 +167,9 @@ export function normalizeInferOptions(
     width: parsePositiveDimension(options.width, "--width <number>"),
     height: parsePositiveDimension(options.height, "--height <number>"),
     specOutputPath,
+    xType,
+    yType,
+    colorType,
   };
 }
 
@@ -198,6 +216,21 @@ function parsePositiveDimension(
   }
 
   return numericValue;
+}
+
+const VALID_FIELD_TYPES = ["quantitative", "nominal", "ordinal", "temporal"] as const;
+
+function parseFieldType(
+  value: string | undefined,
+  flag: "--x-type" | "--y-type" | "--color-type",
+): VegaLiteFieldType | undefined {
+  if (value === undefined) return undefined;
+  if ((VALID_FIELD_TYPES as readonly string[]).includes(value)) {
+    return value as VegaLiteFieldType;
+  }
+  throw new VegaPaperError(
+    `Invalid value "${value}" for ${flag}. Expected one of: quantitative, nominal, ordinal, temporal.`,
+  );
 }
 
 function toSiblingSpecPath(outputPath: string): string {

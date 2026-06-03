@@ -4,6 +4,8 @@ import type { JsonObject } from "./spec";
 
 export type InferChartType = "line" | "bar" | "scatter";
 
+export type VegaLiteFieldType = "quantitative" | "nominal" | "ordinal" | "temporal";
+
 export type InferRequest = {
   inputPath: string;
   chart: InferChartType;
@@ -14,6 +16,9 @@ export type InferRequest = {
   width?: number | undefined;
   height?: number | undefined;
   specOutputPath: string;
+  xType?: VegaLiteFieldType | undefined;
+  yType?: VegaLiteFieldType | undefined;
+  colorType?: VegaLiteFieldType | undefined;
 };
 
 export type InferResult = {
@@ -25,7 +30,7 @@ export type ParsedCsv = {
   rows: string[][];
 };
 
-type InferFieldType = "quantitative" | "nominal";
+type InferredFieldType = "quantitative" | "nominal";
 
 const DEFAULT_WIDTH = 360;
 const DEFAULT_HEIGHT = 240;
@@ -50,24 +55,24 @@ export async function inferVegaLiteSpec(
       : findFieldIndex(csv.header, request.colorField);
 
   const encoding: {
-    x: { field: string; type: InferFieldType };
-    y: { field: string; type: InferFieldType };
-    color?: { field: string; type: "nominal" };
+    x: { field: string; type: VegaLiteFieldType };
+    y: { field: string; type: VegaLiteFieldType };
+    color?: { field: string; type: VegaLiteFieldType };
   } = {
     x: {
       field: request.xField,
-      type: inferFieldType(csv.rows, xIndex),
+      type: request.xType ?? inferFieldType(csv.rows, xIndex),
     },
     y: {
       field: request.yField,
-      type: inferFieldType(csv.rows, yIndex),
+      type: request.yType ?? inferFieldType(csv.rows, yIndex),
     },
   };
 
   if (request.colorField !== undefined && colorIndex !== undefined) {
     encoding.color = {
       field: request.colorField,
-      type: "nominal",
+      type: request.colorType ?? "nominal",
     };
   }
 
@@ -152,7 +157,7 @@ function findFieldIndex(header: string[], field: string): number {
   return index;
 }
 
-function inferFieldType(rows: string[][], index: number): InferFieldType {
+function inferFieldType(rows: string[][], index: number): InferredFieldType {
   let sawNonEmptyValue = false;
 
   const isQuantitative = rows.every((row) => {

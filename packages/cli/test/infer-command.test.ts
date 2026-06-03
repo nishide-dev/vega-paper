@@ -694,6 +694,148 @@ describe("infer command", () => {
     );
   });
 
+  test("passes --x-type through to InferRequest", async () => {
+    const calls = createSpies();
+
+    await runInferCommand(
+      [
+        "infer",
+        "results.csv",
+        "--chart",
+        "line",
+        "--x",
+        "date",
+        "--x-type",
+        "temporal",
+        "--y",
+        "value",
+        "--spec-out",
+        "out.vl.json",
+      ],
+      {
+        ...calls,
+        infer: async (request) => {
+          calls.inferCalls.push(request);
+          return createInferResult("../results.csv");
+        },
+      },
+    );
+
+    expect(calls.inferCalls).toEqual([
+      expect.objectContaining({ xType: "temporal" }),
+    ]);
+  });
+
+  test("passes --y-type through to InferRequest", async () => {
+    const calls = createSpies();
+
+    await runInferCommand(
+      [
+        "infer",
+        "results.csv",
+        "--chart",
+        "line",
+        "--x",
+        "epoch",
+        "--y",
+        "score",
+        "--y-type",
+        "nominal",
+        "--spec-out",
+        "out.vl.json",
+      ],
+      {
+        ...calls,
+        infer: async (request) => {
+          calls.inferCalls.push(request);
+          return createInferResult("../results.csv");
+        },
+      },
+    );
+
+    expect(calls.inferCalls).toEqual([
+      expect.objectContaining({ yType: "nominal" }),
+    ]);
+  });
+
+  test("passes --color-type through to InferRequest", async () => {
+    const calls = createSpies();
+
+    await runInferCommand(
+      [
+        "infer",
+        "results.csv",
+        "--chart",
+        "scatter",
+        "--x",
+        "x",
+        "--y",
+        "y",
+        "--color",
+        "rating",
+        "--color-type",
+        "ordinal",
+        "--spec-out",
+        "out.vl.json",
+      ],
+      {
+        ...calls,
+        infer: async (request) => {
+          calls.inferCalls.push(request);
+          return createInferResult("../results.csv");
+        },
+      },
+    );
+
+    expect(calls.inferCalls).toEqual([
+      expect.objectContaining({ colorType: "ordinal" }),
+    ]);
+  });
+
+  test("rejects --x-type with an invalid type value", async () => {
+    await expect(
+      runInferCommand([
+        "infer",
+        "results.csv",
+        "--chart",
+        "line",
+        "--x",
+        "epoch",
+        "--x-type",
+        "invalid",
+        "--y",
+        "f1",
+        "--spec-out",
+        "out.vl.json",
+      ]),
+    ).rejects.toThrow(
+      new VegaPaperError(
+        'Invalid value "invalid" for --x-type. Expected one of: quantitative, nominal, ordinal, temporal.',
+      ),
+    );
+  });
+
+  test("rejects --color-type without --color", async () => {
+    await expect(
+      runInferCommand([
+        "infer",
+        "results.csv",
+        "--chart",
+        "scatter",
+        "--x",
+        "x",
+        "--y",
+        "y",
+        "--color-type",
+        "ordinal",
+        "--spec-out",
+        "out.vl.json",
+      ]),
+    ).rejects.toThrow(
+      new VegaPaperError('The "--color-type" option requires "--color <field>".'),
+    );
+  });
+
   test("runs the real infer path and writes a generated spec", async () => {
     const workspace = await createWorkspace();
     const inputPath = join(workspace, "results.csv");
