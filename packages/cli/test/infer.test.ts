@@ -308,6 +308,77 @@ describe("inferVegaLiteSpec", () => {
       }),
     ).rejects.toThrow(`CSV file not found or unreadable: ${inputPath}`);
   });
+
+  test("xType temporal overrides nominal inference for date strings", async () => {
+    const workspace = await createWorkspace();
+    const inputPath = join(workspace, "data.csv");
+    const specOutputPath = join(workspace, "chart.vl.json");
+
+    await Bun.write(inputPath, "date,value\n2024-01-01,10\n2024-01-02,15\n");
+
+    const result = await inferVegaLiteSpec({
+      inputPath,
+      chart: "line",
+      xField: "date",
+      yField: "value",
+      specOutputPath,
+      xType: "temporal",
+    });
+
+    expect(result.spec).toMatchObject({
+      encoding: {
+        x: { field: "date", type: "temporal" },
+        y: { field: "value", type: "quantitative" },
+      },
+    });
+  });
+
+  test("xType ordinal overrides quantitative inference for numeric field", async () => {
+    const workspace = await createWorkspace();
+    const inputPath = join(workspace, "data.csv");
+    const specOutputPath = join(workspace, "chart.vl.json");
+
+    await Bun.write(inputPath, "epoch,f1\n1,0.61\n2,0.68\n");
+
+    const result = await inferVegaLiteSpec({
+      inputPath,
+      chart: "line",
+      xField: "epoch",
+      yField: "f1",
+      specOutputPath,
+      xType: "ordinal",
+    });
+
+    expect(result.spec).toMatchObject({
+      encoding: {
+        x: { field: "epoch", type: "ordinal" },
+      },
+    });
+  });
+
+  test("colorType ordinal overrides the default nominal color type", async () => {
+    const workspace = await createWorkspace();
+    const inputPath = join(workspace, "data.csv");
+    const specOutputPath = join(workspace, "chart.vl.json");
+
+    await Bun.write(inputPath, "x,y,rating\n1,2,3\n4,5,5\n");
+
+    const result = await inferVegaLiteSpec({
+      inputPath,
+      chart: "scatter",
+      xField: "x",
+      yField: "y",
+      colorField: "rating",
+      specOutputPath,
+      colorType: "ordinal",
+    });
+
+    expect(result.spec).toMatchObject({
+      encoding: {
+        color: { field: "rating", type: "ordinal" },
+      },
+    });
+  });
 });
 
 async function createWorkspace(): Promise<string> {
