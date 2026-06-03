@@ -8,7 +8,10 @@ import {
   type InferRequest,
   type InferResult,
 } from "../core/infer";
+import { lintSpec, type LintResult } from "../core/lint";
+import { getLintProfile } from "../core/lint-profiles";
 import { renderChart, type RenderRequest, type RenderResult } from "../core/render";
+import { formatHumanLintResult, getLintExitCode } from "./lint";
 
 type InferCommandOptions = {
   chart?: string;
@@ -21,11 +24,18 @@ type InferCommandOptions = {
   theme?: string;
   out?: string;
   specOut?: string;
+  lintProfile?: string;
+  strict?: boolean;
 };
 
 type WriteOutput = (value: string) => void;
 type RunInfer = (request: InferRequest) => Promise<InferResult>;
+type RunLint = (
+  inputPath: string,
+  profileName: string | undefined,
+) => Promise<LintResult>;
 type RunRender = (request: RenderRequest) => Promise<RenderResult>;
+type SetExitCode = (exitCode: 0 | 1) => void;
 type WriteSpec = (specOutputPath: string, spec: InferResult["spec"]) => Promise<void>;
 
 export function registerInferCommand(
@@ -36,6 +46,11 @@ export function registerInferCommand(
   runInfer: RunInfer = inferVegaLiteSpec,
   runRender: RunRender = renderChart,
   writeSpec: WriteSpec = writeSpecFile,
+  runLint: RunLint = (inputPath, profileName) =>
+    lintSpec({ inputPath, profileName }),
+  setExitCode: SetExitCode = (exitCode) => {
+    process.exitCode = exitCode;
+  },
 ): void {
   program
     .command("infer")
@@ -51,7 +66,13 @@ export function registerInferCommand(
     .option("--theme <name>", "theme name, used only when rendering")
     .option("--out <path>", "SVG output path")
     .option("--spec-out <path>", "Vega-Lite spec output path")
+    .option("--lint-profile <name>", "lint profile: paper, web, or acl")
+    .option("--strict", "exit with code 1 when warnings are present when linting")
     .action(async (inputPath: string, options: InferCommandOptions) => {
+      if (options.lintProfile !== undefined) {
+        getLintProfile(options.lintProfile);
+      }
+
       const request = normalizeInferOptions(inputPath, options);
       const result = await runInfer(request);
 
@@ -63,18 +84,32 @@ export function registerInferCommand(
 
       writeOutput(`Wrote ${request.specOutputPath}\n`);
 
-      if (options.out === undefined) {
-        return;
+      if (options.lintProfile !== undefined) {
+        const lintResult = await runLint(request.specOutputPath, options.lintProfile);
+        const lintExitCode = getLintExitCode(lintResult, Boolean(options.strict));
+
+        if (lintResult.issues.length === 0) {
+          writeOutput("No lint issues found.\n");
+        } else {
+          writeOutput(formatHumanLintResult(lintResult));
+        }
+
+        if (lintExitCode !== 0) {
+          setExitCode(lintExitCode);
+          return;
+        }
       }
 
-      const renderResult = await runRender({
-        inputPath: request.specOutputPath,
-        outputPath: options.out,
-        format: "svg",
-        themeName: options.theme,
-      });
+      if (options.out !== undefined) {
+        const renderResult = await runRender({
+          inputPath: request.specOutputPath,
+          outputPath: options.out,
+          format: "svg",
+          themeName: options.theme,
+        });
 
-      writeOutput(`Rendered ${renderResult.outputPath}\n`);
+        writeOutput(`Rendered ${renderResult.outputPath}\n`);
+      }
     });
 }
 
@@ -83,6 +118,11 @@ export function normalizeInferOptions(
   options: InferCommandOptions,
 ): InferRequest {
   const outputPath = options.out;
+
+  if (options.strict && options.lintProfile === undefined) {
+    throw new VegaPaperError('The "--strict" option requires "--lint-profile <name>".');
+  }
+
   const specOutputPath =
     options.specOut ?? (outputPath === undefined ? undefined : toSiblingSpecPath(outputPath));
 
