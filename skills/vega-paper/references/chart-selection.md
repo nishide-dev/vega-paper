@@ -1,0 +1,76 @@
+# Chart selection for `vega-paper infer`
+
+Choose `--chart` and encoding fields **before** running `infer`. This guide covers selection only; see [SKILL.md](../SKILL.md) for the infer → lint → render workflow.
+
+## Chart types
+
+| Analytical goal | `--chart` | Typical encodings |
+|-----------------|-----------|-------------------|
+| Metric over steps, epochs, or time | `line` | `--x` step/time, `--y` metric; optional `--color` series |
+| Compare categories | `bar` | `--x` category (nominal), `--y` measure |
+| Relationship between two numeric variables | `scatter` | `--x` and `--y` both quantitative |
+| Trend with filled area | `area` | Same as `line` |
+| Matrix / grid of counts or scores | `heatmap` | `--x`, `--y`, and `--color` (cell value) — **all distinct fields** |
+| Distribution of a measure by group | `boxplot` | `--x` group (nominal), `--y` measure — **distinct fields** |
+
+Supported values for `--chart`: `line`, `bar`, `scatter`, `area`, `heatmap`, `boxplot`.
+
+There is no dedicated `examples/` folder for `bar`, `scatter`, or `area` yet; use the same encoding rules above when the goal matches.
+
+## Modifiers
+
+Optional flags that change the generated spec. Combine only when rules below allow it.
+
+### `--aggregate <method>`
+
+Methods: `mean`, `median`, `sum`, `count`, `min`, `max`.
+
+- Use when raw rows must be rolled up (e.g. multiple runs per epoch → mean F1).
+- **Not allowed** with `--chart boxplot`.
+- **Not allowed** together with `--error-band`.
+
+For heatmaps, aggregate the `--color` field with groupby `--x` and `--y`.
+
+### `--facet <field>`
+
+Split the chart into small multiples by `field`.
+
+- Must differ from `--x`, `--y`, and `--color` (and from `--error-band` when set).
+- On heatmaps, facet must also differ from the color field used for cell values.
+
+### `--error-band <field>`
+
+Symmetric error magnitude on `--y` (maps to `encoding.yError`).
+
+- Allowed on cartesian charts: `line`, `bar`, `scatter`, `area`.
+- **Not allowed** with `heatmap`, `boxplot`, or `--aggregate`.
+- Field must differ from `--x`, `--y`, `--color`, and `--facet`.
+
+## Examples in this repo
+
+Copy-paste commands live in each folder README.
+
+| Folder | `--chart` | Also demonstrates |
+|--------|-----------|-------------------|
+| [training-curve/](../../../examples/training-curve/) | `line` | `--color`; variants with `--aggregate mean`, `--error-band` |
+| [confusion-matrix/](../../../examples/confusion-matrix/) | `heatmap` | `--aggregate sum` from trial rows |
+| [faceted-training/](../../../examples/faceted-training/) | `line` | `--facet`, `--color` |
+| [boxplot/](../../../examples/boxplot/) | `boxplot` | optional `--color` grouping |
+| [basic-line/](../../../examples/basic-line/) | (hand-written spec) | `render` / `lint` only — not `infer` |
+
+Index: [examples/README.md](../../../examples/README.md).
+
+## Common mistakes
+
+| Mistake | Why it fails / looks wrong | Fix |
+|---------|---------------------------|-----|
+| `heatmap` without `--color` | CLI requires a cell value field | Add distinct `--color` field |
+| Same field for `--x`, `--y`, or `--color` on heatmap | Distinct encodings required | Pick three different columns |
+| `--aggregate` with `boxplot` | CLI rejects the combination | Use boxplot on raw rows or choose another chart |
+| `--error-band` with `--aggregate` | CLI rejects the combination | Pick one modifier |
+| `--error-band` on heatmap or boxplot | Unsupported chart types | Use cartesian chart or drop error band |
+| `--facet` equals `--color` (or `--x` / `--y`) | CLI rejects duplicate fields | Choose a different facet field |
+| Boxplot with `--x` equal to `--y` | Needs category vs measure | Use nominal group on `--x`, quantitative on `--y` |
+| Wrong chart for the goal (e.g. bar for time series) | Misleading figure | Prefer `line` or `area` for ordered steps/time |
+
+When in doubt, inspect column types and row grain (one row per observation vs aggregated), then re-read the chart types table.

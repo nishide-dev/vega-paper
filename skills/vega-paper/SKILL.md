@@ -48,22 +48,7 @@ Optional flags: `--facet`, `--aggregate`, `--error-band`, `--title`, `--width`, 
 
 ## Chart selection
 
-| Goal | `--chart` | Notes |
-|------|-----------|-------|
-| Metric vs step/time | `line` | Training curves, learning curves |
-| Category comparison | `bar` | Set `--x` to category, `--y` to measure |
-| Two numeric variables | `scatter` | Correlation, embeddings |
-| Trend with area fill | `area` | Same encodings as line |
-| Grid/cell counts | `heatmap` | **Requires** distinct `--x`, `--y`, `--color` |
-| Distribution by group | `boxplot` | Distinct `--x` (category) and `--y` (measure) |
-
-Modifiers:
-
-- **`--aggregate`**: `mean`, `median`, `sum`, `count`, `min`, `max` — not with `boxplot`
-- **`--facet`**: small multiples; field must differ from `--x`, `--y`, `--color`
-- **`--error-band`**: symmetric y error field — cartesian charts only; not with `heatmap`, `boxplot`, or `--aggregate`
-
-Copy-paste examples: [`examples/`](../../examples/README.md).
+Pick `--chart`, `--x`, `--y`, and optional `--color` / modifiers from the data and analytical goal. Read [Chart selection](references/chart-selection.md) for the full type table, modifier rules, repo examples, and common mistakes.
 
 ## Primary workflow (infer)
 
@@ -166,6 +151,10 @@ Default recommendation for papers: **`paper-clean`**.
 bun run packages/cli/src/index.ts themes show paper-clean
 bun run packages/cli/src/index.ts doctor
 ```
+
+## References
+
+- [Chart selection](references/chart-selection.md) — chart types and infer modifiers
 
 ## Agent checklist
 
