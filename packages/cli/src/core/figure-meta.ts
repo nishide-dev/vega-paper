@@ -28,6 +28,7 @@ export type InferFigureMeta = {
   output: string;
   specOut: string;
   createdAt: string;
+  vegaPaperVersion: string;
   vegaVersion: string;
   vegaLiteVersion: string;
   theme?: string;
@@ -40,6 +41,7 @@ export type RenderFigureMeta = {
   input: string;
   output: string;
   createdAt: string;
+  vegaPaperVersion: string;
   vegaVersion: string;
   vegaLiteVersion: string;
   theme?: string;
@@ -70,7 +72,7 @@ export type BuildRenderFigureMetaInput = {
   outputPath: string;
   themeName?: string | undefined;
   createdAt?: Date;
-  versions?: VegaDependencyVersions;
+  versions?: FigureMetaVersions;
 };
 
 export type BuildFigureMetaInput = {
@@ -80,10 +82,11 @@ export type BuildFigureMetaInput = {
   chart: InferChartType;
   options: FigureMetaInferOptions;
   createdAt?: Date;
-  versions?: VegaDependencyVersions;
+  versions?: FigureMetaVersions;
 };
 
-export type VegaDependencyVersions = {
+export type FigureMetaVersions = {
+  vegaPaperVersion: string;
   vegaVersion: string;
   vegaLiteVersion: string;
 };
@@ -157,7 +160,7 @@ export function buildFigureMeta(input: BuildFigureMetaInput): InferFigureMeta {
   const versions = input.versions;
 
   if (versions === undefined) {
-    throw new VegaPaperError("Figure meta requires Vega dependency versions.");
+    throw new VegaPaperError("Figure meta requires version metadata.");
   }
 
   const meta: InferFigureMeta = {
@@ -167,6 +170,7 @@ export function buildFigureMeta(input: BuildFigureMetaInput): InferFigureMeta {
     output: input.outputPath,
     specOut: input.specOutPath,
     createdAt: createdAt.toISOString(),
+    vegaPaperVersion: versions.vegaPaperVersion,
     vegaVersion: versions.vegaVersion,
     vegaLiteVersion: versions.vegaLiteVersion,
     infer: buildInferSnapshot(input.chart, input.options),
@@ -184,7 +188,7 @@ export function buildRenderFigureMeta(input: BuildRenderFigureMetaInput): Render
   const versions = input.versions;
 
   if (versions === undefined) {
-    throw new VegaPaperError("Figure meta requires Vega dependency versions.");
+    throw new VegaPaperError("Figure meta requires version metadata.");
   }
 
   const meta: RenderFigureMeta = {
@@ -193,6 +197,7 @@ export function buildRenderFigureMeta(input: BuildRenderFigureMetaInput): Render
     input: input.inputPath,
     output: input.outputPath,
     createdAt: createdAt.toISOString(),
+    vegaPaperVersion: versions.vegaPaperVersion,
     vegaVersion: versions.vegaVersion,
     vegaLiteVersion: versions.vegaLiteVersion,
   };
@@ -204,10 +209,11 @@ export function buildRenderFigureMeta(input: BuildRenderFigureMetaInput): Render
   return meta;
 }
 
-export async function resolveVegaDependencyVersions(): Promise<VegaDependencyVersions> {
+export async function resolveFigureMetaVersions(): Promise<FigureMetaVersions> {
   const cliPackageRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 
   return {
+    vegaPaperVersion: await readPackageVersion(cliPackageRoot, "vega-paper"),
     vegaVersion: await readPackageVersion(join(cliPackageRoot, "node_modules", "vega"), "vega"),
     vegaLiteVersion: await readPackageVersion(
       join(cliPackageRoot, "node_modules", "vega-lite"),
