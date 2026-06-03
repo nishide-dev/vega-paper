@@ -1,0 +1,30 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "data": {
+    "url": "data.csv"
+  },
+  "facet": {
+    "field": "split",
+    "type": "nominal"
+  },
+  "spec": {
+    "mark": "line",
+    "width": 360,
+    "height": 240,
+    "encoding": {
+      "x": {
+        "field": "epoch",
+        "type": "quantitative"
+      },
+      "y": {
+        "field": "f1",
+        "type": "quantitative"
+      },
+      "color": {
+        "field": "model",
+        "type": "nominal"
+      }
+    }
+  },
+  "title": "F1 by split"
+}

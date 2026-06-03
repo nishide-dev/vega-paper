@@ -1,0 +1,24 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "data": {
+    "url": "data.csv"
+  },
+  "mark": "rect",
+  "width": 360,
+  "height": 240,
+  "encoding": {
+    "x": {
+      "field": "predicted",
+      "type": "ordinal"
+    },
+    "y": {
+      "field": "actual",
+      "type": "ordinal"
+    },
+    "color": {
+      "field": "count",
+      "type": "quantitative"
+    }
+  },
+  "title": "Confusion matrix"
+}

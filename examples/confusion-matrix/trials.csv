@@ -1,0 +1,8 @@
+predicted,actual,n
+cat,cat,1
+cat,cat,1
+cat,cat,1
+cat,dog,1
+dog,cat,1
+dog,dog,1
+dog,dog,1
