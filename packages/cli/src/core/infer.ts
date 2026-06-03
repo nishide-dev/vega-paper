@@ -2,7 +2,7 @@ import { dirname, extname, relative } from "node:path";
 import { VegaPaperError } from "./errors";
 import type { JsonObject } from "./spec";
 
-export type InferChartType = "line" | "bar" | "scatter" | "area";
+export type InferChartType = "line" | "bar" | "scatter" | "area" | "heatmap";
 
 export type VegaLiteFieldType = "quantitative" | "nominal" | "ordinal" | "temporal";
 
@@ -52,13 +52,14 @@ const DEFAULT_WIDTH = 360;
 const DEFAULT_HEIGHT = 240;
 const VEGA_LITE_SCHEMA = "https://vega.github.io/schema/vega-lite/v6.json";
 
-type InferMark = "line" | "bar" | "point" | { type: "area"; line: true };
+type InferMark = "line" | "bar" | "point" | "rect" | { type: "area"; line: true };
 
 const MARK_BY_CHART: Record<InferChartType, InferMark> = {
   line: "line",
   bar: "bar",
   scatter: "point",
   area: { type: "area", line: true },
+  heatmap: "rect",
 };
 
 export async function inferVegaLiteSpec(
@@ -76,26 +77,53 @@ export async function inferVegaLiteSpec(
     findFieldIndex(tabular.header, request.facetField);
   }
 
-  const encoding: {
+  let encoding: {
     x: { field: string; type: VegaLiteFieldType };
     y: { field: string; type: VegaLiteFieldType };
     color?: { field: string; type: VegaLiteFieldType };
-  } = {
-    x: {
-      field: request.xField,
-      type: request.xType ?? inferFieldType(tabular.rows, xIndex),
-    },
-    y: {
-      field: request.yField,
-      type: request.yType ?? inferFieldType(tabular.rows, yIndex),
-    },
   };
 
-  if (request.colorField !== undefined && colorIndex !== undefined) {
-    encoding.color = {
-      field: request.colorField,
-      type: request.colorType ?? "nominal",
+  if (chart === "heatmap") {
+    if (request.colorField === undefined) {
+      throw new VegaPaperError(
+        'The "--color" option is required when --chart heatmap is used.',
+      );
+    }
+
+    findFieldIndex(tabular.header, request.colorField);
+
+    encoding = {
+      x: {
+        field: request.xField,
+        type: request.xType ?? "ordinal",
+      },
+      y: {
+        field: request.yField,
+        type: request.yType ?? "ordinal",
+      },
+      color: {
+        field: request.colorField,
+        type: request.colorType ?? "quantitative",
+      },
     };
+  } else {
+    encoding = {
+      x: {
+        field: request.xField,
+        type: request.xType ?? inferFieldType(tabular.rows, xIndex),
+      },
+      y: {
+        field: request.yField,
+        type: request.yType ?? inferFieldType(tabular.rows, yIndex),
+      },
+    };
+
+    if (request.colorField !== undefined && colorIndex !== undefined) {
+      encoding.color = {
+        field: request.colorField,
+        type: request.colorType ?? "nominal",
+      };
+    }
   }
 
   const data: JsonObject = request.inlineData
@@ -313,12 +341,12 @@ function normalizeJsonCell(value: unknown, key: string): string {
 }
 
 function parseChartType(chart: string): InferChartType {
-  if (chart === "line" || chart === "bar" || chart === "scatter" || chart === "area") {
+  if (chart === "line" || chart === "bar" || chart === "scatter" || chart === "area" || chart === "heatmap") {
     return chart;
   }
 
   throw new VegaPaperError(
-    `Unsupported chart type "${chart}". Expected one of: line, bar, scatter, area.`,
+    `Unsupported chart type "${chart}". Expected one of: line, bar, scatter, area, heatmap.`,
   );
 }
 

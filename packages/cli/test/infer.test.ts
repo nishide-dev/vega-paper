@@ -349,7 +349,7 @@ describe("inferVegaLiteSpec", () => {
   test("rejects unsupported chart types", async () => {
     const workspace = await createWorkspace();
     const inputPath = join(workspace, "data.csv");
-    const invalidChart = "heatmap" as unknown as InferRequest["chart"];
+    const invalidChart = "boxplot" as unknown as InferRequest["chart"];
 
     await Bun.write(inputPath, "year,value\n2020,10\n");
 
@@ -362,7 +362,7 @@ describe("inferVegaLiteSpec", () => {
         specOutputPath: join(workspace, "chart.vl.json"),
       }),
     ).rejects.toThrow(
-      'Unsupported chart type "heatmap". Expected one of: line, bar, scatter, area.',
+      'Unsupported chart type "boxplot". Expected one of: line, bar, scatter, area, heatmap.',
     );
   });
 
@@ -663,6 +663,51 @@ describe("inferVegaLiteSpec", () => {
         specOutputPath: join(workspace, "chart.vl.json"),
       }),
     ).rejects.toThrow('Field "missing-facet" was not found.');
+  });
+
+  test("builds a heatmap spec with rect mark and ordinal x/y plus quantitative color", async () => {
+    const workspace = await createWorkspace();
+    const inputPath = join(workspace, "data.csv");
+    const specOutputPath = join(workspace, "chart.vl.json");
+
+    await Bun.write(inputPath, "predicted,actual,count\na,a,10\na,b,2\nb,a,1\n");
+
+    const result = await inferVegaLiteSpec({
+      inputPath,
+      chart: "heatmap",
+      xField: "predicted",
+      yField: "actual",
+      colorField: "count",
+      specOutputPath,
+    });
+
+    expect(result.spec).toMatchObject({
+      mark: "rect",
+      encoding: {
+        x: { field: "predicted", type: "ordinal" },
+        y: { field: "actual", type: "ordinal" },
+        color: { field: "count", type: "quantitative" },
+      },
+    });
+  });
+
+  test("rejects heatmap without a color field in the request", async () => {
+    const workspace = await createWorkspace();
+    const inputPath = join(workspace, "data.csv");
+
+    await Bun.write(inputPath, "x,y,v\na,b,1\n");
+
+    await expect(
+      inferVegaLiteSpec({
+        inputPath,
+        chart: "heatmap",
+        xField: "x",
+        yField: "y",
+        specOutputPath: join(workspace, "chart.vl.json"),
+      }),
+    ).rejects.toThrow(
+      'The "--color" option is required when --chart heatmap is used.',
+    );
   });
 });
 

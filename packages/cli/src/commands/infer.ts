@@ -62,7 +62,7 @@ export function registerInferCommand(
     .command("infer")
     .argument("<input>", "CSV or JSON input path")
     .description("Generate a Vega-Lite spec from CSV or JSON and optionally render SVG")
-    .option("--chart <type>", "chart type: line, bar, scatter, or area")
+    .option("--chart <type>", "chart type: line, bar, scatter, area, or heatmap")
     .option("--x <field>", "x encoding field")
     .option("--y <field>", "y encoding field")
     .option("--color <field>", "color encoding field")
@@ -171,9 +171,12 @@ export function normalizeInferOptions(
     );
   }
 
+  const chart = parseInferChartType(options.chart);
+  validateHeatmapOptions(chart, options);
+
   return {
     inputPath,
-    chart: parseInferChartType(options.chart),
+    chart,
     xField: requireOption(options.x, "--x <field>"),
     yField: requireOption(options.y, "--y <field>"),
     colorField: options.color,
@@ -200,13 +203,46 @@ async function writeSpecFile(
 function parseInferChartType(chart: string | undefined): InferChartType {
   const value = requireOption(chart, "--chart <type>");
 
-  if (value === "line" || value === "bar" || value === "scatter" || value === "area") {
+  if (value === "line" || value === "bar" || value === "scatter" || value === "area" || value === "heatmap") {
     return value;
   }
 
   throw new VegaPaperError(
-    `Unsupported chart type "${value}". Expected one of: line, bar, scatter, area.`,
+    `Unsupported chart type "${value}". Expected one of: line, bar, scatter, area, heatmap.`,
   );
+}
+
+function validateHeatmapOptions(
+  chart: InferChartType,
+  options: InferCommandOptions,
+): void {
+  if (chart !== "heatmap") {
+    return;
+  }
+
+  if (options.color === undefined) {
+    throw new VegaPaperError(
+      'The "--color" option is required when --chart heatmap is used.',
+    );
+  }
+
+  const x = requireOption(options.x, "--x <field>");
+  const y = requireOption(options.y, "--y <field>");
+  const color = options.color;
+
+  if (x === y || x === color || y === color) {
+    throw new VegaPaperError(
+      "Heatmap requires distinct --x, --y, and --color fields.",
+    );
+  }
+
+  if (options.facet !== undefined) {
+    if (options.facet === x || options.facet === y || options.facet === color) {
+      throw new VegaPaperError(
+        'The "--facet" field must differ from --x, --y, and --color on heatmap charts.',
+      );
+    }
+  }
 }
 
 function requireOption(value: string | undefined, flag: string): string {
