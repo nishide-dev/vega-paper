@@ -9,6 +9,8 @@
     "build": "bun scripts/run-if-sources.ts build -- bun run --filter '*' build",
     "test": "bun test --pass-with-no-tests",
     "typecheck": "bun scripts/run-if-sources.ts typecheck -- bun run --filter '*' typecheck",
+    "check": "biome check .",
+    "check:fix": "biome check --write .",
     "render:example": "bun run packages/cli/src/index.ts render examples/basic-line/chart.vl.json --theme paper-clean --format svg --out examples/basic-line/output.svg",
     "infer:examples": "bun run infer:training-curve && bun run infer:training-curve-aggregate && bun run infer:training-curve-error-band && bun run infer:confusion-matrix && bun run infer:confusion-matrix-trials && bun run infer:faceted-training && bun run infer:boxplot && bun run infer:boxplot-by-split",
     "infer:training-curve": "bun run packages/cli/src/index.ts infer examples/training-curve/data.csv --chart line --x epoch --y f1 --color model --title \"Training F1\" --spec-out examples/training-curve/chart.vl.json",
@@ -28,6 +30,7 @@
     "vega-paper": "workspace:*"
   },
   "devDependencies": {
+    "@biomejs/biome": "2.4.16",
     "@types/bun": "latest",
     "typescript": "latest"
   },

@@ -1,6 +1,6 @@
 import type { Command } from "commander";
-import { lintSpec, type LintResult } from "../core/lint";
 import { formatTable, toPrettyJson } from "../core/format";
+import { type LintResult, lintSpec } from "../core/lint";
 import { getLintProfile } from "../core/lint-profiles";
 
 type LintOptions = {
@@ -10,10 +10,7 @@ type LintOptions = {
 };
 
 type WriteOutput = (value: string) => void;
-type RunLint = (
-  inputPath: string,
-  profileName: string | undefined,
-) => Promise<LintResult>;
+type RunLint = (inputPath: string, profileName: string | undefined) => Promise<LintResult>;
 type SetExitCode = (exitCode: 0 | 1) => void;
 
 export function registerLintCommand(
@@ -21,8 +18,7 @@ export function registerLintCommand(
   writeOutput: WriteOutput = (value) => {
     process.stdout.write(value);
   },
-  runLint: RunLint = (inputPath, profileName) =>
-    lintSpec({ inputPath, profileName }),
+  runLint: RunLint = (inputPath, profileName) => lintSpec({ inputPath, profileName }),
   setExitCode: SetExitCode = (exitCode) => {
     process.exitCode = exitCode;
   },
@@ -75,12 +71,7 @@ export function formatHumanLintResult(result: LintResult): string {
   )}`;
   const table = formatTable({
     headers: ["severity", "rule", "path", "message"],
-    rows: result.issues.map((issue) => [
-      issue.severity,
-      issue.ruleId,
-      issue.path,
-      issue.message,
-    ]),
+    rows: result.issues.map((issue) => [issue.severity, issue.ruleId, issue.path, issue.message]),
   });
 
   return `${summary}\n${table}\n`;

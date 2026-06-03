@@ -1,5 +1,5 @@
-import { Command } from "commander";
 import { describe, expect, test } from "bun:test";
+import { Command } from "commander";
 import { registerThemesCommand } from "../src/commands/themes";
 import { VegaPaperError } from "../src/core/errors";
 
@@ -35,9 +35,9 @@ describe("themes command", () => {
   });
 
   test("throws VegaPaperError for unknown themes", async () => {
-    await expect(
-      runThemesCommand(["themes", "show", "missing-theme"]),
-    ).rejects.toBeInstanceOf(VegaPaperError);
+    await expect(runThemesCommand(["themes", "show", "missing-theme"])).rejects.toBeInstanceOf(
+      VegaPaperError,
+    );
   });
 });
 

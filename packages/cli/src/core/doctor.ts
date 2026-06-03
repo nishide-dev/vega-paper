@@ -20,28 +20,23 @@ export type DoctorEnvironment = {
   getBunVersion: () => Promise<string | undefined>;
   getNodeVersion: () => Promise<string | undefined>;
   resolveExecutable: (name: string) => Promise<string | undefined>;
-  resolveVegaCliBinary: (
-    name: VegaCliBinaryName,
-  ) => Promise<string | undefined>;
+  resolveVegaCliBinary: (name: VegaCliBinaryName) => Promise<string | undefined>;
 };
 
 export function getDoctorExitCode(checks: DoctorCheck[]): 0 | 1 {
-  return checks.some((check) => check.required && check.status === "fail")
-    ? 1
-    : 0;
+  return checks.some((check) => check.required && check.status === "fail") ? 1 : 0;
 }
 
 export async function runDoctorChecks(
   environment: DoctorEnvironment = defaultDoctorEnvironment,
 ): Promise<DoctorCheck[]> {
-  const [bunVersion, nodeVersion, vegaPaperBin, vl2svg, vg2svg] =
-    await Promise.all([
-      environment.getBunVersion(),
-      environment.getNodeVersion(),
-      environment.resolveExecutable("vega-paper"),
-      environment.resolveVegaCliBinary("vl2svg"),
-      environment.resolveVegaCliBinary("vg2svg"),
-    ]);
+  const [bunVersion, nodeVersion, vegaPaperBin, vl2svg, vg2svg] = await Promise.all([
+    environment.getBunVersion(),
+    environment.getNodeVersion(),
+    environment.resolveExecutable("vega-paper"),
+    environment.resolveVegaCliBinary("vl2svg"),
+    environment.resolveVegaCliBinary("vg2svg"),
+  ]);
 
   return [
     requiredCheck("bun", bunVersion),
@@ -82,15 +77,11 @@ async function resolveExecutable(name: string): Promise<string | undefined> {
   }
 }
 
-async function resolveEffectiveVegaCliBinary(
-  name: VegaCliBinaryName,
-): Promise<string | undefined> {
+async function resolveEffectiveVegaCliBinary(name: VegaCliBinaryName): Promise<string | undefined> {
   return (await resolveInstalledVegaCliBinary(name)) ?? resolveExecutableOnPath(name);
 }
 
-export async function resolveExecutableOnPath(
-  name: string,
-): Promise<string | undefined> {
+export async function resolveExecutableOnPath(name: string): Promise<string | undefined> {
   const pathValue = process.env.PATH ?? "";
 
   for (const directory of pathValue.split(delimiter)) {

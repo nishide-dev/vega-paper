@@ -70,9 +70,7 @@ describe("normalizeRenderOptions", () => {
       normalizeRenderOptions("chart.vl.json", {
         out: "chart.out",
       }),
-    ).toThrow(
-      'Missing or ambiguous --format <format>. Use "--format svg" or an .svg output path.',
-    );
+    ).toThrow('Missing or ambiguous --format <format>. Use "--format svg" or an .svg output path.');
   });
 });
 

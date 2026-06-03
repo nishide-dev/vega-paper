@@ -1,7 +1,7 @@
 import { extname } from "node:path";
 import type { Command } from "commander";
 import { VegaPaperError } from "../core/errors";
-import { renderChart, type RenderRequest } from "../core/render";
+import { type RenderRequest, renderChart } from "../core/render";
 
 type RenderCommandOptions = {
   format?: string;
@@ -16,9 +16,7 @@ export function normalizeRenderOptions(
   const outputPath = options.out;
 
   if (!outputPath) {
-    throw new VegaPaperError(
-      "Missing --out <path>. SVG output must be written to a file.",
-    );
+    throw new VegaPaperError("Missing --out <path>. SVG output must be written to a file.");
   }
 
   const format = options.format ?? inferFormatFromOutputPath(outputPath);
@@ -30,9 +28,7 @@ export function normalizeRenderOptions(
   }
 
   if (format !== "svg") {
-    throw new VegaPaperError(
-      `Unsupported format "${format}". This MVP supports only "svg".`,
-    );
+    throw new VegaPaperError(`Unsupported format "${format}". This MVP supports only "svg".`);
   }
 
   return {

@@ -1,11 +1,8 @@
 import { describe, expect, test } from "bun:test";
-import { mkdtemp, mkdir, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import {
-  renderWithExternalVegaCli,
-  resolveVegaCliBinary,
-} from "../src/backends/external-vega-cli";
+import { join } from "node:path";
+import { renderWithExternalVegaCli, resolveVegaCliBinary } from "../src/backends/external-vega-cli";
 
 describe("renderWithExternalVegaCli", () => {
   test("reports a missing Vega-Lite CLI binary", async () => {
@@ -38,23 +35,13 @@ describe("renderWithExternalVegaCli", () => {
           format: "svg",
         });
       }),
-    ).rejects.toThrow(
-      'Vega CLI binary "vg2svg" failed with exit code 2.\nbad spec',
-    );
+    ).rejects.toThrow('Vega CLI binary "vg2svg" failed with exit code 2.\nbad spec');
   });
 
   test("resolves Vega-Lite binary from Bun's package store layout", async () => {
     await withTemporaryWorkspace(async (workspace) => {
       await createExecutable(
-        join(
-          workspace,
-          "node_modules",
-          ".bun",
-          "node_modules",
-          "vega-lite",
-          "bin",
-          "vl2svg",
-        ),
+        join(workspace, "node_modules", ".bun", "node_modules", "vega-lite", "bin", "vl2svg"),
         "#!/bin/sh\nexit 0\n",
       );
 
@@ -97,15 +84,7 @@ describe("renderWithExternalVegaCli", () => {
       const localBinary = join(workspace, "node_modules", ".bin", "vl2svg");
       await createExecutable(localBinary, "#!/bin/sh\nexit 0\n");
       await createExecutable(
-        join(
-          workspace,
-          "node_modules",
-          ".bun",
-          "node_modules",
-          "vega-lite",
-          "bin",
-          "vl2svg",
-        ),
+        join(workspace, "node_modules", ".bun", "node_modules", "vega-lite", "bin", "vl2svg"),
         "#!/bin/sh\nexit 0\n",
       );
 
@@ -120,9 +99,7 @@ describe("renderWithExternalVegaCli", () => {
   });
 });
 
-async function withTemporaryWorkspace<T>(
-  callback: (workspace: string) => Promise<T>,
-): Promise<T> {
+async function withTemporaryWorkspace<T>(callback: (workspace: string) => Promise<T>): Promise<T> {
   const previousCwd = process.cwd();
   const previousPath = process.env.PATH;
   const workspace = await mkdtemp(join(tmpdir(), "vega-paper-cli-test-"));

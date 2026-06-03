@@ -5,8 +5,8 @@ import { join } from "node:path";
 import { Command } from "commander";
 import { registerInferCommand } from "../src/commands/infer";
 import { VegaPaperError } from "../src/core/errors";
-import { inferVegaLiteSpec } from "../src/core/infer";
 import type { InferRequest, InferResult } from "../src/core/infer";
+import { inferVegaLiteSpec } from "../src/core/infer";
 import type { LintResult } from "../src/core/lint";
 import type { RenderRequest, RenderResult } from "../src/core/render";
 
@@ -14,9 +14,9 @@ const temporaryDirectories: string[] = [];
 
 afterEach(async () => {
   await Promise.all(
-    temporaryDirectories.splice(0).map((directory) =>
-      rm(directory, { force: true, recursive: true }),
-    ),
+    temporaryDirectories
+      .splice(0)
+      .map((directory) => rm(directory, { force: true, recursive: true })),
   );
 });
 
@@ -239,9 +239,7 @@ describe("infer command", () => {
       },
     );
 
-    expect(calls.lintCalls).toEqual([
-      { inputPath: specOutputPath, profileName: "paper" },
-    ]);
+    expect(calls.lintCalls).toEqual([{ inputPath: specOutputPath, profileName: "paper" }]);
     expect(calls.renderCalls).toHaveLength(1);
   });
 
@@ -285,9 +283,7 @@ describe("infer command", () => {
       },
     );
 
-    expect(calls.lintCalls).toEqual([
-      { inputPath: specOutputPath, profileName: "paper" },
-    ]);
+    expect(calls.lintCalls).toEqual([{ inputPath: specOutputPath, profileName: "paper" }]);
     expect(calls.renderCalls).toEqual([
       {
         inputPath: specOutputPath,
@@ -556,9 +552,7 @@ describe("infer command", () => {
       },
     );
 
-    expect(calls.lintCalls).toEqual([
-      { inputPath: specOutputPath, profileName: "paper" },
-    ]);
+    expect(calls.lintCalls).toEqual([{ inputPath: specOutputPath, profileName: "paper" }]);
     expect(calls.renderCalls).toEqual([]);
     expect(output.stdout).toContain(`Wrote ${specOutputPath}`);
     expect(output.stdout).toContain("No lint issues found.");
@@ -581,23 +575,12 @@ describe("infer command", () => {
         "--spec-out",
         "chart.vl.json",
       ]),
-    ).rejects.toThrow(
-      new VegaPaperError('The "--theme" option requires "--out <path>".'),
-    );
+    ).rejects.toThrow(new VegaPaperError('The "--theme" option requires "--out <path>".'));
   });
 
   test("rejects missing both --out and --spec-out", async () => {
     await expect(
-      runInferCommand([
-        "infer",
-        "results.csv",
-        "--chart",
-        "line",
-        "--x",
-        "epoch",
-        "--y",
-        "score",
-      ]),
+      runInferCommand(["infer", "results.csv", "--chart", "line", "--x", "epoch", "--y", "score"]),
     ).rejects.toThrow(
       new VegaPaperError(
         'Missing output destination. Use "--spec-out <path>" and/or "--out <path>".',
@@ -617,7 +600,7 @@ describe("infer command", () => {
         "--spec-out",
         "chart.vl.json",
       ]),
-    ).rejects.toThrow(new VegaPaperError('Missing required option --chart <type>.'));
+    ).rejects.toThrow(new VegaPaperError("Missing required option --chart <type>."));
 
     await expect(
       runInferCommand([
@@ -630,7 +613,7 @@ describe("infer command", () => {
         "--spec-out",
         "chart.vl.json",
       ]),
-    ).rejects.toThrow(new VegaPaperError('Missing required option --x <field>.'));
+    ).rejects.toThrow(new VegaPaperError("Missing required option --x <field>."));
 
     await expect(
       runInferCommand([
@@ -643,7 +626,7 @@ describe("infer command", () => {
         "--spec-out",
         "chart.vl.json",
       ]),
-    ).rejects.toThrow(new VegaPaperError('Missing required option --y <field>.'));
+    ).rejects.toThrow(new VegaPaperError("Missing required option --y <field>."));
   });
 
   test("rejects non-svg --out paths", async () => {
@@ -689,9 +672,7 @@ describe("infer command", () => {
           },
         },
       ),
-    ).rejects.toThrow(
-      new VegaPaperError("Could not write generated spec to /tmp/chart.vl.json."),
-    );
+    ).rejects.toThrow(new VegaPaperError("Could not write generated spec to /tmp/chart.vl.json."));
   });
 
   test("passes --x-type through to InferRequest", async () => {
@@ -721,9 +702,7 @@ describe("infer command", () => {
       },
     );
 
-    expect(calls.inferCalls).toEqual([
-      expect.objectContaining({ xType: "temporal" }),
-    ]);
+    expect(calls.inferCalls).toEqual([expect.objectContaining({ xType: "temporal" })]);
   });
 
   test("passes --y-type through to InferRequest", async () => {
@@ -753,9 +732,7 @@ describe("infer command", () => {
       },
     );
 
-    expect(calls.inferCalls).toEqual([
-      expect.objectContaining({ yType: "nominal" }),
-    ]);
+    expect(calls.inferCalls).toEqual([expect.objectContaining({ yType: "nominal" })]);
   });
 
   test("passes --color-type through to InferRequest", async () => {
@@ -787,9 +764,7 @@ describe("infer command", () => {
       },
     );
 
-    expect(calls.inferCalls).toEqual([
-      expect.objectContaining({ colorType: "ordinal" }),
-    ]);
+    expect(calls.inferCalls).toEqual([expect.objectContaining({ colorType: "ordinal" })]);
   });
 
   test("rejects --x-type with an invalid type value", async () => {
@@ -831,9 +806,7 @@ describe("infer command", () => {
         "--spec-out",
         "out.vl.json",
       ]),
-    ).rejects.toThrow(
-      new VegaPaperError('The "--color-type" option requires "--color <field>".'),
-    );
+    ).rejects.toThrow(new VegaPaperError('The "--color-type" option requires "--color <field>".'));
   });
 
   test("runs the real infer path and writes a generated spec", async () => {
@@ -1034,27 +1007,23 @@ describe("infer command", () => {
     const specOutputPath = join(workspace, "chart.vl.json");
 
     await expect(
-      runInferCommand(
-        [
-          "infer",
-          "results.csv",
-          "--chart",
-          "line",
-          "--x",
-          "epoch",
-          "--y",
-          "f1",
-          "--facet",
-          "model",
-          "--color",
-          "model",
-          "--spec-out",
-          specOutputPath,
-        ],
-      ),
-    ).rejects.toThrow(
-      'The "--facet" and "--color" options must use different fields.',
-    );
+      runInferCommand([
+        "infer",
+        "results.csv",
+        "--chart",
+        "line",
+        "--x",
+        "epoch",
+        "--y",
+        "f1",
+        "--facet",
+        "model",
+        "--color",
+        "model",
+        "--spec-out",
+        specOutputPath,
+      ]),
+    ).rejects.toThrow('The "--facet" and "--color" options must use different fields.');
   });
 
   test("passes heatmap fields when --chart heatmap and --color are provided", async () => {
@@ -1105,23 +1074,19 @@ describe("infer command", () => {
     const specOutputPath = join(workspace, "chart.vl.json");
 
     await expect(
-      runInferCommand(
-        [
-          "infer",
-          "results.csv",
-          "--chart",
-          "heatmap",
-          "--x",
-          "predicted",
-          "--y",
-          "actual",
-          "--spec-out",
-          specOutputPath,
-        ],
-      ),
-    ).rejects.toThrow(
-      'The "--color" option is required when --chart heatmap is used.',
-    );
+      runInferCommand([
+        "infer",
+        "results.csv",
+        "--chart",
+        "heatmap",
+        "--x",
+        "predicted",
+        "--y",
+        "actual",
+        "--spec-out",
+        specOutputPath,
+      ]),
+    ).rejects.toThrow('The "--color" option is required when --chart heatmap is used.');
   });
 
   test("rejects heatmap when --x and --y are the same field", async () => {
@@ -1129,22 +1094,20 @@ describe("infer command", () => {
     const specOutputPath = join(workspace, "chart.vl.json");
 
     await expect(
-      runInferCommand(
-        [
-          "infer",
-          "results.csv",
-          "--chart",
-          "heatmap",
-          "--x",
-          "field",
-          "--y",
-          "field",
-          "--color",
-          "count",
-          "--spec-out",
-          specOutputPath,
-        ],
-      ),
+      runInferCommand([
+        "infer",
+        "results.csv",
+        "--chart",
+        "heatmap",
+        "--x",
+        "field",
+        "--y",
+        "field",
+        "--color",
+        "count",
+        "--spec-out",
+        specOutputPath,
+      ]),
     ).rejects.toThrow("Heatmap requires distinct --x, --y, and --color fields.");
   });
 
@@ -1199,22 +1162,20 @@ describe("infer command", () => {
     const specOutputPath = join(workspace, "chart.vl.json");
 
     await expect(
-      runInferCommand(
-        [
-          "infer",
-          "results.csv",
-          "--chart",
-          "line",
-          "--x",
-          "epoch",
-          "--y",
-          "f1",
-          "--aggregate",
-          "invalid",
-          "--spec-out",
-          specOutputPath,
-        ],
-      ),
+      runInferCommand([
+        "infer",
+        "results.csv",
+        "--chart",
+        "line",
+        "--x",
+        "epoch",
+        "--y",
+        "f1",
+        "--aggregate",
+        "invalid",
+        "--spec-out",
+        specOutputPath,
+      ]),
     ).rejects.toThrow(
       'Invalid value "invalid" for --aggregate. Expected one of: mean, median, sum, count, min, max.',
     );
@@ -1268,20 +1229,18 @@ describe("infer command", () => {
     const specOutputPath = join(workspace, "chart.vl.json");
 
     await expect(
-      runInferCommand(
-        [
-          "infer",
-          "results.csv",
-          "--chart",
-          "boxplot",
-          "--x",
-          "field",
-          "--y",
-          "field",
-          "--spec-out",
-          specOutputPath,
-        ],
-      ),
+      runInferCommand([
+        "infer",
+        "results.csv",
+        "--chart",
+        "boxplot",
+        "--x",
+        "field",
+        "--y",
+        "field",
+        "--spec-out",
+        specOutputPath,
+      ]),
     ).rejects.toThrow("Boxplot requires distinct --x and --y fields.");
   });
 
@@ -1290,25 +1249,21 @@ describe("infer command", () => {
     const specOutputPath = join(workspace, "chart.vl.json");
 
     await expect(
-      runInferCommand(
-        [
-          "infer",
-          "results.csv",
-          "--chart",
-          "boxplot",
-          "--x",
-          "model",
-          "--y",
-          "f1",
-          "--aggregate",
-          "mean",
-          "--spec-out",
-          specOutputPath,
-        ],
-      ),
-    ).rejects.toThrow(
-      'The "--aggregate" option cannot be used with --chart boxplot.',
-    );
+      runInferCommand([
+        "infer",
+        "results.csv",
+        "--chart",
+        "boxplot",
+        "--x",
+        "model",
+        "--y",
+        "f1",
+        "--aggregate",
+        "mean",
+        "--spec-out",
+        specOutputPath,
+      ]),
+    ).rejects.toThrow('The "--aggregate" option cannot be used with --chart boxplot.');
   });
 
   test("passes errorBandField when --error-band is provided", async () => {
@@ -1359,27 +1314,23 @@ describe("infer command", () => {
     const specOutputPath = join(workspace, "chart.vl.json");
 
     await expect(
-      runInferCommand(
-        [
-          "infer",
-          "results.csv",
-          "--chart",
-          "line",
-          "--x",
-          "epoch",
-          "--y",
-          "f1",
-          "--error-band",
-          "f1_se",
-          "--aggregate",
-          "mean",
-          "--spec-out",
-          specOutputPath,
-        ],
-      ),
-    ).rejects.toThrow(
-      'The "--error-band" option cannot be used with --aggregate.',
-    );
+      runInferCommand([
+        "infer",
+        "results.csv",
+        "--chart",
+        "line",
+        "--x",
+        "epoch",
+        "--y",
+        "f1",
+        "--error-band",
+        "f1_se",
+        "--aggregate",
+        "mean",
+        "--spec-out",
+        specOutputPath,
+      ]),
+    ).rejects.toThrow('The "--error-band" option cannot be used with --aggregate.');
   });
 
   test("rejects error-band when it matches --y", async () => {
@@ -1387,25 +1338,21 @@ describe("infer command", () => {
     const specOutputPath = join(workspace, "chart.vl.json");
 
     await expect(
-      runInferCommand(
-        [
-          "infer",
-          "results.csv",
-          "--chart",
-          "line",
-          "--x",
-          "epoch",
-          "--y",
-          "f1",
-          "--error-band",
-          "f1",
-          "--spec-out",
-          specOutputPath,
-        ],
-      ),
-    ).rejects.toThrow(
-      'The "--error-band" field must differ from --x and --y.',
-    );
+      runInferCommand([
+        "infer",
+        "results.csv",
+        "--chart",
+        "line",
+        "--x",
+        "epoch",
+        "--y",
+        "f1",
+        "--error-band",
+        "f1",
+        "--spec-out",
+        specOutputPath,
+      ]),
+    ).rejects.toThrow('The "--error-band" field must differ from --x and --y.');
   });
 
   test("rejects heatmap when --facet matches --x", async () => {
@@ -1413,24 +1360,22 @@ describe("infer command", () => {
     const specOutputPath = join(workspace, "chart.vl.json");
 
     await expect(
-      runInferCommand(
-        [
-          "infer",
-          "results.csv",
-          "--chart",
-          "heatmap",
-          "--x",
-          "field",
-          "--y",
-          "actual",
-          "--color",
-          "count",
-          "--facet",
-          "field",
-          "--spec-out",
-          specOutputPath,
-        ],
-      ),
+      runInferCommand([
+        "infer",
+        "results.csv",
+        "--chart",
+        "heatmap",
+        "--x",
+        "field",
+        "--y",
+        "actual",
+        "--color",
+        "count",
+        "--facet",
+        "field",
+        "--spec-out",
+        specOutputPath,
+      ]),
     ).rejects.toThrow(
       'The "--facet" field must differ from --x, --y, and --color on heatmap charts.',
     );
@@ -1440,10 +1385,7 @@ describe("infer command", () => {
 type InferCommandHarness = {
   infer?: (request: InferRequest) => Promise<InferResult>;
   render?: (request: RenderRequest) => Promise<RenderResult>;
-  lint?: (
-    inputPath: string,
-    profileName: string | undefined,
-  ) => Promise<LintResult>;
+  lint?: (inputPath: string, profileName: string | undefined) => Promise<LintResult>;
   writeSpec?: (specOutputPath: string, spec: InferResult["spec"]) => Promise<void>;
   inferCalls?: Array<Record<string, unknown>>;
   lintCalls?: Array<{ inputPath: string; profileName: string | undefined }>;

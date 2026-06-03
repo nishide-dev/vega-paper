@@ -1,6 +1,6 @@
-import { runLintRules } from "./lint-rules";
 import { VegaPaperError } from "./errors";
 import { getLintProfile } from "./lint-profiles";
+import { runLintRules } from "./lint-rules";
 import { detectSpecType, loadJsonSpec } from "./spec";
 
 export type LintSeverity = "error" | "warning";
@@ -80,9 +80,7 @@ export async function lintSpec(request: LintRequest): Promise<LintResult> {
 
 export function createLintResult(issues: LintIssue[]): LintResult {
   const errorCount = issues.filter((issue) => issue.severity === "error").length;
-  const warningCount = issues.filter(
-    (issue) => issue.severity === "warning",
-  ).length;
+  const warningCount = issues.filter((issue) => issue.severity === "warning").length;
 
   return {
     ok: errorCount === 0,

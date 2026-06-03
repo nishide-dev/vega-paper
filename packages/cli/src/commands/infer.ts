@@ -3,16 +3,16 @@ import { dirname, extname, join, parse } from "node:path";
 import type { Command } from "commander";
 import { VegaPaperError } from "../core/errors";
 import {
-  inferVegaLiteSpec,
   type InferAggregateMethod,
   type InferChartType,
   type InferRequest,
   type InferResult,
+  inferVegaLiteSpec,
   type VegaLiteFieldType,
 } from "../core/infer";
-import { lintSpec, type LintResult } from "../core/lint";
+import { type LintResult, lintSpec } from "../core/lint";
 import { getLintProfile } from "../core/lint-profiles";
-import { renderChart, type RenderRequest, type RenderResult } from "../core/render";
+import { type RenderRequest, type RenderResult, renderChart } from "../core/render";
 import { formatHumanLintResult, getLintExitCode } from "./lint";
 
 type InferCommandOptions = {
@@ -39,10 +39,7 @@ type InferCommandOptions = {
 
 type WriteOutput = (value: string) => void;
 type RunInfer = (request: InferRequest) => Promise<InferResult>;
-type RunLint = (
-  inputPath: string,
-  profileName: string | undefined,
-) => Promise<LintResult>;
+type RunLint = (inputPath: string, profileName: string | undefined) => Promise<LintResult>;
 type RunRender = (request: RenderRequest) => Promise<RenderResult>;
 type SetExitCode = (exitCode: 0 | 1) => void;
 type WriteSpec = (specOutputPath: string, spec: InferResult["spec"]) => Promise<void>;
@@ -55,8 +52,7 @@ export function registerInferCommand(
   runInfer: RunInfer = inferVegaLiteSpec,
   runRender: RunRender = renderChart,
   writeSpec: WriteSpec = writeSpecFile,
-  runLint: RunLint = (inputPath, profileName) =>
-    lintSpec({ inputPath, profileName }),
+  runLint: RunLint = (inputPath, profileName) => lintSpec({ inputPath, profileName }),
   setExitCode: SetExitCode = (exitCode) => {
     process.exitCode = exitCode;
   },
@@ -65,10 +61,7 @@ export function registerInferCommand(
     .command("infer")
     .argument("<input>", "CSV or JSON input path")
     .description("Generate a Vega-Lite spec from CSV or JSON and optionally render SVG")
-    .option(
-      "--chart <type>",
-      "chart type: line, bar, scatter, area, heatmap, or boxplot",
-    )
+    .option("--chart <type>", "chart type: line, bar, scatter, area, heatmap, or boxplot")
     .option("--x <field>", "x encoding field")
     .option("--y <field>", "y encoding field")
     .option("--color <field>", "color encoding field")
@@ -77,10 +70,7 @@ export function registerInferCommand(
       "--aggregate <method>",
       "aggregate measure before plotting: mean, median, sum, count, min, or max",
     )
-    .option(
-      "--error-band <field>",
-      "symmetric error magnitude for y (maps to encoding.yError)",
-    )
+    .option("--error-band <field>", "symmetric error magnitude for y (maps to encoding.yError)")
     .option("--title <text>", "chart title")
     .option("--width <number>", "chart width")
     .option("--height <number>", "chart height")
@@ -180,24 +170,18 @@ export function normalizeInferOptions(
     options.color !== undefined &&
     options.facet === options.color
   ) {
-    throw new VegaPaperError(
-      'The "--facet" and "--color" options must use different fields.',
-    );
+    throw new VegaPaperError('The "--facet" and "--color" options must use different fields.');
   }
 
   const chart = parseInferChartType(options.chart);
   const aggregateMethod = parseInferAggregateMethod(options.aggregate);
 
   if (chart === "boxplot" && aggregateMethod !== undefined) {
-    throw new VegaPaperError(
-      'The "--aggregate" option cannot be used with --chart boxplot.',
-    );
+    throw new VegaPaperError('The "--aggregate" option cannot be used with --chart boxplot.');
   }
 
   if (options.errorBand !== undefined && aggregateMethod !== undefined) {
-    throw new VegaPaperError(
-      'The "--error-band" option cannot be used with --aggregate.',
-    );
+    throw new VegaPaperError('The "--error-band" option cannot be used with --aggregate.');
   }
 
   validateHeatmapOptions(chart, options);
@@ -224,10 +208,7 @@ export function normalizeInferOptions(
   };
 }
 
-async function writeSpecFile(
-  specOutputPath: string,
-  spec: InferResult["spec"],
-): Promise<void> {
+async function writeSpecFile(specOutputPath: string, spec: InferResult["spec"]): Promise<void> {
   await mkdir(dirname(specOutputPath), { recursive: true });
   await writeFile(specOutputPath, `${JSON.stringify(spec, null, 2)}\n`, "utf8");
 }
@@ -251,10 +232,7 @@ function parseInferChartType(chart: string | undefined): InferChartType {
   );
 }
 
-function validateBoxplotOptions(
-  chart: InferChartType,
-  options: InferCommandOptions,
-): void {
+function validateBoxplotOptions(chart: InferChartType, options: InferCommandOptions): void {
   if (chart !== "boxplot") {
     return;
   }
@@ -270,9 +248,7 @@ function validateBoxplotOptions(
 
   if (color !== undefined) {
     if (x === color || y === color) {
-      throw new VegaPaperError(
-        "Boxplot requires distinct --x, --y, and --color fields.",
-      );
+      throw new VegaPaperError("Boxplot requires distinct --x, --y, and --color fields.");
     }
 
     if (options.facet !== undefined) {
@@ -287,16 +263,11 @@ function validateBoxplotOptions(
   }
 
   if (options.facet !== undefined && (options.facet === x || options.facet === y)) {
-    throw new VegaPaperError(
-      'The "--facet" field must differ from --x and --y on boxplot charts.',
-    );
+    throw new VegaPaperError('The "--facet" field must differ from --x and --y on boxplot charts.');
   }
 }
 
-function validateErrorBandOptions(
-  chart: InferChartType,
-  options: InferCommandOptions,
-): void {
+function validateErrorBandOptions(chart: InferChartType, options: InferCommandOptions): void {
   const errorBand = options.errorBand;
 
   if (errorBand === undefined) {
@@ -304,15 +275,11 @@ function validateErrorBandOptions(
   }
 
   if (chart === "heatmap") {
-    throw new VegaPaperError(
-      'The "--error-band" option cannot be used with --chart heatmap.',
-    );
+    throw new VegaPaperError('The "--error-band" option cannot be used with --chart heatmap.');
   }
 
   if (chart === "boxplot") {
-    throw new VegaPaperError(
-      'The "--error-band" option cannot be used with --chart boxplot.',
-    );
+    throw new VegaPaperError('The "--error-band" option cannot be used with --chart boxplot.');
   }
 
   const x = requireOption(options.x, "--x <field>");
@@ -328,9 +295,7 @@ function validateErrorBandOptions(
   }
 
   if (color !== undefined && errorBand === color) {
-    throw new VegaPaperError(
-      'The "--error-band" field must differ from --x, --y, and --color.',
-    );
+    throw new VegaPaperError('The "--error-band" field must differ from --x, --y, and --color.');
   }
 
   if (options.facet === undefined) {
@@ -353,24 +318,17 @@ function validateErrorBandOptions(
   }
 
   if (options.facet === x || options.facet === y || options.facet === errorBand) {
-    throw new VegaPaperError(
-      'The "--facet" field must differ from --x, --y, and --error-band.',
-    );
+    throw new VegaPaperError('The "--facet" field must differ from --x, --y, and --error-band.');
   }
 }
 
-function validateHeatmapOptions(
-  chart: InferChartType,
-  options: InferCommandOptions,
-): void {
+function validateHeatmapOptions(chart: InferChartType, options: InferCommandOptions): void {
   if (chart !== "heatmap") {
     return;
   }
 
   if (options.color === undefined) {
-    throw new VegaPaperError(
-      'The "--color" option is required when --chart heatmap is used.',
-    );
+    throw new VegaPaperError('The "--color" option is required when --chart heatmap is used.');
   }
 
   const x = requireOption(options.x, "--x <field>");
@@ -378,9 +336,7 @@ function validateHeatmapOptions(
   const color = options.color;
 
   if (x === y || x === color || y === color) {
-    throw new VegaPaperError(
-      "Heatmap requires distinct --x, --y, and --color fields.",
-    );
+    throw new VegaPaperError("Heatmap requires distinct --x, --y, and --color fields.");
   }
 
   if (options.facet !== undefined) {
@@ -392,18 +348,9 @@ function validateHeatmapOptions(
   }
 }
 
-const VALID_AGGREGATE_METHODS = [
-  "mean",
-  "median",
-  "sum",
-  "count",
-  "min",
-  "max",
-] as const;
+const VALID_AGGREGATE_METHODS = ["mean", "median", "sum", "count", "min", "max"] as const;
 
-function parseInferAggregateMethod(
-  value: string | undefined,
-): InferAggregateMethod | undefined {
+function parseInferAggregateMethod(value: string | undefined): InferAggregateMethod | undefined {
   if (value === undefined) {
     return undefined;
   }
