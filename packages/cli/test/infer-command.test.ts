@@ -523,6 +523,48 @@ describe("infer command", () => {
     expect(output.exitCode).toBeUndefined();
   });
 
+  test("runs lint in spec-only mode without rendering", async () => {
+    const workspace = await createWorkspace();
+    const specOutputPath = join(workspace, "figures", "chart.vl.json");
+    const calls = createSpies();
+
+    const output = await runInferCommand(
+      [
+        "infer",
+        "results.csv",
+        "--chart",
+        "line",
+        "--x",
+        "epoch",
+        "--y",
+        "score",
+        "--lint-profile",
+        "paper",
+        "--spec-out",
+        specOutputPath,
+      ],
+      {
+        ...calls,
+        infer: async (request) => {
+          calls.inferCalls.push(request);
+          return createInferResult("../results.csv");
+        },
+        lint: async (inputPath, profileName) => {
+          calls.lintCalls.push({ inputPath, profileName });
+          return cleanLintResult();
+        },
+      },
+    );
+
+    expect(calls.lintCalls).toEqual([
+      { inputPath: specOutputPath, profileName: "paper" },
+    ]);
+    expect(calls.renderCalls).toEqual([]);
+    expect(output.stdout).toContain(`Wrote ${specOutputPath}`);
+    expect(output.stdout).toContain("No lint issues found.");
+    expect(output.exitCode).toBeUndefined();
+  });
+
   test("rejects --theme without --out", async () => {
     await expect(
       runInferCommand([

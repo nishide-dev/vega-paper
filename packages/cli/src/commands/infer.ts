@@ -67,7 +67,7 @@ export function registerInferCommand(
     .option("--out <path>", "SVG output path")
     .option("--spec-out <path>", "Vega-Lite spec output path")
     .option("--lint-profile <name>", "lint profile: paper, web, or acl")
-    .option("--strict", "exit with code 1 when warnings are present")
+    .option("--strict", "exit with code 1 when warnings are present when linting")
     .action(async (inputPath: string, options: InferCommandOptions) => {
       if (options.lintProfile !== undefined) {
         getLintProfile(options.lintProfile);
