@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import {
   buildFigureMeta,
   buildInferSnapshot,
+  buildRenderFigureMeta,
   resolveVegaDependencyVersions,
   toSiblingMetaPath,
 } from "../src/core/figure-meta";
@@ -87,6 +88,7 @@ describe("buildFigureMeta", () => {
 
     expect(meta).toEqual({
       generatedBy: "vega-paper",
+      command: "infer",
       input: "examples/training-curve/data.csv",
       output: "examples/training-curve/output.svg",
       specOut: "examples/training-curve/chart.vl.json",
@@ -114,6 +116,45 @@ describe("buildFigureMeta", () => {
         y: "value",
         theme: "paper-clean",
       },
+      createdAt: new Date("2026-06-03T12:00:00.000Z"),
+      versions: {
+        vegaVersion: "6.2.0",
+        vegaLiteVersion: "6.4.1",
+      },
+    });
+
+    expect(meta.theme).toBe("paper-clean");
+  });
+});
+
+describe("buildRenderFigureMeta", () => {
+  test("builds render provenance without specOut or infer", () => {
+    const meta = buildRenderFigureMeta({
+      inputPath: "chart.vl.json",
+      outputPath: "figures/f1.svg",
+      createdAt: new Date("2026-06-03T12:00:00.000Z"),
+      versions: {
+        vegaVersion: "6.2.0",
+        vegaLiteVersion: "6.4.1",
+      },
+    });
+
+    expect(meta).toEqual({
+      generatedBy: "vega-paper",
+      command: "render",
+      input: "chart.vl.json",
+      output: "figures/f1.svg",
+      createdAt: "2026-06-03T12:00:00.000Z",
+      vegaVersion: "6.2.0",
+      vegaLiteVersion: "6.4.1",
+    });
+  });
+
+  test("includes theme when provided", () => {
+    const meta = buildRenderFigureMeta({
+      inputPath: "chart.vl.json",
+      outputPath: "figure.svg",
+      themeName: "paper-clean",
       createdAt: new Date("2026-06-03T12:00:00.000Z"),
       versions: {
         vegaVersion: "6.2.0",

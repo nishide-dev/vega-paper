@@ -1416,6 +1416,7 @@ describe("infer command", () => {
 
     const meta = (await readMeta(metaOutputPath)) as {
       generatedBy: string;
+      command: string;
       input: string;
       output: string;
       specOut: string;
@@ -1425,6 +1426,7 @@ describe("infer command", () => {
 
     expect(stdout).toContain(`Wrote ${metaOutputPath}`);
     expect(meta.generatedBy).toBe("vega-paper");
+    expect(meta.command).toBe("infer");
     expect(meta.input).toBe("results.csv");
     expect(meta.output).toBe(outputPath);
     expect(meta.specOut).toBe(join(workspace, "figures", "chart.vl.json"));
