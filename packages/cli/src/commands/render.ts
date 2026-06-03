@@ -1,13 +1,24 @@
 import { extname } from "node:path";
 import type { Command } from "commander";
 import { VegaPaperError } from "../core/errors";
-import { type RenderRequest, renderChart } from "../core/render";
+import {
+  buildRenderFigureMeta,
+  type FigureMeta,
+  resolveVegaDependencyVersions,
+  toSiblingMetaPath,
+  writeFigureMeta,
+} from "../core/figure-meta";
+import { type RenderRequest, type RenderResult, renderChart } from "../core/render";
 
 type RenderCommandOptions = {
   format?: string;
   out?: string;
   theme?: string;
 };
+
+type WriteOutput = (value: string) => void;
+type RunRender = (request: RenderRequest) => Promise<RenderResult>;
+type WriteFigureMeta = (metaOutputPath: string, meta: FigureMeta) => Promise<void>;
 
 export function normalizeRenderOptions(
   inputPath: string,
@@ -39,7 +50,14 @@ export function normalizeRenderOptions(
   };
 }
 
-export function registerRenderCommand(program: Command): void {
+export function registerRenderCommand(
+  program: Command,
+  writeOutput: WriteOutput = (value) => {
+    process.stdout.write(value);
+  },
+  runRender: RunRender = renderChart,
+  writeFigureMetaFile: WriteFigureMeta = writeFigureMeta,
+): void {
   program
     .command("render")
     .argument("<spec>", "Vega or Vega-Lite JSON input path")
@@ -48,12 +66,37 @@ export function registerRenderCommand(program: Command): void {
     .option("--theme <name>", "theme name")
     .action(async (inputPath: string, options: RenderCommandOptions) => {
       const request = normalizeRenderOptions(inputPath, options);
-      const result = await renderChart(request);
+      const result = await runRender(request);
 
-      console.log(`Rendered ${result.outputPath}`);
+      writeOutput(`Rendered ${result.outputPath}\n`);
+
+      const metaOutputPath = toSiblingMetaPath(request.outputPath);
+      const versions = await resolveVegaDependencyVersions();
+      const meta = buildRenderFigureMeta({
+        inputPath,
+        outputPath: request.outputPath,
+        themeName: request.themeName,
+        versions,
+      });
+
+      try {
+        await writeFigureMetaFile(metaOutputPath, meta);
+      } catch (error) {
+        throw toMetaWriteError(metaOutputPath, error);
+      }
+
+      writeOutput(`Wrote ${metaOutputPath}\n`);
     });
 }
 
 function inferFormatFromOutputPath(outputPath: string): "svg" | undefined {
   return extname(outputPath).toLowerCase() === ".svg" ? "svg" : undefined;
+}
+
+function toMetaWriteError(metaOutputPath: string, error: unknown): VegaPaperError {
+  if (error instanceof VegaPaperError) {
+    return error;
+  }
+
+  return new VegaPaperError(`Could not write figure meta to ${metaOutputPath}.`);
 }

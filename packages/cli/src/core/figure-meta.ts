@@ -21,8 +21,9 @@ export type FigureMetaInferSnapshot = {
   height?: number;
 };
 
-export type FigureMeta = {
+export type InferFigureMeta = {
   generatedBy: "vega-paper";
+  command: "infer";
   input: string;
   output: string;
   specOut: string;
@@ -32,6 +33,19 @@ export type FigureMeta = {
   theme?: string;
   infer: FigureMetaInferSnapshot;
 };
+
+export type RenderFigureMeta = {
+  generatedBy: "vega-paper";
+  command: "render";
+  input: string;
+  output: string;
+  createdAt: string;
+  vegaVersion: string;
+  vegaLiteVersion: string;
+  theme?: string;
+};
+
+export type FigureMeta = InferFigureMeta | RenderFigureMeta;
 
 export type FigureMetaInferOptions = {
   chart?: string;
@@ -49,6 +63,14 @@ export type FigureMetaInferOptions = {
   facet?: string;
   aggregate?: string;
   errorBand?: string;
+};
+
+export type BuildRenderFigureMetaInput = {
+  inputPath: string;
+  outputPath: string;
+  themeName?: string | undefined;
+  createdAt?: Date;
+  versions?: VegaDependencyVersions;
 };
 
 export type BuildFigureMetaInput = {
@@ -130,7 +152,7 @@ export function buildInferSnapshot(
   return snapshot;
 }
 
-export function buildFigureMeta(input: BuildFigureMetaInput): FigureMeta {
+export function buildFigureMeta(input: BuildFigureMetaInput): InferFigureMeta {
   const createdAt = input.createdAt ?? new Date();
   const versions = input.versions;
 
@@ -138,8 +160,9 @@ export function buildFigureMeta(input: BuildFigureMetaInput): FigureMeta {
     throw new VegaPaperError("Figure meta requires Vega dependency versions.");
   }
 
-  const meta: FigureMeta = {
+  const meta: InferFigureMeta = {
     generatedBy: "vega-paper",
+    command: "infer",
     input: input.inputPath,
     output: input.outputPath,
     specOut: input.specOutPath,
@@ -151,6 +174,31 @@ export function buildFigureMeta(input: BuildFigureMetaInput): FigureMeta {
 
   if (input.options.theme !== undefined) {
     meta.theme = input.options.theme;
+  }
+
+  return meta;
+}
+
+export function buildRenderFigureMeta(input: BuildRenderFigureMetaInput): RenderFigureMeta {
+  const createdAt = input.createdAt ?? new Date();
+  const versions = input.versions;
+
+  if (versions === undefined) {
+    throw new VegaPaperError("Figure meta requires Vega dependency versions.");
+  }
+
+  const meta: RenderFigureMeta = {
+    generatedBy: "vega-paper",
+    command: "render",
+    input: input.inputPath,
+    output: input.outputPath,
+    createdAt: createdAt.toISOString(),
+    vegaVersion: versions.vegaVersion,
+    vegaLiteVersion: versions.vegaLiteVersion,
+  };
+
+  if (input.themeName !== undefined) {
+    meta.theme = input.themeName;
   }
 
   return meta;
