@@ -1056,6 +1056,125 @@ describe("infer command", () => {
       'The "--facet" and "--color" options must use different fields.',
     );
   });
+
+  test("passes heatmap fields when --chart heatmap and --color are provided", async () => {
+    const workspace = await createWorkspace();
+    const specOutputPath = join(workspace, "chart.vl.json");
+    const calls = createSpies();
+
+    await runInferCommand(
+      [
+        "infer",
+        "results.csv",
+        "--chart",
+        "heatmap",
+        "--x",
+        "predicted",
+        "--y",
+        "actual",
+        "--color",
+        "count",
+        "--spec-out",
+        specOutputPath,
+      ],
+      {
+        infer: async (request) => {
+          calls.inferCalls.push(request);
+          return createInferResult("../results.csv");
+        },
+        writeSpec: async () => {
+          calls.writeSpecCalls += 1;
+        },
+      },
+    );
+
+    expect(calls.inferCalls).toEqual([
+      {
+        inputPath: "results.csv",
+        chart: "heatmap",
+        xField: "predicted",
+        yField: "actual",
+        colorField: "count",
+        specOutputPath,
+      },
+    ]);
+  });
+
+  test("rejects heatmap without --color", async () => {
+    const workspace = await createWorkspace();
+    const specOutputPath = join(workspace, "chart.vl.json");
+
+    await expect(
+      runInferCommand(
+        [
+          "infer",
+          "results.csv",
+          "--chart",
+          "heatmap",
+          "--x",
+          "predicted",
+          "--y",
+          "actual",
+          "--spec-out",
+          specOutputPath,
+        ],
+      ),
+    ).rejects.toThrow(
+      'The "--color" option is required when --chart heatmap is used.',
+    );
+  });
+
+  test("rejects heatmap when --x and --y are the same field", async () => {
+    const workspace = await createWorkspace();
+    const specOutputPath = join(workspace, "chart.vl.json");
+
+    await expect(
+      runInferCommand(
+        [
+          "infer",
+          "results.csv",
+          "--chart",
+          "heatmap",
+          "--x",
+          "field",
+          "--y",
+          "field",
+          "--color",
+          "count",
+          "--spec-out",
+          specOutputPath,
+        ],
+      ),
+    ).rejects.toThrow("Heatmap requires distinct --x, --y, and --color fields.");
+  });
+
+  test("rejects heatmap when --facet matches --x", async () => {
+    const workspace = await createWorkspace();
+    const specOutputPath = join(workspace, "chart.vl.json");
+
+    await expect(
+      runInferCommand(
+        [
+          "infer",
+          "results.csv",
+          "--chart",
+          "heatmap",
+          "--x",
+          "field",
+          "--y",
+          "actual",
+          "--color",
+          "count",
+          "--facet",
+          "field",
+          "--spec-out",
+          specOutputPath,
+        ],
+      ),
+    ).rejects.toThrow(
+      'The "--facet" field must differ from --x, --y, and --color on heatmap charts.',
+    );
+  });
 });
 
 type InferCommandHarness = {
