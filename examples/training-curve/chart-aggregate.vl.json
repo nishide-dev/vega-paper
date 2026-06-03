@@ -1,0 +1,39 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "data": {
+    "url": "runs.csv"
+  },
+  "mark": "line",
+  "width": 360,
+  "height": 240,
+  "encoding": {
+    "x": {
+      "field": "epoch",
+      "type": "quantitative"
+    },
+    "y": {
+      "field": "f1",
+      "type": "quantitative"
+    },
+    "color": {
+      "field": "model",
+      "type": "nominal"
+    }
+  },
+  "transform": [
+    {
+      "aggregate": [
+        {
+          "op": "mean",
+          "field": "f1",
+          "as": "f1"
+        }
+      ],
+      "groupby": [
+        "epoch",
+        "model"
+      ]
+    }
+  ],
+  "title": "Training F1 (mean over runs)"
+}
