@@ -1220,6 +1220,97 @@ describe("infer command", () => {
     );
   });
 
+  test("passes boxplot fields when --chart boxplot is provided", async () => {
+    const workspace = await createWorkspace();
+    const specOutputPath = join(workspace, "chart.vl.json");
+    const calls = createSpies();
+
+    await runInferCommand(
+      [
+        "infer",
+        "results.csv",
+        "--chart",
+        "boxplot",
+        "--x",
+        "model",
+        "--y",
+        "f1",
+        "--color",
+        "split",
+        "--spec-out",
+        specOutputPath,
+      ],
+      {
+        infer: async (request) => {
+          calls.inferCalls.push(request);
+          return createInferResult("../results.csv");
+        },
+        writeSpec: async () => {
+          calls.writeSpecCalls += 1;
+        },
+      },
+    );
+
+    expect(calls.inferCalls).toEqual([
+      {
+        inputPath: "results.csv",
+        chart: "boxplot",
+        xField: "model",
+        yField: "f1",
+        colorField: "split",
+        specOutputPath,
+      },
+    ]);
+  });
+
+  test("rejects boxplot when --x and --y are the same field", async () => {
+    const workspace = await createWorkspace();
+    const specOutputPath = join(workspace, "chart.vl.json");
+
+    await expect(
+      runInferCommand(
+        [
+          "infer",
+          "results.csv",
+          "--chart",
+          "boxplot",
+          "--x",
+          "field",
+          "--y",
+          "field",
+          "--spec-out",
+          specOutputPath,
+        ],
+      ),
+    ).rejects.toThrow("Boxplot requires distinct --x and --y fields.");
+  });
+
+  test("rejects aggregate with boxplot chart", async () => {
+    const workspace = await createWorkspace();
+    const specOutputPath = join(workspace, "chart.vl.json");
+
+    await expect(
+      runInferCommand(
+        [
+          "infer",
+          "results.csv",
+          "--chart",
+          "boxplot",
+          "--x",
+          "model",
+          "--y",
+          "f1",
+          "--aggregate",
+          "mean",
+          "--spec-out",
+          specOutputPath,
+        ],
+      ),
+    ).rejects.toThrow(
+      'The "--aggregate" option cannot be used with --chart boxplot.',
+    );
+  });
+
   test("rejects heatmap when --facet matches --x", async () => {
     const workspace = await createWorkspace();
     const specOutputPath = join(workspace, "chart.vl.json");

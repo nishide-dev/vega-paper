@@ -64,7 +64,10 @@ export function registerInferCommand(
     .command("infer")
     .argument("<input>", "CSV or JSON input path")
     .description("Generate a Vega-Lite spec from CSV or JSON and optionally render SVG")
-    .option("--chart <type>", "chart type: line, bar, scatter, area, or heatmap")
+    .option(
+      "--chart <type>",
+      "chart type: line, bar, scatter, area, heatmap, or boxplot",
+    )
     .option("--x <field>", "x encoding field")
     .option("--y <field>", "y encoding field")
     .option("--color <field>", "color encoding field")
@@ -178,7 +181,16 @@ export function normalizeInferOptions(
   }
 
   const chart = parseInferChartType(options.chart);
+  const aggregateMethod = parseInferAggregateMethod(options.aggregate);
+
+  if (chart === "boxplot" && aggregateMethod !== undefined) {
+    throw new VegaPaperError(
+      'The "--aggregate" option cannot be used with --chart boxplot.',
+    );
+  }
+
   validateHeatmapOptions(chart, options);
+  validateBoxplotOptions(chart, options);
 
   return {
     inputPath,
@@ -195,7 +207,7 @@ export function normalizeInferOptions(
     colorType,
     inlineData: options.inlineData === true ? true : undefined,
     facetField: options.facet,
-    aggregateMethod: parseInferAggregateMethod(options.aggregate),
+    aggregateMethod,
   };
 }
 
@@ -210,13 +222,62 @@ async function writeSpecFile(
 function parseInferChartType(chart: string | undefined): InferChartType {
   const value = requireOption(chart, "--chart <type>");
 
-  if (value === "line" || value === "bar" || value === "scatter" || value === "area" || value === "heatmap") {
+  if (
+    value === "line" ||
+    value === "bar" ||
+    value === "scatter" ||
+    value === "area" ||
+    value === "heatmap" ||
+    value === "boxplot"
+  ) {
     return value;
   }
 
   throw new VegaPaperError(
-    `Unsupported chart type "${value}". Expected one of: line, bar, scatter, area, heatmap.`,
+    `Unsupported chart type "${value}". Expected one of: line, bar, scatter, area, heatmap, boxplot.`,
   );
+}
+
+function validateBoxplotOptions(
+  chart: InferChartType,
+  options: InferCommandOptions,
+): void {
+  if (chart !== "boxplot") {
+    return;
+  }
+
+  const x = requireOption(options.x, "--x <field>");
+  const y = requireOption(options.y, "--y <field>");
+
+  if (x === y) {
+    throw new VegaPaperError("Boxplot requires distinct --x and --y fields.");
+  }
+
+  const color = options.color;
+
+  if (color !== undefined) {
+    if (x === color || y === color) {
+      throw new VegaPaperError(
+        "Boxplot requires distinct --x, --y, and --color fields.",
+      );
+    }
+
+    if (options.facet !== undefined) {
+      if (options.facet === x || options.facet === y || options.facet === color) {
+        throw new VegaPaperError(
+          'The "--facet" field must differ from --x, --y, and --color on boxplot charts.',
+        );
+      }
+    }
+
+    return;
+  }
+
+  if (options.facet !== undefined && (options.facet === x || options.facet === y)) {
+    throw new VegaPaperError(
+      'The "--facet" field must differ from --x and --y on boxplot charts.',
+    );
+  }
 }
 
 function validateHeatmapOptions(

@@ -349,7 +349,7 @@ describe("inferVegaLiteSpec", () => {
   test("rejects unsupported chart types", async () => {
     const workspace = await createWorkspace();
     const inputPath = join(workspace, "data.csv");
-    const invalidChart = "boxplot" as unknown as InferRequest["chart"];
+    const invalidChart = "pie" as unknown as InferRequest["chart"];
 
     await Bun.write(inputPath, "year,value\n2020,10\n");
 
@@ -362,7 +362,7 @@ describe("inferVegaLiteSpec", () => {
         specOutputPath: join(workspace, "chart.vl.json"),
       }),
     ).rejects.toThrow(
-      'Unsupported chart type "boxplot". Expected one of: line, bar, scatter, area, heatmap.',
+      'Unsupported chart type "pie". Expected one of: line, bar, scatter, area, heatmap, boxplot.',
     );
   });
 
@@ -822,6 +822,88 @@ describe("inferVegaLiteSpec", () => {
         groupby: ["col", "row"],
       },
     ]);
+  });
+
+  test("builds a boxplot spec with nominal x and quantitative y scale zero false", async () => {
+    const workspace = await createWorkspace();
+    const inputPath = join(workspace, "data.csv");
+    const specOutputPath = join(workspace, "chart.vl.json");
+
+    await Bun.write(
+      inputPath,
+      "model,f1,split\nbase,0.61,train\nbase,0.62,train\nlarge,0.64,train\nlarge,0.65,train\n",
+    );
+
+    const result = await inferVegaLiteSpec({
+      inputPath,
+      chart: "boxplot",
+      xField: "model",
+      yField: "f1",
+      colorField: "split",
+      specOutputPath,
+    });
+
+    expect(result.spec).toEqual({
+      $schema: "https://vega.github.io/schema/vega-lite/v6.json",
+      data: { url: "data.csv" },
+      mark: "boxplot",
+      width: 360,
+      height: 240,
+      encoding: {
+        x: { field: "model", type: "nominal" },
+        y: {
+          field: "f1",
+          type: "quantitative",
+          scale: { zero: false },
+        },
+        color: { field: "split", type: "nominal" },
+      },
+    });
+  });
+
+  test("wraps boxplot in facet on inner spec", async () => {
+    const workspace = await createWorkspace();
+    const inputPath = join(workspace, "data.csv");
+    const specOutputPath = join(workspace, "chart.vl.json");
+
+    await Bun.write(inputPath, "model,f1,run\nbase,0.61,a\nbase,0.62,a\n");
+
+    const result = await inferVegaLiteSpec({
+      inputPath,
+      chart: "boxplot",
+      xField: "model",
+      yField: "f1",
+      facetField: "run",
+      specOutputPath,
+    });
+
+    expect(result.spec.facet).toEqual({ field: "run", type: "nominal" });
+    expect(result.spec.spec).toMatchObject({
+      mark: "boxplot",
+      encoding: {
+        y: { scale: { zero: false } },
+      },
+    });
+  });
+
+  test("rejects aggregate with boxplot in the request", async () => {
+    const workspace = await createWorkspace();
+    const inputPath = join(workspace, "data.csv");
+
+    await Bun.write(inputPath, "model,f1\nbase,0.61\n");
+
+    await expect(
+      inferVegaLiteSpec({
+        inputPath,
+        chart: "boxplot",
+        xField: "model",
+        yField: "f1",
+        aggregateMethod: "mean",
+        specOutputPath: join(workspace, "chart.vl.json"),
+      }),
+    ).rejects.toThrow(
+      'The "--aggregate" option cannot be used with --chart boxplot.',
+    );
   });
 
   test("rejects heatmap without a color field in the request", async () => {
