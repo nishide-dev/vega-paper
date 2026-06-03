@@ -76,7 +76,7 @@ See [`examples/`](examples/) for copy-paste commands.
 
 ## AI Skill
 
-Agents can follow [`skills/vega-paper/SKILL.md`](skills/vega-paper/SKILL.md) for infer-first workflows, lint revision loops, and figure meta sidecars. For Cursor, symlink `skills/vega-paper` to `.cursor/skills/vega-paper` (see the skill file).
+Agents can follow [`skills/vega-paper/SKILL.md`](skills/vega-paper/SKILL.md) for infer-first workflows, lint revision loops, and figure meta sidecars.
 
 ## Development
 
