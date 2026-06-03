@@ -9,9 +9,7 @@ export async function loadJsonSpec(inputPath: string): Promise<JsonObject> {
   try {
     contents = await Bun.file(inputPath).text();
   } catch {
-    throw new VegaPaperError(
-      `Input file not found or unreadable: ${inputPath}`,
-    );
+    throw new VegaPaperError(`Input file not found or unreadable: ${inputPath}`);
   }
 
   let parsed: unknown;
@@ -53,10 +51,7 @@ export function detectSpecType(spec: JsonObject): SpecType {
   );
 }
 
-export function applyThemeToSpec(
-  spec: JsonObject,
-  themeConfig: JsonObject,
-): JsonObject {
+export function applyThemeToSpec(spec: JsonObject, themeConfig: JsonObject): JsonObject {
   const specConfig = isPlainObject(spec.config) ? spec.config : {};
   const config = deepMerge(themeConfig, specConfig);
 
@@ -84,9 +79,5 @@ function deepMerge(defaults: JsonObject, overrides: JsonObject): JsonObject {
 }
 
 function isPlainObject(value: unknown): value is JsonObject {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    !Array.isArray(value)
-  );
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }

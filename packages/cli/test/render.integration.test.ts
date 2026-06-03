@@ -1,6 +1,6 @@
-import { access, mkdir, readFile, readdir, rm } from "node:fs/promises";
-import { dirname, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { access, mkdir, readdir, readFile, rm } from "node:fs/promises";
+import { dirname, join } from "node:path";
 import { renderChart } from "../src/core/render";
 
 const outputPath = "examples/basic-line/output.svg";
@@ -46,15 +46,7 @@ async function hasVegaLiteSvgBinary(): Promise<boolean> {
       ...entries
         .filter((entry) => entry.startsWith("vega-lite@"))
         .map((entry) =>
-          join(
-            "node_modules",
-            ".bun",
-            entry,
-            "node_modules",
-            "vega-lite",
-            "bin",
-            "vl2svg",
-          ),
+          join("node_modules", ".bun", entry, "node_modules", "vega-lite", "bin", "vl2svg"),
         ),
     );
   } catch {

@@ -1,14 +1,14 @@
 import { describe, expect, test } from "bun:test";
-import { Command } from "commander";
-import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { Command } from "commander";
 import { registerDoctorCommand } from "../src/commands/doctor";
 import {
   type DoctorCheck,
+  type DoctorEnvironment,
   getDoctorExitCode,
   runDoctorChecks,
-  type DoctorEnvironment,
 } from "../src/core/doctor";
 
 describe("doctor core", () => {

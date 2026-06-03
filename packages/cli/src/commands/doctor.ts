@@ -1,9 +1,5 @@
 import type { Command } from "commander";
-import {
-  type DoctorCheck,
-  getDoctorExitCode,
-  runDoctorChecks,
-} from "../core/doctor";
+import { type DoctorCheck, getDoctorExitCode, runDoctorChecks } from "../core/doctor";
 import { formatTable, toPrettyJson } from "../core/format";
 
 type DoctorOptions = {
@@ -38,11 +34,7 @@ export function registerDoctorCommand(
         writeOutput(
           `${formatTable({
             headers: ["status", "name", "message"],
-            rows: checks.map((check) => [
-              check.status,
-              check.name,
-              check.message,
-            ]),
+            rows: checks.map((check) => [check.status, check.name, check.message]),
           })}\n`,
         );
       }

@@ -2,23 +2,11 @@ import { dirname, extname, relative } from "node:path";
 import { VegaPaperError } from "./errors";
 import type { JsonObject } from "./spec";
 
-export type InferChartType =
-  | "line"
-  | "bar"
-  | "scatter"
-  | "area"
-  | "heatmap"
-  | "boxplot";
+export type InferChartType = "line" | "bar" | "scatter" | "area" | "heatmap" | "boxplot";
 
 export type VegaLiteFieldType = "quantitative" | "nominal" | "ordinal" | "temporal";
 
-export type InferAggregateMethod =
-  | "mean"
-  | "median"
-  | "sum"
-  | "count"
-  | "min"
-  | "max";
+export type InferAggregateMethod = "mean" | "median" | "sum" | "count" | "min" | "max";
 
 export type InferRequest = {
   inputPath: string;
@@ -68,13 +56,7 @@ const DEFAULT_WIDTH = 360;
 const DEFAULT_HEIGHT = 240;
 const VEGA_LITE_SCHEMA = "https://vega.github.io/schema/vega-lite/v6.json";
 
-type InferMark =
-  | "line"
-  | "bar"
-  | "point"
-  | "rect"
-  | "boxplot"
-  | { type: "area"; line: true };
+type InferMark = "line" | "bar" | "point" | "rect" | "boxplot" | { type: "area"; line: true };
 
 type InferEncodingChannel = {
   field: string;
@@ -91,9 +73,7 @@ const MARK_BY_CHART: Record<InferChartType, InferMark> = {
   boxplot: "boxplot",
 };
 
-export async function inferVegaLiteSpec(
-  request: InferRequest,
-): Promise<InferResult> {
+export async function inferVegaLiteSpec(request: InferRequest): Promise<InferResult> {
   const chart = parseChartType(request.chart);
   const tabular = await loadTabularInput(request.inputPath);
   const xIndex = findFieldIndex(tabular.header, request.xField);
@@ -118,16 +98,12 @@ export async function inferVegaLiteSpec(
   };
 
   if (chart === "boxplot" && request.aggregateMethod !== undefined) {
-    throw new VegaPaperError(
-      'The "--aggregate" option cannot be used with --chart boxplot.',
-    );
+    throw new VegaPaperError('The "--aggregate" option cannot be used with --chart boxplot.');
   }
 
   if (chart === "heatmap") {
     if (request.colorField === undefined) {
-      throw new VegaPaperError(
-        'The "--color" option is required when --chart heatmap is used.',
-      );
+      throw new VegaPaperError('The "--color" option is required when --chart heatmap is used.');
     }
 
     findFieldIndex(tabular.header, request.colorField);
@@ -266,9 +242,7 @@ export function parseJsonArray(contents: string): ParsedJsonArray {
   }
 
   if (!Array.isArray(parsed) || parsed.length === 0) {
-    throw new VegaPaperError(
-      "JSON input must be a non-empty array of objects.",
-    );
+    throw new VegaPaperError("JSON input must be a non-empty array of objects.");
   }
 
   const header: string[] = [];
@@ -288,9 +262,7 @@ export function parseJsonArray(contents: string): ParsedJsonArray {
   }
 
   const values = parsed as JsonObject[];
-  const rows = values.map((item) =>
-    header.map((key) => normalizeJsonCell(item[key], key)),
-  );
+  const rows = values.map((item) => header.map((key) => normalizeJsonCell(item[key], key)));
 
   return { header, rows, values };
 }
@@ -364,9 +336,7 @@ async function readJsonArray(inputPath: string): Promise<ParsedJsonArray> {
         error.message === "JSON input must be a non-empty array of objects." ||
         error.message === "JSON input must contain only objects."
       ) {
-        throw new VegaPaperError(
-          `${error.message.replace(/\.$/, "")}: ${inputPath}`,
-        );
+        throw new VegaPaperError(`${error.message.replace(/\.$/, "")}: ${inputPath}`);
       }
 
       throw error;
@@ -412,28 +382,19 @@ function normalizeJsonCell(value: unknown, key: string): string {
 
 function assertErrorBandSupported(chart: InferChartType, request: InferRequest): void {
   if (request.aggregateMethod !== undefined) {
-    throw new VegaPaperError(
-      'The "--error-band" option cannot be used with --aggregate.',
-    );
+    throw new VegaPaperError('The "--error-band" option cannot be used with --aggregate.');
   }
 
   if (chart === "heatmap") {
-    throw new VegaPaperError(
-      'The "--error-band" option cannot be used with --chart heatmap.',
-    );
+    throw new VegaPaperError('The "--error-band" option cannot be used with --chart heatmap.');
   }
 
   if (chart === "boxplot") {
-    throw new VegaPaperError(
-      'The "--error-band" option cannot be used with --chart boxplot.',
-    );
+    throw new VegaPaperError('The "--error-band" option cannot be used with --chart boxplot.');
   }
 }
 
-function buildAggregateTransform(
-  chart: InferChartType,
-  request: InferRequest,
-): JsonObject {
+function buildAggregateTransform(chart: InferChartType, request: InferRequest): JsonObject {
   const method = request.aggregateMethod;
 
   if (method === undefined) {
@@ -441,19 +402,18 @@ function buildAggregateTransform(
   }
 
   if (chart === "boxplot") {
-    throw new VegaPaperError(
-      'The "--aggregate" option cannot be used with --chart boxplot.',
-    );
+    throw new VegaPaperError('The "--aggregate" option cannot be used with --chart boxplot.');
   }
 
   const isHeatmap = chart === "heatmap";
-  const measureField = isHeatmap ? request.colorField! : request.yField;
+  if (isHeatmap && request.colorField === undefined) {
+    throw new VegaPaperError('The "--color" option is required when --chart heatmap is used.');
+  }
+
+  const measureField = isHeatmap ? request.colorField : request.yField;
   const groupby = isHeatmap
     ? [request.xField, request.yField]
-    : [
-        request.xField,
-        ...(request.colorField !== undefined ? [request.colorField] : []),
-      ];
+    : [request.xField, ...(request.colorField !== undefined ? [request.colorField] : [])];
 
   const aggregateEntry: JsonObject =
     method === "count"

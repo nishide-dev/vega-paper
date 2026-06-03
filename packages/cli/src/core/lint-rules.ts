@@ -112,10 +112,7 @@ function checkSizeRange({ spec, profile }: LintRuleContext): LintIssue[] {
   const width = getNumber(spec, "width");
   const height = getNumber(spec, "height");
 
-  if (
-    width !== undefined &&
-    (width < profile.widthRange.min || width > profile.widthRange.max)
-  ) {
+  if (width !== undefined && (width < profile.widthRange.min || width > profile.widthRange.max)) {
     issues.push({
       severity: "warning",
       ruleId: "size-out-of-range",
@@ -159,11 +156,7 @@ function checkInlineDataSize({ spec, profile }: LintRuleContext): LintIssue[] {
   ];
 }
 
-function checkLegendCategoryCount({
-  spec,
-  specType,
-  profile,
-}: LintRuleContext): LintIssue[] {
+function checkLegendCategoryCount({ spec, specType, profile }: LintRuleContext): LintIssue[] {
   if (specType !== "vega-lite") {
     return [];
   }
@@ -238,10 +231,7 @@ function checkFontSizes({ spec, profile }: LintRuleContext): LintIssue[] {
   });
 }
 
-function checkBarYAxisZero({
-  spec,
-  specType,
-}: LintRuleContext): LintIssue[] {
+function checkBarYAxisZero({ spec, specType }: LintRuleContext): LintIssue[] {
   if (specType !== "vega-lite") {
     return [];
   }
@@ -256,7 +246,7 @@ function checkBarYAxisZero({
     const encoding = getObject(unit.spec, "encoding");
     const y = encoding ? getObject(encoding, "y") : undefined;
 
-    if (!y || y.type !== "quantitative") {
+    if (y?.type !== "quantitative") {
       continue;
     }
 

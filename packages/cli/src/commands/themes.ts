@@ -1,5 +1,5 @@
 import { getTheme, listThemes } from "@vega-paper/themes";
-import { Command } from "commander";
+import type { Command } from "commander";
 import { VegaPaperError } from "../core/errors";
 import { formatTable, toPrettyJson } from "../core/format";
 

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { mkdtemp } from "node:fs/promises";
-import { join } from "node:path";
 import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { applyThemeToSpec, detectSpecType, loadJsonSpec } from "../src/core/spec";
 
 describe("loadJsonSpec", () => {
@@ -16,18 +16,14 @@ describe("loadJsonSpec", () => {
     const path = await tempSpecPath("spec-invalid.json");
     await Bun.write(path, "{");
 
-    await expect(loadJsonSpec(path)).rejects.toThrow(
-      `Invalid JSON in input file: ${path}`,
-    );
+    await expect(loadJsonSpec(path)).rejects.toThrow(`Invalid JSON in input file: ${path}`);
   });
 
   test("rejects non-object JSON", async () => {
     const path = await tempSpecPath("spec-array.json");
     await Bun.write(path, "[]");
 
-    await expect(loadJsonSpec(path)).rejects.toThrow(
-      `Input JSON must be an object: ${path}`,
-    );
+    await expect(loadJsonSpec(path)).rejects.toThrow(`Input JSON must be an object: ${path}`);
   });
 });
 

@@ -1,11 +1,11 @@
 import { describe, expect, test } from "bun:test";
-import { Command } from "commander";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { Command } from "commander";
 import { registerLintCommand } from "../src/commands/lint";
-import { lintSpec } from "../src/core/lint";
 import type { LintResult } from "../src/core/lint";
+import { lintSpec } from "../src/core/lint";
 import { getLintProfile, type LintProfileName } from "../src/core/lint-profiles";
 import { runLintRules } from "../src/core/lint-rules";
 import type { JsonObject, SpecType } from "../src/core/spec";
@@ -108,9 +108,7 @@ describe("runLintRules", () => {
         .map((issue) => issue.path),
     ).toEqual(["$.width", "$.height"]);
     expect(
-      runRules(spec, "vega-lite", "web").filter(
-        (issue) => issue.ruleId === "size-out-of-range",
-      ),
+      runRules(spec, "vega-lite", "web").filter((issue) => issue.ruleId === "size-out-of-range"),
     ).toEqual([]);
   });
 
@@ -127,9 +125,7 @@ describe("runLintRules", () => {
       suggestion: "Shorten the title or move detail into the caption.",
     });
     expect(
-      runRules(spec, "vega-lite", "web").filter(
-        (issue) => issue.ruleId === "title-too-long",
-      ),
+      runRules(spec, "vega-lite", "web").filter((issue) => issue.ruleId === "title-too-long"),
     ).toEqual([]);
   });
 
@@ -162,13 +158,11 @@ describe("runLintRules", () => {
       },
     });
 
+    expect(runRules(spec, "vega-lite", "acl").map((issue) => issue.ruleId)).toContain(
+      "inline-data-large",
+    );
     expect(
-      runRules(spec, "vega-lite", "acl").map((issue) => issue.ruleId),
-    ).toContain("inline-data-large");
-    expect(
-      runRules(spec, "vega-lite", "paper").filter(
-        (issue) => issue.ruleId === "inline-data-large",
-      ),
+      runRules(spec, "vega-lite", "paper").filter((issue) => issue.ruleId === "inline-data-large"),
     ).toEqual([]);
   });
 
@@ -213,9 +207,9 @@ describe("runLintRules", () => {
       },
     });
 
-    expect(
-      runRules(spec, "vega-lite", "acl").map((issue) => issue.ruleId),
-    ).toContain("legend-too-many-categories");
+    expect(runRules(spec, "vega-lite", "acl").map((issue) => issue.ruleId)).toContain(
+      "legend-too-many-categories",
+    );
     expect(
       runRules(spec, "vega-lite", "web").filter(
         (issue) => issue.ruleId === "legend-too-many-categories",
@@ -284,11 +278,9 @@ describe("runLintRules", () => {
     delete spec.mark;
     delete spec.encoding;
 
-    expect(
-      runRules(spec).filter(
-        (issue) => issue.ruleId === "legend-too-many-categories",
-      ),
-    ).toEqual([]);
+    expect(runRules(spec).filter((issue) => issue.ruleId === "legend-too-many-categories")).toEqual(
+      [],
+    );
   });
 
   test("skips composed legend category counts for child non-inline data", () => {
@@ -315,11 +307,9 @@ describe("runLintRules", () => {
     delete spec.mark;
     delete spec.encoding;
 
-    expect(
-      runRules(spec).filter(
-        (issue) => issue.ruleId === "legend-too-many-categories",
-      ),
-    ).toEqual([]);
+    expect(runRules(spec).filter((issue) => issue.ruleId === "legend-too-many-categories")).toEqual(
+      [],
+    );
   });
 
   test("warns when configured font sizes are too small", () => {
@@ -343,13 +333,11 @@ describe("runLintRules", () => {
       },
     });
 
+    expect(runRules(spec, "vega-lite", "acl").map((issue) => issue.ruleId)).toContain(
+      "font-size-small",
+    );
     expect(
-      runRules(spec, "vega-lite", "acl").map((issue) => issue.ruleId),
-    ).toContain("font-size-small");
-    expect(
-      runRules(spec, "vega-lite", "paper").filter(
-        (issue) => issue.ruleId === "font-size-small",
-      ),
+      runRules(spec, "vega-lite", "paper").filter((issue) => issue.ruleId === "font-size-small"),
     ).toEqual([]);
   });
 
@@ -417,10 +405,7 @@ describe("runLintRules", () => {
   });
 
   test("does not warn at rule boundaries", () => {
-    const categories = Array.from(
-      { length: 12 },
-      (_, index) => `model-${index}`,
-    );
+    const categories = Array.from({ length: 12 }, (_, index) => `model-${index}`);
     const spec = cleanVegaLiteSpec({
       width: 180,
       height: 120,
@@ -484,11 +469,7 @@ describe("runLintRules", () => {
       runRules(spec)
         .filter((issue) => issue.ruleId === "axis-title-missing")
         .map((issue) => issue.path),
-    ).toEqual([
-      "$.layer[0].encoding.x",
-      "$.layer[0].encoding.y",
-      "$.layer[1].encoding.y",
-    ]);
+    ).toEqual(["$.layer[0].encoding.x", "$.layer[0].encoding.y", "$.layer[1].encoding.y"]);
   });
 
   test("warns for missing axis titles inside facet and repeat specs", () => {
@@ -567,11 +548,7 @@ describe("runLintRules", () => {
       runRules(spec)
         .filter((issue) => issue.ruleId === "axis-title-missing")
         .map((issue) => issue.path),
-    ).toEqual([
-      "$.concat[0].encoding.x",
-      "$.hconcat[0].encoding.y",
-      "$.vconcat[0].encoding.x",
-    ]);
+    ).toEqual(["$.concat[0].encoding.x", "$.hconcat[0].encoding.y", "$.vconcat[0].encoding.x"]);
   });
 
   test("recurses through nested composed Vega-Lite specs", () => {
@@ -719,11 +696,7 @@ describe("lintSpec", () => {
           .filter((issue) => issue.ruleId === "size-out-of-range")
           .map((issue) => issue.path),
       ).toEqual(["$.width", "$.height"]);
-      expect(
-        webResult.issues.filter(
-          (issue) => issue.ruleId === "size-out-of-range",
-        ),
-      ).toEqual([]);
+      expect(webResult.issues.filter((issue) => issue.ruleId === "size-out-of-range")).toEqual([]);
     });
   });
 
@@ -773,9 +746,8 @@ describe("lint command", () => {
 
   test("propagates unknown profile errors", async () => {
     try {
-      await runLintCommandWithRunner(
-        ["lint", "chart.vl.json", "--profile", "unknown"],
-        async () => cleanLintResult(),
+      await runLintCommandWithRunner(["lint", "chart.vl.json", "--profile", "unknown"], async () =>
+        cleanLintResult(),
       );
       throw new Error("Expected command to reject");
     } catch (error) {
@@ -890,12 +862,8 @@ function cleanVegaLiteSpec(overrides: JsonObject = {}): JsonObject {
   };
 }
 
-async function withTemporaryWorkspace(
-  callback: (workspacePath: string) => Promise<void>,
-) {
-  const workspacePath = await mkdtemp(
-    join(tmpdir(), "vega-paper-lint-test-"),
-  );
+async function withTemporaryWorkspace(callback: (workspacePath: string) => Promise<void>) {
+  const workspacePath = await mkdtemp(join(tmpdir(), "vega-paper-lint-test-"));
 
   try {
     await callback(workspacePath);
@@ -946,9 +914,7 @@ function cleanLintResult(): LintResult {
 
 function createCommandLintResult(issues: LintResult["issues"]): LintResult {
   const errorCount = issues.filter((issue) => issue.severity === "error").length;
-  const warningCount = issues.filter(
-    (issue) => issue.severity === "warning",
-  ).length;
+  const warningCount = issues.filter((issue) => issue.severity === "warning").length;
 
   return {
     ok: errorCount === 0,

@@ -2,21 +2,16 @@ import { afterEach, describe, expect, test } from "bun:test";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import {
-  inferVegaLiteSpec,
-  parseCsv,
-  parseJsonArray,
-  type InferRequest,
-} from "../src/core/infer";
 import { VegaPaperError } from "../src/core/errors";
+import { type InferRequest, inferVegaLiteSpec, parseCsv, parseJsonArray } from "../src/core/infer";
 
 const temporaryDirectories: string[] = [];
 
 afterEach(async () => {
   await Promise.all(
-    temporaryDirectories.splice(0).map((directory) =>
-      rm(directory, { force: true, recursive: true }),
-    ),
+    temporaryDirectories
+      .splice(0)
+      .map((directory) => rm(directory, { force: true, recursive: true })),
   );
 });
 
@@ -33,9 +28,7 @@ describe("parseCsv", () => {
 
   test("parses quoted values, commas, escaped quotes, and trailing empty cells", () => {
     expect(
-      parseCsv(
-        'name,quote,notes\n"Alice, Jr.","He said ""hello""",\nBob,"plain text",""\n',
-      ),
+      parseCsv('name,quote,notes\n"Alice, Jr.","He said ""hello""",\nBob,"plain text",""\n'),
     ).toEqual({
       header: ["name", "quote", "notes"],
       rows: [
@@ -56,20 +49,17 @@ describe("parseCsv", () => {
   });
 
   test("parses multiline quoted cells", () => {
-    expect(parseCsv('name,notes\nAlice,"line 1\nline 2"\nBob,"single line"\n'))
-      .toEqual({
-        header: ["name", "notes"],
-        rows: [
-          ["Alice", "line 1\nline 2"],
-          ["Bob", "single line"],
-        ],
-      });
+    expect(parseCsv('name,notes\nAlice,"line 1\nline 2"\nBob,"single line"\n')).toEqual({
+      header: ["name", "notes"],
+      rows: [
+        ["Alice", "line 1\nline 2"],
+        ["Bob", "single line"],
+      ],
+    });
   });
 
   test("rejects unterminated quoted fields", () => {
-    expect(() => parseCsv('name,notes\nAlice,"missing end quote')).toThrow(
-      VegaPaperError,
-    );
+    expect(() => parseCsv('name,notes\nAlice,"missing end quote')).toThrow(VegaPaperError);
   });
 
   test("rejects empty CSV input", () => {
@@ -77,9 +67,7 @@ describe("parseCsv", () => {
   });
 
   test("rejects empty header names", () => {
-    expect(() => parseCsv("name, ,value\nAlice,1,2\n")).toThrow(
-      VegaPaperError,
-    );
+    expect(() => parseCsv("name, ,value\nAlice,1,2\n")).toThrow(VegaPaperError);
   });
 });
 
@@ -91,7 +79,10 @@ describe("parseJsonArray", () => {
         ["2", "1", ""],
         ["", "9", "3"],
       ],
-      values: [{ b: 2, a: 1 }, { a: 9, c: 3 }],
+      values: [
+        { b: 2, a: 1 },
+        { a: 9, c: 3 },
+      ],
     });
   });
 
@@ -107,9 +98,7 @@ describe("parseJsonArray", () => {
   });
 
   test("rejects empty arrays", () => {
-    expect(() => parseJsonArray("[]")).toThrow(
-      "JSON input must be a non-empty array of objects.",
-    );
+    expect(() => parseJsonArray("[]")).toThrow("JSON input must be a non-empty array of objects.");
   });
 
   test("rejects non-array top level", () => {
@@ -119,9 +108,7 @@ describe("parseJsonArray", () => {
   });
 
   test("rejects non-object elements", () => {
-    expect(() => parseJsonArray('[{"x":1},42]')).toThrow(
-      "JSON input must contain only objects.",
-    );
+    expect(() => parseJsonArray('[{"x":1},42]')).toThrow("JSON input must contain only objects.");
   });
 
   test("rejects nested cell values", () => {
@@ -175,22 +162,15 @@ describe("inferVegaLiteSpec", () => {
       xField: "category",
       yField: "value",
       specOutputPath: join(workspace, "chart.vl.json"),
-    } satisfies Omit<
-      InferRequest,
-      "chart"
-    >;
+    } satisfies Omit<InferRequest, "chart">;
 
-    await expect(
-      inferVegaLiteSpec({ ...baseRequest, chart: "bar" }),
-    ).resolves.toMatchObject({
+    await expect(inferVegaLiteSpec({ ...baseRequest, chart: "bar" })).resolves.toMatchObject({
       spec: {
         mark: "bar",
       },
     });
 
-    await expect(
-      inferVegaLiteSpec({ ...baseRequest, chart: "scatter" }),
-    ).resolves.toMatchObject({
+    await expect(inferVegaLiteSpec({ ...baseRequest, chart: "scatter" })).resolves.toMatchObject({
       spec: {
         mark: "point",
       },
@@ -457,10 +437,7 @@ describe("inferVegaLiteSpec", () => {
     const inputPath = join(workspace, "data.json");
     const specOutputPath = join(workspace, "nested", "chart.vl.json");
 
-    await Bun.write(
-      inputPath,
-      '[{"epoch":1,"f1":0.61},{"epoch":2,"f1":0.68}]',
-    );
+    await Bun.write(inputPath, '[{"epoch":1,"f1":0.61},{"epoch":2,"f1":0.68}]');
 
     const result = await inferVegaLiteSpec({
       inputPath,
@@ -493,9 +470,7 @@ describe("inferVegaLiteSpec", () => {
         yField: "f1",
         specOutputPath: join(workspace, "chart.vl.json"),
       }),
-    ).rejects.toThrow(
-      'Unsupported input format ".tsv". Expected a .csv or .json file.',
-    );
+    ).rejects.toThrow('Unsupported input format ".tsv". Expected a .csv or .json file.');
   });
 
   test("rejects invalid JSON files", async () => {
@@ -520,10 +495,7 @@ describe("inferVegaLiteSpec", () => {
     const inputPath = join(workspace, "data.json");
     const specOutputPath = join(workspace, "chart.vl.json");
 
-    await Bun.write(
-      inputPath,
-      '[{"epoch":1,"f1":0.61},{"epoch":2,"f1":0.68}]',
-    );
+    await Bun.write(inputPath, '[{"epoch":1,"f1":0.61},{"epoch":2,"f1":0.68}]');
 
     const result = await inferVegaLiteSpec({
       inputPath,
@@ -535,7 +507,10 @@ describe("inferVegaLiteSpec", () => {
     });
 
     expect(result.spec.data).toEqual({
-      values: [{ epoch: 1, f1: 0.61 }, { epoch: 2, f1: 0.68 }],
+      values: [
+        { epoch: 1, f1: 0.61 },
+        { epoch: 2, f1: 0.68 },
+      ],
     });
     expect(result.spec.data).not.toHaveProperty("url");
   });
@@ -696,10 +671,7 @@ describe("inferVegaLiteSpec", () => {
     const inputPath = join(workspace, "data.csv");
     const specOutputPath = join(workspace, "chart.vl.json");
 
-    await Bun.write(
-      inputPath,
-      "epoch,f1,model\n1,0.61,a\n1,0.62,a\n2,0.68,a\n",
-    );
+    await Bun.write(inputPath, "epoch,f1,model\n1,0.61,a\n1,0.62,a\n2,0.68,a\n");
 
     const result = await inferVegaLiteSpec({
       inputPath,
@@ -772,10 +744,7 @@ describe("inferVegaLiteSpec", () => {
     const inputPath = join(workspace, "data.csv");
     const specOutputPath = join(workspace, "chart.vl.json");
 
-    await Bun.write(
-      inputPath,
-      "epoch,f1,split,model\n1,0.61,a,x\n1,0.62,a,x\n2,0.68,a,x\n",
-    );
+    await Bun.write(inputPath, "epoch,f1,split,model\n1,0.61,a,x\n1,0.62,a,x\n2,0.68,a,x\n");
 
     const result = await inferVegaLiteSpec({
       inputPath,
@@ -901,9 +870,7 @@ describe("inferVegaLiteSpec", () => {
         aggregateMethod: "mean",
         specOutputPath: join(workspace, "chart.vl.json"),
       }),
-    ).rejects.toThrow(
-      'The "--aggregate" option cannot be used with --chart boxplot.',
-    );
+    ).rejects.toThrow('The "--aggregate" option cannot be used with --chart boxplot.');
   });
 
   test("adds yError encoding when errorBandField is set on a line chart", async () => {
@@ -969,9 +936,7 @@ describe("inferVegaLiteSpec", () => {
         aggregateMethod: "mean",
         specOutputPath: join(workspace, "chart.vl.json"),
       }),
-    ).rejects.toThrow(
-      'The "--error-band" option cannot be used with --aggregate.',
-    );
+    ).rejects.toThrow('The "--error-band" option cannot be used with --aggregate.');
   });
 
   test("rejects error-band with heatmap in the request", async () => {
@@ -990,9 +955,7 @@ describe("inferVegaLiteSpec", () => {
         errorBandField: "se",
         specOutputPath: join(workspace, "chart.vl.json"),
       }),
-    ).rejects.toThrow(
-      'The "--error-band" option cannot be used with --chart heatmap.',
-    );
+    ).rejects.toThrow('The "--error-band" option cannot be used with --chart heatmap.');
   });
 
   test("rejects heatmap without a color field in the request", async () => {
@@ -1009,9 +972,7 @@ describe("inferVegaLiteSpec", () => {
         yField: "y",
         specOutputPath: join(workspace, "chart.vl.json"),
       }),
-    ).rejects.toThrow(
-      'The "--color" option is required when --chart heatmap is used.',
-    );
+    ).rejects.toThrow('The "--color" option is required when --chart heatmap is used.');
   });
 });
 

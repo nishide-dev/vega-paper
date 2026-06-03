@@ -1,7 +1,7 @@
-import { getTheme } from "@vega-paper/themes";
 import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
+import { getTheme } from "@vega-paper/themes";
 import { renderWithExternalVegaCli } from "../backends/external-vega-cli";
 import { VegaPaperError } from "./errors";
 import { applyThemeToSpec, detectSpecType, loadJsonSpec } from "./spec";
@@ -20,9 +20,7 @@ export type RenderResult = {
   warnings: string[];
 };
 
-export async function renderChart(
-  request: RenderRequest,
-): Promise<RenderResult> {
+export async function renderChart(request: RenderRequest): Promise<RenderResult> {
   const spec = await loadJsonSpec(request.inputPath);
   const specType = detectSpecType(spec);
   const theme = request.themeName ? getCliTheme(request.themeName) : undefined;
@@ -36,11 +34,7 @@ export async function renderChart(
     specType === "vega-lite" ? "spec.vl.json" : "spec.vg.json",
   );
 
-  await writeFile(
-    tempSpecPath,
-    `${JSON.stringify(renderedSpec, null, 2)}\n`,
-    "utf8",
-  );
+  await writeFile(tempSpecPath, `${JSON.stringify(renderedSpec, null, 2)}\n`, "utf8");
 
   await renderWithExternalVegaCli({
     specType,
@@ -59,10 +53,7 @@ function getCliTheme(themeName: string): ReturnType<typeof getTheme> {
   try {
     return getTheme(themeName);
   } catch (error) {
-    if (
-      error instanceof Error &&
-      error.message === `Unknown theme "${themeName}"`
-    ) {
+    if (error instanceof Error && error.message === `Unknown theme "${themeName}"`) {
       throw new VegaPaperError(error.message);
     }
 

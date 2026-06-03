@@ -25,23 +25,14 @@ export async function renderWithExternalVegaCli(
 
 function getRenderBinary(specType: SpecType, format: "svg"): VegaCliBinaryName {
   if (format !== "svg") {
-    throw new VegaPaperError(
-      `Unsupported format "${format}". This MVP supports only "svg".`,
-    );
+    throw new VegaPaperError(`Unsupported format "${format}". This MVP supports only "svg".`);
   }
 
   return specType === "vega-lite" ? "vl2svg" : "vg2svg";
 }
 
-export async function resolveVegaCliBinary(
-  binary: VegaCliBinaryName,
-): Promise<string | undefined> {
-  const localBinary = join(
-    await getWorkspacePath(),
-    "node_modules",
-    ".bin",
-    binary,
-  );
+export async function resolveVegaCliBinary(binary: VegaCliBinaryName): Promise<string | undefined> {
+  const localBinary = join(await getWorkspacePath(), "node_modules", ".bin", binary);
 
   try {
     await access(localBinary);
@@ -68,24 +59,18 @@ async function getWorkspacePath(): Promise<string> {
   return cwd;
 }
 
-async function getBunPackageStoreBinary(
-  binary: VegaCliBinaryName,
-): Promise<string | undefined> {
+async function getBunPackageStoreBinary(binary: VegaCliBinaryName): Promise<string | undefined> {
   const packageName = binary === "vl2svg" ? "vega-lite" : "vega-cli";
 
   const packageStoreRoot = join("node_modules", ".bun");
-  const candidates = [
-    join(packageStoreRoot, "node_modules", packageName, "bin", binary),
-  ];
+  const candidates = [join(packageStoreRoot, "node_modules", packageName, "bin", binary)];
 
   try {
     const entries = await readdir(packageStoreRoot);
     candidates.push(
       ...entries
         .filter((entry) => entry.startsWith(`${packageName}@`))
-        .map((entry) =>
-          join(packageStoreRoot, entry, "node_modules", packageName, "bin", binary),
-        ),
+        .map((entry) => join(packageStoreRoot, entry, "node_modules", packageName, "bin", binary)),
     );
   } catch {
     return undefined;
@@ -103,11 +88,7 @@ async function getBunPackageStoreBinary(
   return undefined;
 }
 
-async function runBinary(
-  command: string,
-  displayName: string,
-  args: string[],
-): Promise<void> {
+async function runBinary(command: string, displayName: string, args: string[]): Promise<void> {
   await new Promise<void>((resolve, reject) => {
     const child = spawn(command, args, {
       stdio: ["ignore", "pipe", "pipe"],
@@ -136,9 +117,7 @@ async function runBinary(
       }
 
       reject(
-        new VegaPaperError(
-          `Failed to start Vega CLI binary "${displayName}": ${error.message}`,
-        ),
+        new VegaPaperError(`Failed to start Vega CLI binary "${displayName}": ${error.message}`),
       );
     });
 

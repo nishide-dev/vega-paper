@@ -63,5 +63,5 @@ export function listLintProfileNames(): LintProfileName[] {
 }
 
 function isLintProfileName(value: string): value is LintProfileName {
-  return Object.prototype.hasOwnProperty.call(LINT_PROFILES, value);
+  return Object.hasOwn(LINT_PROFILES, value);
 }

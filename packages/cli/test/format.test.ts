@@ -12,11 +12,7 @@ describe("formatTable", () => {
         ],
       }),
     ).toBe(
-      [
-        "name              mode",
-        "paper-clean       light",
-        "monochrome-print  print",
-      ].join("\n"),
+      ["name              mode", "paper-clean       light", "monochrome-print  print"].join("\n"),
     );
   });
 

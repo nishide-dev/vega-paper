@@ -8,8 +8,7 @@ export function formatTable(input: TableInput): string {
     return "";
   }
 
-  const allRows =
-    input.headers.length > 0 ? [input.headers, ...input.rows] : input.rows;
+  const allRows = input.headers.length > 0 ? [input.headers, ...input.rows] : input.rows;
   const columnCount = Math.max(...allRows.map((row) => row.length));
   const widths = Array.from({ length: columnCount }, (_, columnIndex) =>
     Math.max(...allRows.map((row) => row[columnIndex]?.length ?? 0)),
