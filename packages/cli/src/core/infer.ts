@@ -2,7 +2,7 @@ import { dirname, extname, relative } from "node:path";
 import { VegaPaperError } from "./errors";
 import type { JsonObject } from "./spec";
 
-export type InferChartType = "line" | "bar" | "scatter";
+export type InferChartType = "line" | "bar" | "scatter" | "area";
 
 export type VegaLiteFieldType = "quantitative" | "nominal" | "ordinal" | "temporal";
 
@@ -51,10 +51,13 @@ const DEFAULT_WIDTH = 360;
 const DEFAULT_HEIGHT = 240;
 const VEGA_LITE_SCHEMA = "https://vega.github.io/schema/vega-lite/v6.json";
 
-const MARK_BY_CHART: Record<InferChartType, "line" | "bar" | "point"> = {
+type InferMark = "line" | "bar" | "point" | { type: "area"; line: true };
+
+const MARK_BY_CHART: Record<InferChartType, InferMark> = {
   line: "line",
   bar: "bar",
   scatter: "point",
+  area: { type: "area", line: true },
 };
 
 export async function inferVegaLiteSpec(
@@ -291,12 +294,12 @@ function normalizeJsonCell(value: unknown, key: string): string {
 }
 
 function parseChartType(chart: string): InferChartType {
-  if (chart === "line" || chart === "bar" || chart === "scatter") {
+  if (chart === "line" || chart === "bar" || chart === "scatter" || chart === "area") {
     return chart;
   }
 
   throw new VegaPaperError(
-    `Unsupported chart type "${chart}". Expected one of: line, bar, scatter.`,
+    `Unsupported chart type "${chart}". Expected one of: line, bar, scatter, area.`,
   );
 }
 
