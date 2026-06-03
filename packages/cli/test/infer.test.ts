@@ -197,6 +197,29 @@ describe("inferVegaLiteSpec", () => {
     });
   });
 
+  test("maps area chart to an area mark with line overlay", async () => {
+    const workspace = await createWorkspace();
+    const inputPath = join(workspace, "data.csv");
+
+    await Bun.write(inputPath, "epoch,loss\n1,0.9\n2,0.7\n");
+
+    const result = await inferVegaLiteSpec({
+      inputPath,
+      chart: "area",
+      xField: "epoch",
+      yField: "loss",
+      specOutputPath: join(workspace, "chart.vl.json"),
+    });
+
+    expect(result.spec).toMatchObject({
+      mark: { type: "area", line: true },
+      encoding: {
+        x: { field: "epoch", type: "quantitative" },
+        y: { field: "loss", type: "quantitative" },
+      },
+    });
+  });
+
   test("infers nominal types for non-numeric x and y fields", async () => {
     const workspace = await createWorkspace();
     const inputPath = join(workspace, "data.csv");
@@ -326,7 +349,7 @@ describe("inferVegaLiteSpec", () => {
   test("rejects unsupported chart types", async () => {
     const workspace = await createWorkspace();
     const inputPath = join(workspace, "data.csv");
-    const invalidChart = "area" as unknown as InferRequest["chart"];
+    const invalidChart = "heatmap" as unknown as InferRequest["chart"];
 
     await Bun.write(inputPath, "year,value\n2020,10\n");
 
@@ -339,7 +362,7 @@ describe("inferVegaLiteSpec", () => {
         specOutputPath: join(workspace, "chart.vl.json"),
       }),
     ).rejects.toThrow(
-      'Unsupported chart type "area". Expected one of: line, bar, scatter.',
+      'Unsupported chart type "heatmap". Expected one of: line, bar, scatter, area.',
     );
   });
 

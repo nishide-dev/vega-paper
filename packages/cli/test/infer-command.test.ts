@@ -945,6 +945,46 @@ describe("infer command", () => {
 
     expect(calls.inferCalls[0]?.inlineData).toBeUndefined();
   });
+
+  test("passes area chart type through to InferRequest", async () => {
+    const workspace = await createWorkspace();
+    const specOutputPath = join(workspace, "chart.vl.json");
+    const calls = createSpies();
+
+    await runInferCommand(
+      [
+        "infer",
+        "results.csv",
+        "--chart",
+        "area",
+        "--x",
+        "epoch",
+        "--y",
+        "loss",
+        "--spec-out",
+        specOutputPath,
+      ],
+      {
+        infer: async (request) => {
+          calls.inferCalls.push(request);
+          return createInferResult("../results.csv");
+        },
+        writeSpec: async () => {
+          calls.writeSpecCalls += 1;
+        },
+      },
+    );
+
+    expect(calls.inferCalls).toEqual([
+      {
+        inputPath: "results.csv",
+        chart: "area",
+        xField: "epoch",
+        yField: "loss",
+        specOutputPath,
+      },
+    ]);
+  });
 });
 
 type InferCommandHarness = {

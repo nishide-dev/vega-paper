@@ -61,7 +61,7 @@ export function registerInferCommand(
     .command("infer")
     .argument("<input>", "CSV or JSON input path")
     .description("Generate a Vega-Lite spec from CSV or JSON and optionally render SVG")
-    .option("--chart <type>", "chart type: line, bar, or scatter")
+    .option("--chart <type>", "chart type: line, bar, scatter, or area")
     .option("--x <field>", "x encoding field")
     .option("--y <field>", "y encoding field")
     .option("--color <field>", "color encoding field")
@@ -187,12 +187,12 @@ async function writeSpecFile(
 function parseInferChartType(chart: string | undefined): InferChartType {
   const value = requireOption(chart, "--chart <type>");
 
-  if (value === "line" || value === "bar" || value === "scatter") {
+  if (value === "line" || value === "bar" || value === "scatter" || value === "area") {
     return value;
   }
 
   throw new VegaPaperError(
-    `Unsupported chart type "${value}". Expected one of: line, bar, scatter.`,
+    `Unsupported chart type "${value}". Expected one of: line, bar, scatter, area.`,
   );
 }
 
