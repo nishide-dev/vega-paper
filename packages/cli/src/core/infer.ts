@@ -2,7 +2,13 @@ import { dirname, extname, relative } from "node:path";
 import { VegaPaperError } from "./errors";
 import type { JsonObject } from "./spec";
 
-export type InferChartType = "line" | "bar" | "scatter" | "area" | "heatmap";
+export type InferChartType =
+  | "line"
+  | "bar"
+  | "scatter"
+  | "area"
+  | "heatmap"
+  | "boxplot";
 
 export type VegaLiteFieldType = "quantitative" | "nominal" | "ordinal" | "temporal";
 
@@ -61,7 +67,19 @@ const DEFAULT_WIDTH = 360;
 const DEFAULT_HEIGHT = 240;
 const VEGA_LITE_SCHEMA = "https://vega.github.io/schema/vega-lite/v6.json";
 
-type InferMark = "line" | "bar" | "point" | "rect" | { type: "area"; line: true };
+type InferMark =
+  | "line"
+  | "bar"
+  | "point"
+  | "rect"
+  | "boxplot"
+  | { type: "area"; line: true };
+
+type InferEncodingChannel = {
+  field: string;
+  type: VegaLiteFieldType;
+  scale?: { zero: boolean };
+};
 
 const MARK_BY_CHART: Record<InferChartType, InferMark> = {
   line: "line",
@@ -69,6 +87,7 @@ const MARK_BY_CHART: Record<InferChartType, InferMark> = {
   scatter: "point",
   area: { type: "area", line: true },
   heatmap: "rect",
+  boxplot: "boxplot",
 };
 
 export async function inferVegaLiteSpec(
@@ -87,10 +106,16 @@ export async function inferVegaLiteSpec(
   }
 
   let encoding: {
-    x: { field: string; type: VegaLiteFieldType };
-    y: { field: string; type: VegaLiteFieldType };
-    color?: { field: string; type: VegaLiteFieldType };
+    x: InferEncodingChannel;
+    y: InferEncodingChannel;
+    color?: InferEncodingChannel;
   };
+
+  if (chart === "boxplot" && request.aggregateMethod !== undefined) {
+    throw new VegaPaperError(
+      'The "--aggregate" option cannot be used with --chart boxplot.',
+    );
+  }
 
   if (chart === "heatmap") {
     if (request.colorField === undefined) {
@@ -115,6 +140,25 @@ export async function inferVegaLiteSpec(
         type: request.colorType ?? "quantitative",
       },
     };
+  } else if (chart === "boxplot") {
+    encoding = {
+      x: {
+        field: request.xField,
+        type: request.xType ?? "nominal",
+      },
+      y: {
+        field: request.yField,
+        type: request.yType ?? "quantitative",
+        scale: { zero: false },
+      },
+    };
+
+    if (request.colorField !== undefined && colorIndex !== undefined) {
+      encoding.color = {
+        field: request.colorField,
+        type: request.colorType ?? "nominal",
+      };
+    }
   } else {
     encoding = {
       x: {
@@ -363,6 +407,12 @@ function buildAggregateTransform(
     throw new VegaPaperError("Aggregate method is required to build transform.");
   }
 
+  if (chart === "boxplot") {
+    throw new VegaPaperError(
+      'The "--aggregate" option cannot be used with --chart boxplot.',
+    );
+  }
+
   const isHeatmap = chart === "heatmap";
   const measureField = isHeatmap ? request.colorField! : request.yField;
   const groupby = isHeatmap
@@ -384,12 +434,19 @@ function buildAggregateTransform(
 }
 
 function parseChartType(chart: string): InferChartType {
-  if (chart === "line" || chart === "bar" || chart === "scatter" || chart === "area" || chart === "heatmap") {
+  if (
+    chart === "line" ||
+    chart === "bar" ||
+    chart === "scatter" ||
+    chart === "area" ||
+    chart === "heatmap" ||
+    chart === "boxplot"
+  ) {
     return chart;
   }
 
   throw new VegaPaperError(
-    `Unsupported chart type "${chart}". Expected one of: line, bar, scatter, area, heatmap.`,
+    `Unsupported chart type "${chart}". Expected one of: line, bar, scatter, area, heatmap, boxplot.`,
   );
 }
 
