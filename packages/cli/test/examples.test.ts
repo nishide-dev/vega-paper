@@ -27,6 +27,16 @@ describe("examples", () => {
     ]);
   });
 
+  test("training-curve error-band chart links to data-with-error.csv with yError", async () => {
+    const spec = await readExampleSpec("examples/training-curve/chart-error-band.vl.json");
+
+    expect(spec.data).toEqual({ url: "data-with-error.csv" });
+    expect(spec.encoding).toMatchObject({
+      y: { field: "f1", type: "quantitative" },
+      yError: { field: "f1_se", type: "quantitative" },
+    });
+  });
+
   test("confusion-matrix chart is a heatmap", async () => {
     const spec = await readExampleSpec("examples/confusion-matrix/chart.vl.json");
 

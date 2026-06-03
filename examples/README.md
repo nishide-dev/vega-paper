@@ -5,7 +5,7 @@ Small datasets and reference Vega-Lite specs for trying the CLI. Each folder has
 | Folder | Demonstrates |
 |--------|----------------|
 | [basic-line/](basic-line/) | Hand-written spec; `render` and `lint` |
-| [training-curve/](training-curve/) | `infer` line chart; `--aggregate mean` on raw runs |
+| [training-curve/](training-curve/) | `infer` line chart; `--aggregate mean`; `--error-band` |
 | [confusion-matrix/](confusion-matrix/) | `infer` heatmap; sum aggregation from trial rows |
 | [faceted-training/](faceted-training/) | `infer` with `--facet` small multiples |
 | [boxplot/](boxplot/) | `infer` boxplot from raw sample rows; optional `--color` grouping |
