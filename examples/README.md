@@ -8,6 +8,7 @@ Small datasets and reference Vega-Lite specs for trying the CLI. Each folder has
 | [training-curve/](training-curve/) | `infer` line chart; `--aggregate mean` on raw runs |
 | [confusion-matrix/](confusion-matrix/) | `infer` heatmap; sum aggregation from trial rows |
 | [faceted-training/](faceted-training/) | `infer` with `--facet` small multiples |
+| [boxplot/](boxplot/) | `infer` boxplot from raw sample rows; optional `--color` grouping |
 
 ## Quick start
 

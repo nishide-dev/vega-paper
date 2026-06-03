@@ -1,0 +1,9 @@
+model,f1,split
+base,0.58,train
+base,0.61,train
+base,0.59,val
+base,0.62,val
+large,0.63,train
+large,0.66,train
+large,0.64,val
+large,0.67,val

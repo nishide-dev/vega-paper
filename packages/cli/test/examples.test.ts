@@ -59,4 +59,28 @@ describe("examples", () => {
       },
     });
   });
+
+  test("boxplot chart uses boxplot mark with y scale zero false", async () => {
+    const spec = await readExampleSpec("examples/boxplot/chart.vl.json");
+
+    expect(spec.data).toEqual({ url: "data.csv" });
+    expect(spec.mark).toBe("boxplot");
+    expect(spec.encoding).toEqual({
+      x: { field: "model", type: "nominal" },
+      y: {
+        field: "f1",
+        type: "quantitative",
+        scale: { zero: false },
+      },
+    });
+  });
+
+  test("boxplot by-split chart adds nominal color encoding", async () => {
+    const spec = await readExampleSpec("examples/boxplot/chart-by-split.vl.json");
+
+    expect(spec.data).toEqual({ url: "data-by-split.csv" });
+    expect(spec.encoding).toMatchObject({
+      color: { field: "split", type: "nominal" },
+    });
+  });
 });

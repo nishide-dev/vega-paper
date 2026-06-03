@@ -1,0 +1,27 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "data": {
+    "url": "data-by-split.csv"
+  },
+  "mark": "boxplot",
+  "width": 360,
+  "height": 240,
+  "encoding": {
+    "x": {
+      "field": "model",
+      "type": "nominal"
+    },
+    "y": {
+      "field": "f1",
+      "type": "quantitative",
+      "scale": {
+        "zero": false
+      }
+    },
+    "color": {
+      "field": "split",
+      "type": "nominal"
+    }
+  },
+  "title": "F1 by model and split"
+}

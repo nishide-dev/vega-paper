@@ -1,0 +1,23 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "data": {
+    "url": "data.csv"
+  },
+  "mark": "boxplot",
+  "width": 360,
+  "height": 240,
+  "encoding": {
+    "x": {
+      "field": "model",
+      "type": "nominal"
+    },
+    "y": {
+      "field": "f1",
+      "type": "quantitative",
+      "scale": {
+        "zero": false
+      }
+    }
+  },
+  "title": "F1 by model"
+}
