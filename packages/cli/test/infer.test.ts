@@ -5,6 +5,7 @@ import { join } from "node:path";
 import {
   inferVegaLiteSpec,
   parseCsv,
+  parseJsonArray,
   type InferRequest,
 } from "../src/core/infer";
 import { VegaPaperError } from "../src/core/errors";
@@ -78,6 +79,54 @@ describe("parseCsv", () => {
   test("rejects empty header names", () => {
     expect(() => parseCsv("name, ,value\nAlice,1,2\n")).toThrow(
       VegaPaperError,
+    );
+  });
+});
+
+describe("parseJsonArray", () => {
+  test("collects union keys in first-seen order", () => {
+    expect(parseJsonArray('[{"b":2,"a":1},{"c":3,"a":9}]')).toEqual({
+      header: ["b", "a", "c"],
+      rows: [
+        ["2", "1", ""],
+        ["", "9", "3"],
+      ],
+      values: [{ b: 2, a: 1 }, { a: 9, c: 3 }],
+    });
+  });
+
+  test("normalizes null and missing keys to empty strings", () => {
+    expect(parseJsonArray('[{"x":1},{"x":null,"y":"ok"}]')).toEqual({
+      header: ["x", "y"],
+      rows: [
+        ["1", ""],
+        ["", "ok"],
+      ],
+      values: [{ x: 1 }, { x: null, y: "ok" }],
+    });
+  });
+
+  test("rejects empty arrays", () => {
+    expect(() => parseJsonArray("[]")).toThrow(
+      "JSON input must be a non-empty array of objects.",
+    );
+  });
+
+  test("rejects non-array top level", () => {
+    expect(() => parseJsonArray('{"mark":"bar"}')).toThrow(
+      "JSON input must be a non-empty array of objects.",
+    );
+  });
+
+  test("rejects non-object elements", () => {
+    expect(() => parseJsonArray('[{"x":1},42]')).toThrow(
+      "JSON input must contain only objects.",
+    );
+  });
+
+  test("rejects nested cell values", () => {
+    expect(() => parseJsonArray('[{"x":{"nested":true}}]')).toThrow(
+      'JSON field "x" contains a nested value.',
     );
   });
 });
@@ -250,7 +299,7 @@ describe("inferVegaLiteSpec", () => {
         yField: "value",
         specOutputPath: join(workspace, "chart-a.vl.json"),
       }),
-    ).rejects.toThrow('CSV field "missing-x" was not found.');
+    ).rejects.toThrow('Field "missing-x" was not found.');
 
     await expect(
       inferVegaLiteSpec({
@@ -260,7 +309,7 @@ describe("inferVegaLiteSpec", () => {
         yField: "missing-y",
         specOutputPath: join(workspace, "chart-b.vl.json"),
       }),
-    ).rejects.toThrow('CSV field "missing-y" was not found.');
+    ).rejects.toThrow('Field "missing-y" was not found.');
 
     await expect(
       inferVegaLiteSpec({
@@ -271,7 +320,7 @@ describe("inferVegaLiteSpec", () => {
         colorField: "missing-color",
         specOutputPath: join(workspace, "chart-c.vl.json"),
       }),
-    ).rejects.toThrow('CSV field "missing-color" was not found.');
+    ).rejects.toThrow('Field "missing-color" was not found.');
   });
 
   test("rejects unsupported chart types", async () => {
@@ -378,6 +427,119 @@ describe("inferVegaLiteSpec", () => {
         color: { field: "rating", type: "ordinal" },
       },
     });
+  });
+
+  test("builds a line spec with a relative JSON url", async () => {
+    const workspace = await createWorkspace();
+    const inputPath = join(workspace, "data.json");
+    const specOutputPath = join(workspace, "nested", "chart.vl.json");
+
+    await Bun.write(
+      inputPath,
+      '[{"epoch":1,"f1":0.61},{"epoch":2,"f1":0.68}]',
+    );
+
+    const result = await inferVegaLiteSpec({
+      inputPath,
+      chart: "line",
+      xField: "epoch",
+      yField: "f1",
+      specOutputPath,
+    });
+
+    expect(result.spec).toMatchObject({
+      data: { url: "../data.json" },
+      encoding: {
+        x: { field: "epoch", type: "quantitative" },
+        y: { field: "f1", type: "quantitative" },
+      },
+    });
+  });
+
+  test("rejects unsupported input extensions", async () => {
+    const workspace = await createWorkspace();
+    const inputPath = join(workspace, "data.tsv");
+
+    await Bun.write(inputPath, "epoch\tf1\n1\t0.5\n");
+
+    await expect(
+      inferVegaLiteSpec({
+        inputPath,
+        chart: "line",
+        xField: "epoch",
+        yField: "f1",
+        specOutputPath: join(workspace, "chart.vl.json"),
+      }),
+    ).rejects.toThrow(
+      'Unsupported input format ".tsv". Expected a .csv or .json file.',
+    );
+  });
+
+  test("rejects invalid JSON files", async () => {
+    const workspace = await createWorkspace();
+    const inputPath = join(workspace, "broken.json");
+
+    await Bun.write(inputPath, "[not json");
+
+    await expect(
+      inferVegaLiteSpec({
+        inputPath,
+        chart: "line",
+        xField: "epoch",
+        yField: "f1",
+        specOutputPath: join(workspace, "chart.vl.json"),
+      }),
+    ).rejects.toThrow(`Invalid JSON in input file: ${inputPath}`);
+  });
+
+  test("embeds JSON objects in data.values when inlineData is true", async () => {
+    const workspace = await createWorkspace();
+    const inputPath = join(workspace, "data.json");
+    const specOutputPath = join(workspace, "chart.vl.json");
+
+    await Bun.write(
+      inputPath,
+      '[{"epoch":1,"f1":0.61},{"epoch":2,"f1":0.68}]',
+    );
+
+    const result = await inferVegaLiteSpec({
+      inputPath,
+      chart: "line",
+      xField: "epoch",
+      yField: "f1",
+      specOutputPath,
+      inlineData: true,
+    });
+
+    expect(result.spec.data).toEqual({
+      values: [{ epoch: 1, f1: 0.61 }, { epoch: 2, f1: 0.68 }],
+    });
+    expect(result.spec.data).not.toHaveProperty("url");
+  });
+
+  test("embeds CSV rows as all-string objects when inlineData is true", async () => {
+    const workspace = await createWorkspace();
+    const inputPath = join(workspace, "data.csv");
+    const specOutputPath = join(workspace, "chart.vl.json");
+
+    await Bun.write(inputPath, "epoch,f1\n1,0.61\n2,0.68\n");
+
+    const result = await inferVegaLiteSpec({
+      inputPath,
+      chart: "line",
+      xField: "epoch",
+      yField: "f1",
+      specOutputPath,
+      inlineData: true,
+    });
+
+    expect(result.spec.data).toEqual({
+      values: [
+        { epoch: "1", f1: "0.61" },
+        { epoch: "2", f1: "0.68" },
+      ],
+    });
+    expect(result.spec.data).not.toHaveProperty("url");
   });
 
   test("yType ordinal overrides quantitative inference for numeric y field", async () => {

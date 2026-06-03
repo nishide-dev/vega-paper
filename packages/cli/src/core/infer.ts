@@ -1,4 +1,4 @@
-import { dirname, relative } from "node:path";
+import { dirname, extname, relative } from "node:path";
 import { VegaPaperError } from "./errors";
 import type { JsonObject } from "./spec";
 
@@ -19,6 +19,7 @@ export type InferRequest = {
   xType?: VegaLiteFieldType | undefined;
   yType?: VegaLiteFieldType | undefined;
   colorType?: VegaLiteFieldType | undefined;
+  inlineData?: boolean | undefined;
 };
 
 export type InferResult = {
@@ -29,6 +30,20 @@ export type ParsedCsv = {
   header: string[];
   rows: string[][];
 };
+
+export type ParsedJsonArray = {
+  header: string[];
+  rows: string[][];
+  values: JsonObject[];
+};
+
+type TabularInput = {
+  header: string[];
+  rows: string[][];
+  jsonValues?: JsonObject[] | undefined;
+};
+
+type InputFormat = "csv" | "json";
 
 type InferredFieldType = "quantitative" | "nominal";
 
@@ -46,13 +61,13 @@ export async function inferVegaLiteSpec(
   request: InferRequest,
 ): Promise<InferResult> {
   const chart = parseChartType(request.chart);
-  const csv = await readCsv(request.inputPath);
-  const xIndex = findFieldIndex(csv.header, request.xField);
-  const yIndex = findFieldIndex(csv.header, request.yField);
+  const tabular = await loadTabularInput(request.inputPath);
+  const xIndex = findFieldIndex(tabular.header, request.xField);
+  const yIndex = findFieldIndex(tabular.header, request.yField);
   const colorIndex =
     request.colorField === undefined
       ? undefined
-      : findFieldIndex(csv.header, request.colorField);
+      : findFieldIndex(tabular.header, request.colorField);
 
   const encoding: {
     x: { field: string; type: VegaLiteFieldType };
@@ -61,11 +76,11 @@ export async function inferVegaLiteSpec(
   } = {
     x: {
       field: request.xField,
-      type: request.xType ?? inferFieldType(csv.rows, xIndex),
+      type: request.xType ?? inferFieldType(tabular.rows, xIndex),
     },
     y: {
       field: request.yField,
-      type: request.yType ?? inferFieldType(csv.rows, yIndex),
+      type: request.yType ?? inferFieldType(tabular.rows, yIndex),
     },
   };
 
@@ -76,11 +91,13 @@ export async function inferVegaLiteSpec(
     };
   }
 
+  const data: JsonObject = request.inlineData
+    ? { values: buildInlineValues(tabular) }
+    : { url: toRelativeDataUrl(request.specOutputPath, request.inputPath) };
+
   const spec: JsonObject = {
     $schema: VEGA_LITE_SCHEMA,
-    data: {
-      url: toRelativeDataUrl(request.specOutputPath, request.inputPath),
-    },
+    data,
     mark: MARK_BY_CHART[chart],
     width: request.width ?? DEFAULT_WIDTH,
     height: request.height ?? DEFAULT_HEIGHT,
@@ -119,6 +136,77 @@ export function parseCsv(contents: string): ParsedCsv {
   };
 }
 
+export function parseJsonArray(contents: string): ParsedJsonArray {
+  let parsed: unknown;
+
+  try {
+    parsed = JSON.parse(contents);
+  } catch {
+    throw new VegaPaperError("Invalid JSON in input file.");
+  }
+
+  if (!Array.isArray(parsed) || parsed.length === 0) {
+    throw new VegaPaperError(
+      "JSON input must be a non-empty array of objects.",
+    );
+  }
+
+  const header: string[] = [];
+  const seenKeys = new Set<string>();
+
+  for (const item of parsed) {
+    if (typeof item !== "object" || item === null || Array.isArray(item)) {
+      throw new VegaPaperError("JSON input must contain only objects.");
+    }
+
+    for (const key of Object.keys(item as JsonObject)) {
+      if (!seenKeys.has(key)) {
+        seenKeys.add(key);
+        header.push(key);
+      }
+    }
+  }
+
+  const values = parsed as JsonObject[];
+  const rows = values.map((item) =>
+    header.map((key) => normalizeJsonCell(item[key], key)),
+  );
+
+  return { header, rows, values };
+}
+
+function getInputFormat(inputPath: string): InputFormat {
+  const extension = extname(inputPath).toLowerCase();
+
+  if (extension === ".csv") {
+    return "csv";
+  }
+
+  if (extension === ".json") {
+    return "json";
+  }
+
+  throw new VegaPaperError(
+    `Unsupported input format "${extension}". Expected a .csv or .json file.`,
+  );
+}
+
+async function loadTabularInput(inputPath: string): Promise<TabularInput> {
+  const format = getInputFormat(inputPath);
+
+  if (format === "csv") {
+    const csv = await readCsv(inputPath);
+    return { header: csv.header, rows: csv.rows };
+  }
+
+  const json = await readJsonArray(inputPath);
+  return {
+    header: json.header,
+    rows: json.rows,
+    jsonValues: json.values,
+  };
+}
+
 async function readCsv(inputPath: string): Promise<ParsedCsv> {
   const file = Bun.file(inputPath);
 
@@ -137,6 +225,71 @@ async function readCsv(inputPath: string): Promise<ParsedCsv> {
   }
 }
 
+async function readJsonArray(inputPath: string): Promise<ParsedJsonArray> {
+  const file = Bun.file(inputPath);
+
+  if (!(await file.exists())) {
+    throw new VegaPaperError(`JSON file not found or unreadable: ${inputPath}`);
+  }
+
+  try {
+    return parseJsonArray(await file.text());
+  } catch (error) {
+    if (error instanceof VegaPaperError) {
+      if (error.message === "Invalid JSON in input file.") {
+        throw new VegaPaperError(`Invalid JSON in input file: ${inputPath}`);
+      }
+
+      if (
+        error.message === "JSON input must be a non-empty array of objects." ||
+        error.message === "JSON input must contain only objects."
+      ) {
+        throw new VegaPaperError(
+          `${error.message.replace(/\.$/, "")}: ${inputPath}`,
+        );
+      }
+
+      throw error;
+    }
+
+    throw new VegaPaperError(`JSON file not found or unreadable: ${inputPath}`);
+  }
+}
+
+function buildInlineValues(tabular: TabularInput): JsonObject[] {
+  if (tabular.jsonValues !== undefined) {
+    return tabular.jsonValues;
+  }
+
+  return tabular.rows.map((row) => {
+    const record: JsonObject = {};
+
+    for (let index = 0; index < tabular.header.length; index += 1) {
+      const key = tabular.header[index];
+
+      if (key === undefined) {
+        continue;
+      }
+
+      record[key] = row[index] ?? "";
+    }
+
+    return record;
+  });
+}
+
+function normalizeJsonCell(value: unknown, key: string): string {
+  if (value === null || value === undefined) {
+    return "";
+  }
+
+  if (typeof value === "object") {
+    throw new VegaPaperError(`JSON field "${key}" contains a nested value.`);
+  }
+
+  return String(value);
+}
+
 function parseChartType(chart: string): InferChartType {
   if (chart === "line" || chart === "bar" || chart === "scatter") {
     return chart;
@@ -151,7 +304,7 @@ function findFieldIndex(header: string[], field: string): number {
   const index = header.indexOf(field);
 
   if (index === -1) {
-    throw new VegaPaperError(`CSV field "${field}" was not found.`);
+    throw new VegaPaperError(`Field "${field}" was not found.`);
   }
 
   return index;
