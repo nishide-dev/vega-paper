@@ -25,6 +25,8 @@ export const paperLintRules: LintRule[] = [
   checkLegendCategoryCount,
   checkFontSizes,
   checkBarYAxisZero,
+  checkGrayscaleUnsafeColors,
+  checkColorOnlySeriesDistinction,
 ];
 
 export function runLintRules(context: LintRuleContext): LintIssue[] {
@@ -266,6 +268,217 @@ function checkBarYAxisZero({ spec, specType }: LintRuleContext): LintIssue[] {
   }
 
   return issues;
+}
+
+function checkGrayscaleUnsafeColors({ spec, profile }: LintRuleContext): LintIssue[] {
+  if (!profile.grayscaleSafe) {
+    return [];
+  }
+
+  const issues: LintIssue[] = [];
+
+  for (const { path, color } of collectExplicitColors(spec)) {
+    if (isGrayscaleColor(color)) {
+      continue;
+    }
+
+    issues.push({
+      severity: "warning",
+      ruleId: "grayscale-unsafe-color",
+      path,
+      message: `Color "${color}" is not grayscale-safe.`,
+      suggestion:
+        "Use gray values, add strokeDash/shape encodings, or render with monochrome-print.",
+    });
+  }
+
+  return issues;
+}
+
+function checkColorOnlySeriesDistinction({
+  spec,
+  specType,
+  profile,
+}: LintRuleContext): LintIssue[] {
+  if (!profile.grayscaleSafe || specType !== "vega-lite") {
+    return [];
+  }
+
+  const issues: LintIssue[] = [];
+  const rootValues = getInlineDataValues(spec);
+
+  for (const unit of collectVegaLiteUnitSpecs(spec)) {
+    if (!isLineMark(unit.spec.mark) && !isBarMark(unit.spec.mark)) {
+      continue;
+    }
+
+    const encoding = getObject(unit.spec, "encoding");
+    const color = encoding ? getObject(encoding, "color") : undefined;
+    const field = typeof color?.field === "string" ? color.field : undefined;
+
+    if (!field) {
+      continue;
+    }
+
+    if (hasSeriesDistinctionBeyondColor(encoding)) {
+      continue;
+    }
+
+    const values = getLegendCategoryValues(unit.spec, rootValues);
+
+    if (!values || countDistinctFieldValues(values, field) < 2) {
+      continue;
+    }
+
+    issues.push({
+      severity: "warning",
+      ruleId: "color-only-series",
+      path: joinJsonPath(unit.path, "encoding.color"),
+      message: `Series differ only by color field "${field}".`,
+      suggestion:
+        "Add strokeDash or shape encoding, facet, or use monochrome-print with fewer series.",
+    });
+  }
+
+  return issues;
+}
+
+type ExplicitColor = {
+  path: string;
+  color: string;
+};
+
+function collectExplicitColors(spec: JsonObject): ExplicitColor[] {
+  const colors: ExplicitColor[] = [];
+  const config = getObject(spec, "config");
+  const range = config ? getObject(config, "range") : undefined;
+  const categoryRange = range?.category;
+
+  if (Array.isArray(categoryRange)) {
+    for (const [index, value] of categoryRange.entries()) {
+      if (typeof value === "string") {
+        colors.push({ path: `$.config.range.category[${index}]`, color: value });
+      }
+    }
+  }
+
+  for (const unit of collectVegaLiteUnitSpecs(spec)) {
+    if (typeof unit.spec.mark === "object" && typeof unit.spec.mark.color === "string") {
+      colors.push({
+        path: joinJsonPath(unit.path, "mark.color"),
+        color: unit.spec.mark.color,
+      });
+    }
+
+    const encoding = getObject(unit.spec, "encoding");
+    const color = encoding ? getObject(encoding, "color") : undefined;
+
+    if (typeof color?.value === "string") {
+      colors.push({
+        path: joinJsonPath(unit.path, "encoding.color.value"),
+        color: color.value,
+      });
+    }
+  }
+
+  return colors;
+}
+
+function hasSeriesDistinctionBeyondColor(encoding: JsonObject | undefined): boolean {
+  if (!encoding) {
+    return false;
+  }
+
+  for (const channelName of ["strokeDash", "shape", "strokeWidth", "opacity"] as const) {
+    const channel = getObject(encoding, channelName);
+
+    if (channel && typeof channel.field === "string") {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function countDistinctFieldValues(values: unknown[], field: string): number {
+  const categories = new Set<string>();
+
+  for (const row of values) {
+    if (!isPlainObject(row)) {
+      continue;
+    }
+
+    const value = row[field];
+
+    if (typeof value === "string" || typeof value === "number") {
+      categories.add(String(value));
+    }
+  }
+
+  return categories.size;
+}
+
+function isGrayscaleColor(color: string): boolean {
+  const rgb = parseRgbComponents(color);
+
+  if (!rgb) {
+    return true;
+  }
+
+  const maxDiff = Math.max(
+    Math.abs(rgb.r - rgb.g),
+    Math.abs(rgb.g - rgb.b),
+    Math.abs(rgb.r - rgb.b),
+  );
+
+  return maxDiff <= 16;
+}
+
+function parseRgbComponents(color: string): { r: number; g: number; b: number } | undefined {
+  const trimmed = color.trim();
+  const shortHex = /^#([0-9a-f]{3})$/i.exec(trimmed);
+
+  if (shortHex) {
+    const [r, g, b] = shortHex[1] as string;
+
+    return {
+      r: Number.parseInt(`${r}${r}`, 16),
+      g: Number.parseInt(`${g}${g}`, 16),
+      b: Number.parseInt(`${b}${b}`, 16),
+    };
+  }
+
+  const longHex = /^#([0-9a-f]{6})$/i.exec(trimmed);
+
+  if (longHex) {
+    const hex = longHex[1] as string;
+
+    return {
+      r: Number.parseInt(hex.slice(0, 2), 16),
+      g: Number.parseInt(hex.slice(2, 4), 16),
+      b: Number.parseInt(hex.slice(4, 6), 16),
+    };
+  }
+
+  const rgb = /^rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)$/i.exec(trimmed);
+
+  if (rgb) {
+    return {
+      r: Number(rgb[1]),
+      g: Number(rgb[2]),
+      b: Number(rgb[3]),
+    };
+  }
+
+  return undefined;
+}
+
+function isLineMark(mark: unknown): boolean {
+  if (mark === "line") {
+    return true;
+  }
+
+  return isPlainObject(mark) && mark.type === "line";
 }
 
 function getInlineDataValues(spec: JsonObject): unknown[] | undefined {
