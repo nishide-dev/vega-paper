@@ -1,6 +1,9 @@
 import { aclClean } from "./acl-clean";
 import { monochromePrint } from "./monochrome-print";
+import { natureSoft } from "./nature-soft";
 import { paperClean } from "./paper-clean";
+import { posterDark } from "./poster-dark";
+import { shadcnDark } from "./shadcn-dark";
 import { shadcnLight } from "./shadcn-light";
 
 export type VegaPaperThemeTarget = "paper" | "slide" | "web" | "poster";
@@ -15,7 +18,15 @@ export interface VegaPaperTheme {
   config: Record<string, unknown>;
 }
 
-export const themes = [paperClean, aclClean, shadcnLight, monochromePrint] as const;
+export const themes = [
+  paperClean,
+  aclClean,
+  shadcnLight,
+  shadcnDark,
+  natureSoft,
+  monochromePrint,
+  posterDark,
+] as const;
 
 export function listThemes(): VegaPaperTheme[] {
   return themes.map(cloneTheme);
