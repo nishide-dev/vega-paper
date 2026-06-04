@@ -11,7 +11,10 @@ describe("themes command", () => {
     expect(output.stdout).toContain("paper-clean");
     expect(output.stdout).toContain("acl-clean");
     expect(output.stdout).toContain("shadcn-light");
+    expect(output.stdout).toContain("shadcn-dark");
+    expect(output.stdout).toContain("nature-soft");
     expect(output.stdout).toContain("monochrome-print");
+    expect(output.stdout).toContain("poster-dark");
   });
 
   test("prints theme list as JSON", async () => {
@@ -22,7 +25,10 @@ describe("themes command", () => {
       "paper-clean",
       "acl-clean",
       "shadcn-light",
+      "shadcn-dark",
+      "nature-soft",
       "monochrome-print",
+      "poster-dark",
     ]);
   });
 

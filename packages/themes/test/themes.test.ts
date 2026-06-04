@@ -7,7 +7,10 @@ describe("theme registry", () => {
       "paper-clean",
       "acl-clean",
       "shadcn-light",
+      "shadcn-dark",
+      "nature-soft",
       "monochrome-print",
+      "poster-dark",
     ]);
   });
 
@@ -19,6 +22,13 @@ describe("theme registry", () => {
     expect(theme.mode).toBe("light");
     expect(theme.config).toHaveProperty("axis");
     expect(theme.config).toHaveProperty("view");
+  });
+
+  test("returns poster-dark with poster target and dark mode", () => {
+    const theme = getTheme("poster-dark");
+
+    expect(theme.target).toBe("poster");
+    expect(theme.mode).toBe("dark");
   });
 
   test("rejects unknown themes", () => {
