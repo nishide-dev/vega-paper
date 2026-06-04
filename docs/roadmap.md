@@ -15,7 +15,7 @@ This document is the **living roadmap** for VegaPaper. It supersedes §13 in [`i
 | 1 | CLI MVP | Done |
 | 2 | AI Skill | Done |
 | 3 | Theme expansion | Done |
-| 4a | CLI distribution & install | **Next** |
+| 4a | CLI distribution & install | **In progress** (4a-1 done; 4a-2 Release install next) |
 | 4b | Custom themes | Planned |
 | 5 | MCP wrapper | Planned |
 | 6 | Research workflow integration | Planned |
@@ -69,22 +69,28 @@ Also delivered:
 
 ---
 
-## Phase 4a: CLI distribution & install — Next
+## Phase 4a: CLI distribution & install — In progress
 
-**Goal:** Use `vega-paper` outside a monorepo checkout. Primary UX: **`curl -fsSL …/install.sh | bash`** → `vega-paper` on PATH (with `vl2svg` / `vg2svg` shims under the hood).
+**Goal:** Use `vega-paper` outside a monorepo checkout. Primary UX: **`curl -fsSL …/install.sh | bash`** → downloads **GitHub Release** assets → `vega-paper` on PATH (with `vl2svg` / `vg2svg` bundled or shimmed).
 
-Spec: [`superpowers/specs/2026-06-03-vega-paper-cli-distribution-design.md`](./superpowers/specs/2026-06-03-vega-paper-cli-distribution-design.md)
+**Distribution model:** GitHub Release binaries only — **no npm publish**.
 
-### Phase 4a-1 (this slice)
+Spec: [`superpowers/specs/2026-06-03-vega-paper-github-release-install-design.md`](./superpowers/specs/2026-06-03-vega-paper-github-release-install-design.md) (supersedes npm paths in the 4a-1 distribution spec)
 
-1. **Publishable packages** — `@vega-paper/themes` + `vega-paper` on npm; `dist/` builds; `bunx vega-paper` documented
-2. **`install.sh`** — prefix at `~/.local/share/vega-paper`; shims in `~/.local/bin`
-3. **Install-root resolution** — Vega CLI and version lookup work from any cwd
-4. **`doctor` + docs** — README, SKILL.md updated for installed vs dev-repo usage
+### Phase 4a-1 — Done
 
-### Phase 4a-2 (deferred)
+1. **`dist/` builds** — compiled CLI bundle for release packaging
+2. **`install.sh` skeleton** — prefix layout, shims, `--from-repo` for dev/CI
+3. **Install-root resolution** — `VEGA_PAPER_HOME`, Vega CLI lookup from any cwd
+4. **`doctor` + docs** — README, SKILL.md; CI `install:smoke` via `--from-repo`
 
-- GitHub Release **compiled binaries** (`bun build --compile`) for Bun-free targets
+### Phase 4a-2 — Next
+
+1. **GitHub Release workflow** — per-OS/arch artifacts (`bun build --compile` + bundled `vl2svg`/`vg2svg` or release tarball)
+2. **`install.sh` production path** — detect platform, download from Release, extract to `~/.local/share/vega-paper`
+3. **Version pinning** — `--version v0.1.0` or `latest`
+
+Remove / defer: npm publish, `bunx vega-paper`, prefix `bun install vega-paper@…` path in `install.sh`.
 
 **Why before MCP:** MCP wraps the CLI; external clients need a stable install story first.
 

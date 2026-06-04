@@ -21,9 +21,11 @@ Open a new shell (or add `~/.local/bin` to your PATH), then verify:
 vega-paper doctor
 ```
 
-After [npm publish](https://www.npmjs.com/package/vega-paper), the same installer pins `vega-paper@0.1.0`. Until then, test from a clone with `bash scripts/install.sh --from-repo`.
+The installer downloads **GitHub Release** binaries for your platform (Phase 4a-2). Until Release artifacts ship, test from a clone:
 
-Alternative: `bunx vega-paper` (requires Vega CLI binaries on PATH or in the project).
+```bash
+bash scripts/install.sh --from-repo
+```
 
 ## Development setup
 
