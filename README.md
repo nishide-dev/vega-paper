@@ -78,6 +78,22 @@ See [`examples/`](examples/) for copy-paste commands.
 
 Agents can follow [`skills/vega-paper/SKILL.md`](skills/vega-paper/SKILL.md) for infer-first workflows, lint revision loops, and figure meta sidecars.
 
+| Reference | Topic |
+|-----------|-------|
+| [chart-selection.md](skills/vega-paper/references/chart-selection.md) | Chart types, decision guide, modifiers |
+| [theme-catalog.md](skills/vega-paper/references/theme-catalog.md) | Built-in themes and selection |
+| [paper-style-guide.md](skills/vega-paper/references/paper-style-guide.md) | Lint profiles, sizes, LaTeX notes |
+| [vega-lite-patterns.md](skills/vega-paper/references/vega-lite-patterns.md) | Hand-written specs and `render` |
+
+Optional wrappers (from repo root):
+
+```bash
+bun run skills/vega-paper/scripts/validate-spec.ts figures/f1.vl.json --lint-profile paper
+bun run skills/vega-paper/scripts/render-chart.ts figures/f1.vl.json --out figures/f1.svg
+```
+
+The CLI prefix in `SKILL.md` remains canonical; scripts are thin entry points for agents.
+
 ## Development
 
 | Script | Description |
