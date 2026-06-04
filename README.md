@@ -111,7 +111,7 @@ Note: `bun run check` is **code** quality (Biome). `vega-paper lint` is **figure
 
 ```text
 packages/cli/      vega-paper CLI
-packages/themes/   seven built-in themes (paper, ACL, shadcn, nature, poster, monochrome)
+packages/themes/   eight built-in themes (paper, ACL, NeurIPS, shadcn, nature, poster, monochrome)
 skills/            agent skills (vega-paper workflow)
 examples/          sample data, reference specs, and READMEs
 docs/superpowers/  design specs and implementation plans

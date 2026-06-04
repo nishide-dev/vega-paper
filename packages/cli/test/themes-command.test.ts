@@ -10,6 +10,7 @@ describe("themes command", () => {
     expect(output.stdout).toContain("name");
     expect(output.stdout).toContain("paper-clean");
     expect(output.stdout).toContain("acl-clean");
+    expect(output.stdout).toContain("neurips-clean");
     expect(output.stdout).toContain("shadcn-light");
     expect(output.stdout).toContain("shadcn-dark");
     expect(output.stdout).toContain("nature-soft");
@@ -24,6 +25,7 @@ describe("themes command", () => {
     expect(themes.map((theme) => theme.name)).toEqual([
       "paper-clean",
       "acl-clean",
+      "neurips-clean",
       "shadcn-light",
       "shadcn-dark",
       "nature-soft",
