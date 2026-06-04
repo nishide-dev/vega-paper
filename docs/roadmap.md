@@ -69,7 +69,7 @@ Also delivered:
 
 ---
 
-## Phase 4a: CLI distribution & install — In progress
+## Phase 4a: CLI distribution & install — Done
 
 **Goal:** Use `vega-paper` outside a monorepo checkout. Primary UX: **`curl -fsSL …/install.sh | bash`** → downloads **GitHub Release** assets → `vega-paper` on PATH (with `vl2svg` / `vg2svg` bundled or shimmed).
 
@@ -84,14 +84,15 @@ Spec: [`superpowers/specs/2026-06-03-vega-paper-github-release-install-design.md
 3. **Install-root resolution** — `VEGA_PAPER_HOME`, Vega CLI lookup from any cwd
 4. **`doctor` + docs** — README, SKILL.md; CI `install:smoke` via `--from-repo`
 
-### Phase 4a-2 — Done (pending first `v*` tag on GitHub)
+### Phase 4a-2 — Done
 
 1. **`build-release-tarball.sh`** — compile CLI + vendored Vega CLIs per target
 2. **`install.sh` Release path** — GitHub download, `current` symlink, production shims
 3. **`release.yml`** — matrix build on tags; attach tarballs to Release
 4. **`install:tarball-smoke`** — CI validates tarball install + render
+5. **`docs/releases/`** — versioned release notes used as GitHub Release body
 
-First public install: tag `v0.1.0` and run Release workflow, then `curl | bash`.
+Public install: tag `v0.1.0` (or later) + `curl | bash`.
 
 **Why before MCP:** MCP wraps the CLI; external clients need a stable install story first.
 

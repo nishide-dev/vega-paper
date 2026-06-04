@@ -53,8 +53,11 @@ jobs:
           path: dist/release
           merge-multiple: true
 
+      - name: Verify release notes
+        run: test -f "docs/releases/${GITHUB_REF_NAME}.md"
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: dist/release/*.tar.gz
-          generate_release_notes: true
+          body_path: docs/releases/${{ github.ref_name }}.md
