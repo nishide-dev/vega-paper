@@ -1,5 +1,15 @@
 import { describe, expect, test } from "bun:test";
-import { getTheme, listThemes } from "../src";
+import { getPalette, getTheme, listThemes } from "../src";
+
+const THEMES_WITH_PALETTES: Array<{ name: string; paletteId: string }> = [
+  { name: "paper-clean", paletteId: "carbon-categorical" },
+  { name: "acl-clean", paletteId: "carbon-categorical" },
+  { name: "neurips-clean", paletteId: "ft-line-web" },
+  { name: "nature-soft", paletteId: "ft-line-web" },
+  { name: "shadcn-light", paletteId: "catppuccin-latte" },
+  { name: "shadcn-dark", paletteId: "catppuccin-mocha" },
+  { name: "poster-dark", paletteId: "catppuccin-mocha" },
+];
 
 describe("theme registry", () => {
   test("lists the initial themes in stable order", () => {
@@ -46,6 +56,32 @@ describe("theme registry", () => {
 
     expect(freshTheme.displayName).toBe("Paper Clean");
     expect(freshTheme.config.range.category[0]).toBe("#6929C4");
+  });
+
+  test("wired themes use palette registry colors", () => {
+    for (const { name, paletteId } of THEMES_WITH_PALETTES) {
+      const theme = getTheme(name);
+      const palette = getPalette(paletteId);
+      const category = (theme.config as { range: { category: string[] } }).range.category;
+
+      expect(theme.paletteId).toBe(paletteId);
+      expect(category).toEqual([...palette.colors]);
+    }
+  });
+
+  test("monochrome-print has no palette metadata and unchanged grayscale series", () => {
+    const theme = getTheme("monochrome-print");
+
+    expect(theme.paletteId).toBeUndefined();
+    expect(theme.paletteAttribution).toBeUndefined();
+    expect((theme.config as { range: { category: string[] } }).range.category).toEqual([
+      "#111111",
+      "#444444",
+      "#777777",
+      "#999999",
+      "#bbbbbb",
+      "#dddddd",
+    ]);
   });
 
   test("paper-clean references carbon-categorical palette", () => {

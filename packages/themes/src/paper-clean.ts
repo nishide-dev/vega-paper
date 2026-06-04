@@ -46,7 +46,7 @@ export const paperClean: VegaPaperTheme = {
       size: 55,
     },
     range: {
-      category: categoryRangeFromPalette("carbon-categorical"),
+      category: categoryRangeFromPalette(palette.id),
     },
   },
 };

@@ -2,7 +2,7 @@
 
 **Status:** Approved for implementation planning  
 **Supersedes:** ad hoc `range.category` hex in built-in themes (v0.1.x)  
-**Release:** v0.2.0 (visual breaking change for series colors)
+**Release:** v0.1.3 (series colors change; theme names unchanged)
 
 ## Problem
 
@@ -16,7 +16,7 @@ MCP and CLI presets do not improve color aesthetics. This phase addresses **pale
 2. Wire every built-in theme (except `monochrome-print`) to a named palette.
 3. Publish **`docs/palettes.md`** with swatches, sources, and theme mapping.
 4. Regenerate **`examples/theme-samples/`** as the visual regression baseline.
-5. Ship as **v0.2.0** with release notes calling out palette refresh.
+5. Ship as **v0.1.3** with release notes calling out palette refresh.
 
 ## Non-goals
 
@@ -173,7 +173,7 @@ Before merge:
 
 - **`docs/palettes.md`** — table of four palettes with color swatches (inline SVG or linked theme-samples), attribution links, theme mapping, A vs B usage blurb.
 - **`skills/vega-paper/references/theme-catalog.md`** — add “Palette source” column or footnote per theme.
-- **`docs/releases/v0.2.0.md`** — “Built-in series colors now use curated palettes (Carbon, FT, Catppuccin).”
+- **`docs/releases/v0.1.3.md`** — “Built-in series colors now use curated palettes (Carbon, FT, Catppuccin).”
 
 ## Roadmap
 
@@ -183,7 +183,7 @@ Before merge:
 
 ## Versioning
 
-- **v0.2.0** — palette refresh; same theme **names**, different series colors.
+- **v0.1.3** — palette refresh; same theme **names**, different series colors.
 - Users pinning reproducible colors should record `paletteId` in figure meta (future enhancement) or vendor `themes show` output.
 
 ## Implementation plan

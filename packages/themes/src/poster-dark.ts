@@ -46,7 +46,7 @@ export const posterDark: VegaPaperTheme = {
       size: 80,
     },
     range: {
-      category: categoryRangeFromPalette("catppuccin-mocha"),
+      category: categoryRangeFromPalette(palette.id),
     },
   },
 };

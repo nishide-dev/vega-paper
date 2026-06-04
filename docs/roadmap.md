@@ -149,7 +149,7 @@ Delivered:
 - Palette registry: Carbon categorical, FT lineWeb, Catppuccin Latte/Mocha
 - Built-in themes wired to `paletteId` + attribution
 - `themes show` surfaces palette source
-- [`docs/palettes.md`](./palettes.md) and refreshed `examples/theme-samples/`
+- [`docs/palettes.md`](./palettes.md) (regenerate `examples/theme-samples/` locally via `bun run render:theme-samples`; SVGs are gitignored)
 
 Target release: **v0.1.3** (tag pending).
 

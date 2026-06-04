@@ -49,7 +49,7 @@ export const neuripsClean: VegaPaperTheme = {
       size: 58,
     },
     range: {
-      category: categoryRangeFromPalette("ft-line-web"),
+      category: categoryRangeFromPalette(palette.id),
     },
   },
 };

@@ -44,7 +44,7 @@ export const shadcnLight: VegaPaperTheme = {
       size: 60,
     },
     range: {
-      category: categoryRangeFromPalette("catppuccin-latte"),
+      category: categoryRangeFromPalette(palette.id),
     },
   },
 };

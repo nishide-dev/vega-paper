@@ -44,7 +44,7 @@ export const natureSoft: VegaPaperTheme = {
       size: 50,
     },
     range: {
-      category: categoryRangeFromPalette("ft-line-web"),
+      category: categoryRangeFromPalette(palette.id),
     },
   },
 };
