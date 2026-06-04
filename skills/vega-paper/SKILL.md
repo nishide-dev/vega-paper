@@ -10,7 +10,13 @@ Guide agents to produce **publication-ready SVG figures** with the VegaPaper CLI
 
 ## Prerequisites
 
-From the **repository root**:
+**Installed CLI** (recommended for paper repos):
+
+```bash
+vega-paper doctor
+```
+
+**Repository contributors** — from the **repository root**:
 
 ```bash
 bun install
@@ -19,15 +25,21 @@ bun run packages/cli/src/index.ts doctor
 
 Requires Bun (see `.bun-version`) and Vega CLI binaries (`vl2svg`). Fix `doctor` failures before rendering.
 
-## CLI prefix
+## CLI invocation
 
-Always run commands from the repo root:
+**Installed:**
+
+```bash
+vega-paper <command> ...
+```
+
+**This repository (development):**
 
 ```bash
 bun run packages/cli/src/index.ts <command> ...
 ```
 
-Do not assume a globally installed `vega-paper` binary in this repository.
+Use the installed form when `vega-paper doctor` passes globally. Use the repo prefix when working inside the vega-paper monorepo or before install.
 
 ## Skill scripts
 

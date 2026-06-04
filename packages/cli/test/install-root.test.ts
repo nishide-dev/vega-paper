@@ -12,6 +12,12 @@ describe("install-root", () => {
     expect(root.endsWith(join("packages", "cli"))).toBe(true);
   });
 
+  test("resolveCliPackageRootFromMeta walks up from dist to packages/cli", () => {
+    const metaUrl = new URL("../dist/index.js", import.meta.url).href;
+    const root = resolveCliPackageRootFromMeta(metaUrl);
+    expect(root.endsWith(join("packages", "cli"))).toBe(true);
+  });
+
   test("resolveInstallBinDirectory prefers VEGA_PAPER_HOME", () => {
     const original = process.env.VEGA_PAPER_HOME;
     process.env.VEGA_PAPER_HOME = "/tmp/vega-paper-home";

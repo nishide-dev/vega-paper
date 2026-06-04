@@ -13,6 +13,10 @@ export function resolveCliPackageRootFromMeta(importMetaUrl: string): string {
     return join(moduleDirectory, "..", "..");
   }
 
+  if (moduleDirectory.endsWith("dist")) {
+    return join(moduleDirectory, "..");
+  }
+
   return join(moduleDirectory, "..", "..");
 }
 
