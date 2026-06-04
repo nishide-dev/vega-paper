@@ -18,7 +18,7 @@ This document is the **living roadmap** for VegaPaper. It supersedes §13 in [`i
 | 4a | CLI distribution & install | **Done** (tag `v0.1.0` for public curl install) |
 | 4b | Custom themes | **Done** |
 | 4.5 | Output formats (PNG / PDF) | **Done** |
-| 4c | Curated design palettes | Planned |
+| 4c | Curated design palettes | **Done** |
 | 5 | MCP wrapper | **Deferred** (after 4c; thin CLI wrapper, low impact on figure aesthetics) |
 | 6 | Research workflow integration | Planned |
 
@@ -137,18 +137,21 @@ Delivered:
 
 ---
 
-## Phase 4c: Curated design palettes — Planned
+## Phase 4c: Curated design palettes — Done
 
 **Goal:** Replace ad hoc built-in series colors with **attributed, professionally designed palettes** (product/media + popular curated design systems).
 
-**Spec:** [`superpowers/specs/2026-06-04-vega-paper-curated-palettes-design.md`](./superpowers/specs/2026-06-04-vega-paper-curated-palettes-design.md)
+**Spec:** [`superpowers/specs/2026-06-04-vega-paper-curated-palettes-design.md`](./superpowers/specs/2026-06-04-vega-paper-curated-palettes-design.md)  
+**Plan:** [`superpowers/plans/2026-06-04-vega-paper-curated-palettes.md`](./superpowers/plans/2026-06-04-vega-paper-curated-palettes.md)
 
-Planned palettes:
+Delivered:
 
-- **Paper (A1):** IBM Carbon categorical, Financial Times `lineWeb`
-- **Web (B):** Catppuccin Latte (light), Catppuccin Mocha (dark)
+- Palette registry: Carbon categorical, FT lineWeb, Catppuccin Latte/Mocha
+- Built-in themes wired to `paletteId` + attribution
+- `themes show` surfaces palette source
+- [`docs/palettes.md`](./palettes.md) and refreshed `examples/theme-samples/`
 
-Target release: **v0.2.0** (series colors change; theme names unchanged).
+Target release: **v0.2.0** (tag pending).
 
 **Why before MCP:** MCP does not improve chart aesthetics; palette curation addresses the primary design concern.
 

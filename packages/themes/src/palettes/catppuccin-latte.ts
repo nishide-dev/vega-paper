@@ -10,5 +10,6 @@ export const catppuccinLatte: VegaPaperPalette = {
     license: "MIT",
   },
   colors: ["#1E66F5", "#179299", "#FE640B", "#8839EF", "#40A02B", "#D20F39"],
-  selectionNotes: "Latte accent colors (Blue, Teal, Peach, Mauve, Green, Red) for light backgrounds.",
+  selectionNotes:
+    "Latte accent colors (Blue, Teal, Peach, Mauve, Green, Red) for light backgrounds.",
 };

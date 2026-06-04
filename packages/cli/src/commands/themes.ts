@@ -64,9 +64,7 @@ export function registerThemesCommand(
           `description: ${theme.description}`,
           ...(theme.paletteId ? [`paletteId: ${theme.paletteId}`] : []),
           ...(theme.paletteAttribution
-            ? [
-                `paletteSource: ${theme.paletteAttribution.name} (${theme.paletteAttribution.url})`,
-              ]
+            ? [`paletteSource: ${theme.paletteAttribution.name} (${theme.paletteAttribution.url})`]
             : []),
           "config:",
           JSON.stringify(theme.config, null, 2),
