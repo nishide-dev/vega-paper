@@ -90,4 +90,4 @@ Non-monochrome palettes are not grayscale-safe. Use `monochrome-print` + `--lint
 
 ## Versioning
 
-Palette colors changed in **v0.2.0**. Theme names are unchanged; re-rendered SVGs will differ from v0.1.x. Pin colors by saving `themes show <name> --json` output or figure meta sidecars.
+Palette colors changed in **v0.1.3**. Theme names are unchanged; re-rendered SVGs will differ from v0.1.2. Pin colors by saving `themes show <name> --json` output or figure meta sidecars.

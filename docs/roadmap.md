@@ -151,7 +151,7 @@ Delivered:
 - `themes show` surfaces palette source
 - [`docs/palettes.md`](./palettes.md) and refreshed `examples/theme-samples/`
 
-Target release: **v0.2.0** (tag pending).
+Target release: **v0.1.3** (tag pending).
 
 **Why before MCP:** MCP does not improve chart aesthetics; palette curation addresses the primary design concern.
 
