@@ -1,8 +1,8 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join, parse } from "node:path";
-import { fileURLToPath } from "node:url";
 import { VegaPaperError } from "./errors";
 import type { InferAggregateMethod, InferChartType, VegaLiteFieldType } from "./infer";
+import { resolveCliNodeModulesDirectory, resolveCliPackageRootFromMeta } from "./install-root";
 
 export type FigureMetaInferSnapshot = {
   chart: InferChartType;
@@ -210,15 +210,13 @@ export function buildRenderFigureMeta(input: BuildRenderFigureMetaInput): Render
 }
 
 export async function resolveFigureMetaVersions(): Promise<FigureMetaVersions> {
-  const cliPackageRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
+  const cliPackageRoot = resolveCliPackageRootFromMeta(import.meta.url);
+  const nodeModules = resolveCliNodeModulesDirectory();
 
   return {
     vegaPaperVersion: await readPackageVersion(cliPackageRoot, "vega-paper"),
-    vegaVersion: await readPackageVersion(join(cliPackageRoot, "node_modules", "vega"), "vega"),
-    vegaLiteVersion: await readPackageVersion(
-      join(cliPackageRoot, "node_modules", "vega-lite"),
-      "vega-lite",
-    ),
+    vegaVersion: await readPackageVersion(join(nodeModules, "vega"), "vega"),
+    vegaLiteVersion: await readPackageVersion(join(nodeModules, "vega-lite"), "vega-lite"),
   };
 }
 

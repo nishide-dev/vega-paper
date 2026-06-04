@@ -7,7 +7,25 @@ CLI for building publication-ready figures from CSV/JSON with [Vega-Lite](https:
 - [Bun](https://bun.sh) `1.3.14` (see [`.bun-version`](.bun-version))
 - Node-compatible Vega CLI binaries for SVG rendering (checked by `doctor`)
 
-## Setup
+## Install
+
+Install `vega-paper` to `~/.local/bin` (includes `vl2svg` / `vg2svg` shims):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/nishide-dev/vega-paper/main/scripts/install.sh | bash
+```
+
+Open a new shell (or add `~/.local/bin` to your PATH), then verify:
+
+```bash
+vega-paper doctor
+```
+
+After [npm publish](https://www.npmjs.com/package/vega-paper), the same installer pins `vega-paper@0.1.0`. Until then, test from a clone with `bash scripts/install.sh --from-repo`.
+
+Alternative: `bunx vega-paper` (requires Vega CLI binaries on PATH or in the project).
+
+## Development setup
 
 ```bash
 bun install
@@ -103,6 +121,7 @@ The CLI prefix in `SKILL.md` remains canonical; scripts are thin entry points fo
 | `bun test` | Run tests |
 | `bun run typecheck` | TypeScript check |
 | `bun run build` | Build workspace packages |
+| `bun run install:smoke` | Test install.sh + render from shims |
 | `bun run infer:examples` | Regenerate committed example specs |
 
 Note: `bun run check` is **code** quality (Biome). `vega-paper lint` is **figure spec** quality (Vega-Lite).
@@ -114,6 +133,7 @@ packages/cli/      vega-paper CLI
 packages/themes/   eight built-in themes (paper, ACL, NeurIPS, shadcn, nature, poster, monochrome)
 skills/            agent skills (vega-paper workflow)
 examples/          sample data, reference specs, and READMEs
+docs/              product roadmap and founding design (`roadmap.md`, `initial-design.md`)
 docs/superpowers/  design specs and implementation plans
 ```
 

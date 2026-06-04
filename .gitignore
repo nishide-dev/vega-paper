@@ -4,4 +4,4 @@ dist/
 examples/**/output.svg
 examples/theme-samples/*.svg
 examples/theme-samples/*.meta.json
-out.vl.json
+out.vl.json.DS_Store

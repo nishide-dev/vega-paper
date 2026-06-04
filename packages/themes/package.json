@@ -6,6 +6,16 @@
   "exports": {
     ".": "./src/index.ts"
   },
+  "files": [
+    "dist/**",
+    "src/**"
+  ],
+  "publishConfig": {
+    "main": "./dist/index.js",
+    "exports": {
+      ".": "./dist/index.js"
+    }
+  },
   "scripts": {
     "build": "bun ../../scripts/run-if-sources.ts build -- bun build ./src/index.ts --outdir dist --target bun",
     "typecheck": "bun ../../scripts/run-if-sources.ts typecheck -- tsc --noEmit --types bun"

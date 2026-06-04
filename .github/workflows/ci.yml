@@ -30,3 +30,6 @@ jobs:
 
       - name: Build
         run: bun run build
+
+      - name: Install smoke
+        run: bun run install:smoke
