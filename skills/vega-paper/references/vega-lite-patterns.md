@@ -63,6 +63,70 @@ Run **`lint`** on the spec path with an appropriate **`--lint-profile`** before 
 
 Optional **`--strict`** gates warnings the same as on `infer`.
 
+## Snippet patterns
+
+Minimal Vega-Lite shapes for hand-written specs. Adapt field names, sizes, and titles. Full example: [basic-line/chart.vl.json](../../../examples/basic-line/chart.vl.json).
+
+### Line with series color
+
+Single unit spec with inline or external data:
+
+```json
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "width": 360,
+  "height": 220,
+  "data": { "values": [] },
+  "mark": { "type": "line", "point": true },
+  "encoding": {
+    "x": { "field": "epoch", "type": "quantitative", "title": "Epoch" },
+    "y": { "field": "metric", "type": "quantitative", "title": "Score" },
+    "color": { "field": "model", "type": "nominal", "title": "Model" }
+  }
+}
+```
+
+### Faceted small multiples
+
+Top-level `facet` + inner `spec` (see [faceted-training/chart.vl.json](../../../examples/faceted-training/chart.vl.json)):
+
+```json
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "data": { "url": "data.csv" },
+  "facet": { "field": "split", "type": "nominal" },
+  "spec": {
+    "width": 360,
+    "height": 240,
+    "mark": "line",
+    "encoding": {
+      "x": { "field": "epoch", "type": "quantitative", "title": "Epoch" },
+      "y": { "field": "f1", "type": "quantitative", "title": "F1" },
+      "color": { "field": "model", "type": "nominal", "title": "Model" }
+    }
+  }
+}
+```
+
+### Layered marks
+
+Combine marks in one view when `infer` cannot express the design (custom point + line styling, rules, etc.):
+
+```json
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "width": 360,
+  "height": 220,
+  "data": { "url": "data.csv" },
+  "layer": [
+    { "mark": "line", "encoding": { "x": { "field": "x", "type": "quantitative" }, "y": { "field": "y", "type": "quantitative" } } },
+    { "mark": "point", "encoding": { "x": { "field": "x", "type": "quantitative" }, "y": { "field": "y", "type": "quantitative" } } }
+  ]
+}
+```
+
+After editing snippets, run **`lint`** then **`render`**. Prefer **`infer`** when the chart matches a supported `--chart` type.
+
 ## Common mistakes
 
 | Mistake | Why it fails / looks wrong | Fix |

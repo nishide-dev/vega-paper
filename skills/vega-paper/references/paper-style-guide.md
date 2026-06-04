@@ -86,3 +86,29 @@ Errors (always blocking):
 | `--width` / `--height` outside venue | `size-out-of-range` or poor fit in LaTeX | Re-read profile ranges; start from recommended sizes |
 | Fixing lint by changing `--theme` only | Themes do not change spec size or titles | Adjust infer flags or spec; see [Theme catalog](theme-catalog.md) |
 | Many color series in one chart | `legend-too-many-categories` | Facet, filter, or collapse categories |
+
+## LaTeX and captions
+
+MVP output is **SVG**. Treat the SVG + Vega-Lite spec + `*.meta.json` as the reproducible figure bundle.
+
+### Embedding SVG
+
+- Prefer **vector SVG** for LaTeX: scalable in `\includegraphics[width=\linewidth]{...}` when your toolchain accepts SVG (e.g. XeLaTeX/LuaLaTeX with `svg` package, or `\includesvg` from `svg` / `inkscape` conversion).
+- **pdfLaTeX** often requires converting SVG to PDF/EPS first; VegaPaper does not ship a PDF export in MVP — convert externally if the venue requires PDF figures only.
+- Keep figure **width** aligned with the column: use lint profile ranges and [recommended sizes](#recommended-figure-sizes); set `--width` on `infer` or spec `width` to match `\linewidth` or the venue’s max figure width in pixels.
+
+### Title vs caption
+
+- **`title-too-long`** exists because paper captions belong in **LaTeX** (`\caption{...}`), not in the chart title.
+- Keep the in-figure title short (methods name or panel label). Put experimental detail, dataset name, and statistics in the LaTeX caption.
+- For ACL-style narrow figures, prefer **`acl`** lint profile and shorter titles (70 characters).
+
+### Files to commit with the paper
+
+| Artifact | Role |
+|----------|------|
+| `*.vl.json` | Source spec; regenerate or edit figure |
+| `*.svg` | Vector figure for the paper |
+| `*.meta.json` | Provenance (`command`, versions, infer snapshot when applicable) |
+
+Do not promise PNG/PDF export from VegaPaper MVP; SVG is the canonical artifact (see repository README).

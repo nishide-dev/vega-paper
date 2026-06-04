@@ -17,6 +17,27 @@ Supported values for `--chart`: `line`, `bar`, `scatter`, `area`, `heatmap`, `bo
 
 There is no dedicated `examples/` folder for `bar`, `scatter`, or `area` yet; use the same encoding rules above when the goal matches.
 
+## Decision guide
+
+Use this **before** the chart types table when the goal is unclear. Stop at the first matching branch.
+
+1. **Matrix / grid of cell values** (confusion matrix, score grid) → `--chart heatmap` with distinct `--x`, `--y`, `--color`.
+2. **Distribution of one measure across groups** (spread, outliers) → `--chart boxplot` with nominal `--x`, quantitative `--y`.
+3. **Metric over ordered steps, epochs, or time** → `--chart line` or `--area` (filled trend); optional `--color` for series.
+4. **Compare a measure across discrete categories** (no natural time order) → `--chart bar`.
+5. **Relationship between two numeric variables** → `--chart scatter`.
+6. **Still unclear** → inspect column types and row grain; prefer `line`/`area` when x is ordered, `bar` when x is categorical.
+
+Then add modifiers if needed:
+
+| Need | Modifier | Notes |
+|------|----------|-------|
+| Roll up duplicate x rows | `--aggregate <method>` | Not with `boxplot` or `--error-band` |
+| Small multiples by a third field | `--facet <field>` | Must differ from `--x`, `--y`, `--color` |
+| Symmetric uncertainty on y | `--error-band <field>` | Cartesian charts only; not with `--aggregate` |
+
+See repo examples in the table below and [Chart types](#chart-types) for encoding details.
+
 ## Modifiers
 
 Optional flags that change the generated spec. Combine only when rules below allow it.

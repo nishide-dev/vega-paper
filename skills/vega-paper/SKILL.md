@@ -59,7 +59,7 @@ Optional flags: `--facet`, `--aggregate`, `--error-band`, `--title`, `--width`, 
 
 ## Chart selection
 
-Pick `--chart`, `--x`, `--y`, and optional `--color` / modifiers from the data and analytical goal. Read [Chart selection](references/chart-selection.md) for the full type table, modifier rules, repo examples, and common mistakes.
+Pick `--chart`, `--x`, `--y`, and optional `--color` / modifiers from the data and analytical goal. Read [Chart selection](references/chart-selection.md) for the decision guide, type table, modifier rules, repo examples, and common mistakes.
 
 ## Primary workflow (infer)
 
@@ -159,8 +159,8 @@ bun run packages/cli/src/index.ts doctor
 
 - [Chart selection](references/chart-selection.md) — chart types and infer modifiers
 - [Theme catalog](references/theme-catalog.md) — built-in themes and selection guidance
-- [Paper style guide](references/paper-style-guide.md) — lint profiles, figure sizes, and style rules
-- [Vega-Lite patterns](references/vega-lite-patterns.md) — hand-written specs and the render workflow
+- [Paper style guide](references/paper-style-guide.md) — lint profiles, figure sizes, LaTeX notes, and style rules
+- [Vega-Lite patterns](references/vega-lite-patterns.md) — hand-written specs, snippets, and the render workflow
 
 ## Agent checklist
 
