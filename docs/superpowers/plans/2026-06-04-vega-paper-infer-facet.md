@@ -327,7 +327,7 @@ PATH="$HOME/.bun/bin:$PATH" bun run build
 - [ ] **Step 2: Smoke**
 
 ```bash
-PATH="$HOME/.bun/bin:$PATH" bun run packages/cli/src/index.ts infer examples/training-curve/data.csv \
+vega-paper infer examples/training-curve/data.csv \
   --chart line --x epoch --y f1 --facet model \
   --spec-out /tmp/facet-smoke.vl.json
 grep -q '"facet"' /tmp/facet-smoke.vl.json && grep -q '"spec"' /tmp/facet-smoke.vl.json && echo SMOKE_FACET=ok

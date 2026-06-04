@@ -732,11 +732,11 @@ Expected: all pass with no errors.
 cd /Users/ryusei0623/projects/vega-paper
 mkdir -p /tmp/vega-paper-json-smoke
 printf '%s\n' '[{"epoch":1,"f1":0.5},{"epoch":2,"f1":0.7}]' > /tmp/vega-paper-json-smoke/data.json
-PATH="$HOME/.bun/bin:$PATH" bun run packages/cli/src/index.ts infer /tmp/vega-paper-json-smoke/data.json \
+vega-paper infer /tmp/vega-paper-json-smoke/data.json \
   --chart line --x epoch --y f1 \
   --spec-out /tmp/vega-paper-json-smoke/chart.vl.json
 grep -q '"url": "data.json"' /tmp/vega-paper-json-smoke/chart.vl.json && echo "SMOKE_URL=ok"
-PATH="$HOME/.bun/bin:$PATH" bun run packages/cli/src/index.ts infer /tmp/vega-paper-json-smoke/data.json \
+vega-paper infer /tmp/vega-paper-json-smoke/data.json \
   --chart line --x epoch --y f1 --inline-data \
   --spec-out /tmp/vega-paper-json-smoke/chart-inline.vl.json
 grep -q '"values"' /tmp/vega-paper-json-smoke/chart-inline.vl.json && echo "SMOKE_INLINE=ok"

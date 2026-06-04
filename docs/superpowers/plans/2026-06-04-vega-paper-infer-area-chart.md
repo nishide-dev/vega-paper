@@ -240,7 +240,7 @@ PATH="$HOME/.bun/bin:$PATH" bun run build
 - [ ] **Step 2: Smoke**
 
 ```bash
-PATH="$HOME/.bun/bin:$PATH" bun run packages/cli/src/index.ts infer examples/training-curve/data.csv \
+vega-paper infer examples/training-curve/data.csv \
   --chart area --x year --y value --spec-out /tmp/area-smoke.vl.json
 grep -q '"type": "area"' /tmp/area-smoke.vl.json && grep -q '"line": true' /tmp/area-smoke.vl.json && echo SMOKE_AREA=ok
 ```

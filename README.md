@@ -26,7 +26,7 @@ The installer downloads **GitHub Release** tarballs for your platform ([latest r
 Pin a version:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/nishide-dev/vega-paper/main/scripts/install.sh | bash -s -- --version 0.1.3
+curl -fsSL https://raw.githubusercontent.com/nishide-dev/vega-paper/main/scripts/install.sh | bash -s -- --version 0.1.4
 ```
 
 Develop from a clone or a locally built tarball:
@@ -45,10 +45,10 @@ bun run check
 bun test
 ```
 
-Run the CLI from the repo root:
+After install (`bash scripts/install.sh --from-repo` for contributors):
 
 ```bash
-bun run packages/cli/src/index.ts --help
+vega-paper --help
 ```
 
 ## Quick start
@@ -94,19 +94,19 @@ Regenerate: `bun run render:gallery`
 Example:
 
 ```bash
-bun run packages/cli/src/index.ts infer data.csv \
+vega-paper infer data.csv \
   --chart line \
   --x epoch \
   --y f1 \
   --color model \
   --spec-out figures/f1.vl.json
 
-bun run packages/cli/src/index.ts render figures/f1.vl.json \
+vega-paper render figures/f1.vl.json \
   --theme paper-clean \
   --format svg \
   --out figures/f1.svg
 
-bun run packages/cli/src/index.ts lint figures/f1.vl.json --lint-profile paper
+vega-paper lint figures/f1.vl.json --profile paper
 ```
 
 ### `infer` highlights
@@ -122,8 +122,8 @@ See [`examples/`](examples/) for copy-paste commands.
 Default for papers is **SVG** (canonical, diff-friendly). Use **PDF** for LaTeX submission and **PNG** for README or slides.
 
 ```bash
-bun run packages/cli/src/index.ts render chart.vl.json --format pdf --out figure.pdf
-bun run packages/cli/src/index.ts render chart.vl.json --out figure.png --scale 2
+vega-paper render chart.vl.json --format pdf --out figure.pdf
+vega-paper render chart.vl.json --out figure.png --scale 2
 ```
 
 `infer --out` accepts `.svg`, `.png`, or `.pdf` with the same `--format` / `--scale` options.
@@ -133,7 +133,7 @@ bun run packages/cli/src/index.ts render chart.vl.json --out figure.png --scale 
 Pass a path to a theme JSON file instead of a built-in name:
 
 ```bash
-bun run packages/cli/src/index.ts render chart.vl.json \
+vega-paper render chart.vl.json \
   --theme path/to/theme.json \
   --format svg \
   --out figure.svg
@@ -152,14 +152,7 @@ Agents can follow [`skills/vega-paper/SKILL.md`](skills/vega-paper/SKILL.md) for
 | [paper-style-guide.md](skills/vega-paper/references/paper-style-guide.md) | Lint profiles, sizes, LaTeX notes |
 | [vega-lite-patterns.md](skills/vega-paper/references/vega-lite-patterns.md) | Hand-written specs and `render` |
 
-Optional wrappers (from repo root):
-
-```bash
-bun run skills/vega-paper/scripts/validate-spec.ts figures/f1.vl.json --lint-profile paper
-bun run skills/vega-paper/scripts/render-chart.ts figures/f1.vl.json --out figures/f1.svg
-```
-
-The CLI prefix in `SKILL.md` remains canonical; scripts are thin entry points for agents.
+All agent workflows use the installed `vega-paper` CLI — see `SKILL.md` for copy-paste commands.
 
 ## Development
 
@@ -189,4 +182,4 @@ docs/superpowers/  design specs and implementation plans
 
 ## License
 
-See repository defaults. Current release: [v0.1.3](https://github.com/nishide-dev/vega-paper/releases/tag/v0.1.3).
+See repository defaults. Current release: [v0.1.4](https://github.com/nishide-dev/vega-paper/releases/tag/v0.1.4).

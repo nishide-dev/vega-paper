@@ -65,7 +65,7 @@ Existing gitignore entries for `examples/**/output.svg` and `examples/theme-samp
 Use the same pattern as `scripts/render-theme-samples.ts`:
 
 ```text
-bun run packages/cli/src/index.ts render <spec> --theme <name> --format png --scale 2 --out <path>
+vega-paper render <spec> --theme <name> --format png --scale 2 --out <path>
 ```
 
 Exit non-zero if any render fails.

@@ -4,7 +4,7 @@ Date: 2026-06-03
 
 ## Context
 
-VegaPaper is developed and run from a monorepo checkout (`bun run packages/cli/src/index.ts`). Phase 2 Skill docs explicitly avoid assuming a global binary. External users, CI outside the repo, and future MCP need an install path where **`vega-paper` on PATH is enough to render**.
+VegaPaper is developed and run from a monorepo checkout (`vega-paper`). Phase 2 Skill docs explicitly avoid assuming a global binary. External users, CI outside the repo, and future MCP need an install path where **`vega-paper` on PATH is enough to render**.
 
 Render still shells out to official Vega CLI binaries (`vl2svg`, `vg2svg`). A standalone compiled `vega-paper` executable alone is insufficient unless those binaries are also installed or bundled.
 
@@ -170,4 +170,4 @@ Dev-repo workflow **unchanged** for contributors.
 - [ ] User without repo clone runs curl install and `vega-paper doctor` exits 0.
 - [ ] `vega-paper render examples/basic-line/chart.vl.json --out /tmp/out.svg` works from any cwd when spec path is absolute (or after cd to project).
 - [ ] `bunx vega-paper@<version> --help` works on a clean project with Vega deps installed.
-- [ ] Monorepo contributors still use `bun run packages/cli/src/index.ts` or linked workspace without regression.
+- [ ] Monorepo contributors still use `vega-paper` or linked workspace without regression.

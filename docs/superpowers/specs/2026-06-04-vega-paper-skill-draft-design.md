@@ -11,7 +11,7 @@ Brainstorm decisions:
 - Canonical path: `skills/vega-paper/SKILL.md` (not `packages/skill/`)
 - First slice: SKILL.md only (no `references/` or `scripts/` yet)
 - English prose; infer-centric workflow
-- CLI invocation: `bun run packages/cli/src/index.ts` from repo root
+- CLI invocation: `vega-paper` from repo root
 - Cursor install instructions at end of SKILL.md
 - Lint: `--lint-profile paper` by default; `--strict` only when user requires zero warnings
 
@@ -35,7 +35,7 @@ Brainstorm decisions:
 |---------|---------|
 | Frontmatter | `name: vega-paper`, third-person `description` with triggers, `disable-model-invocation: true` |
 | Prerequisites | Bun, `bun install`, `doctor` |
-| CLI prefix | `bun run packages/cli/src/index.ts` |
+| CLI prefix | `vega-paper` |
 | Constrained inputs | chart, x, y, color, theme, paths — no free-form Vega-Lite unless render path |
 | Chart selection | Rules for six chart types + aggregate/facet/error-band/heatmap constraints |
 | Primary workflow | data inspect → infer + lint → fix loop → infer `--out` + meta |

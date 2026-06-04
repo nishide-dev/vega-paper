@@ -470,10 +470,10 @@ Expected: all pass
 - [ ] **Step 2: Manual smoke (record in PR description)**
 
 ```bash
-bun run packages/cli/src/index.ts themes show paper-clean
-bun run packages/cli/src/index.ts render examples/training-curve/chart.vl.json \
+vega-paper themes show paper-clean
+vega-paper render examples/training-curve/chart.vl.json \
   --theme paper-clean --format svg --out /tmp/f1-paper-clean.svg
-bun run packages/cli/src/index.ts render examples/training-curve/chart.vl.json \
+vega-paper render examples/training-curve/chart.vl.json \
   --theme shadcn-light --format svg --out /tmp/f1-shadcn-light.svg
 ```
 

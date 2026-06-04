@@ -6,51 +6,27 @@ disable-model-invocation: true
 
 # VegaPaper Skill
 
-Guide agents to produce **publication-ready SVG figures** with the VegaPaper CLI. Prefer **constrained CLI generation** over hand-written Vega-Lite unless the user already has a spec.
+Guide agents to produce **publication-ready figures** with the VegaPaper CLI. Prefer **constrained CLI generation** over hand-written Vega-Lite unless the user already has a spec.
 
 ## Prerequisites
 
-**Installed CLI** (recommended for paper repos):
+Run before any render:
 
 ```bash
 vega-paper doctor
 ```
 
-**Repository contributors** — from the **repository root**:
+If `vega-paper` is not on PATH, install from [README Install](../../../README.md#install) or, for vega-paper monorepo contributors, `bash scripts/install.sh --from-repo`.
 
-```bash
-bun install
-bun run packages/cli/src/index.ts doctor
-```
-
-Requires Bun (see `.bun-version`) and Vega CLI binaries (`vl2svg`, `vl2png`, `vl2pdf`, …). Fix `doctor` failures before rendering.
+Requires Vega CLI binaries (`vl2svg`, `vl2png`, `vl2pdf`, …). Fix `doctor` failures before rendering.
 
 ## CLI invocation
 
-**Installed:**
+**IRON RULE:** Use `vega-paper <subcommand> …` for all CLI operations. Do not use `bun run packages/cli/src/index.ts`.
 
 ```bash
 vega-paper <command> ...
 ```
-
-**This repository (development):**
-
-```bash
-bun run packages/cli/src/index.ts <command> ...
-```
-
-Use the installed form when `vega-paper doctor` passes globally. Use the repo prefix when working inside the vega-paper monorepo or before install.
-
-## Skill scripts
-
-Optional thin wrappers around `lint` and `render` (run from repo root). The CLI prefix above remains canonical.
-
-```bash
-bun run skills/vega-paper/scripts/validate-spec.ts figures/f1.vl.json --lint-profile paper
-bun run skills/vega-paper/scripts/render-chart.ts figures/f1.vl.json --out figures/f1.svg --theme paper-clean
-```
-
-Add `--strict` to `validate-spec.ts` when warnings must fail the command.
 
 ## Constrained inputs
 
@@ -89,7 +65,7 @@ Pick `--chart`, `--x`, `--y`, and optional `--color` / modifiers from the data a
 ### Step 3 — Generate spec with lint
 
 ```bash
-bun run packages/cli/src/index.ts infer DATA.csv \
+vega-paper infer DATA.csv \
   --chart line \
   --x epoch \
   --y f1 \
@@ -111,7 +87,7 @@ On lint issues:
 4. Optionally run standalone lint:
 
 ```bash
-bun run packages/cli/src/index.ts lint figures/f1.vl.json --lint-profile paper
+vega-paper lint figures/f1.vl.json --profile paper
 ```
 
 Repeat until clean enough for the user's goal (or until `--strict` passes if requested).
@@ -121,7 +97,7 @@ Repeat until clean enough for the user's goal (or until `--strict` passes if req
 When the spec is acceptable, add `--out` and `--theme` (same infer flags as before):
 
 ```bash
-bun run packages/cli/src/index.ts infer DATA.csv \
+vega-paper infer DATA.csv \
   --chart line \
   --x epoch \
   --y f1 \
@@ -148,7 +124,7 @@ If `--strict` lint fails, the command exits before render and **no** `.meta.json
 Use when the user already has a Vega-Lite spec. Read [Vega-Lite patterns](references/vega-lite-patterns.md) for when to prefer `render`, spec requirements, repo examples, and hand-written lint.
 
 ```bash
-bun run packages/cli/src/index.ts render figures/f1.vl.json \
+vega-paper render figures/f1.vl.json \
   --theme paper-clean \
   --format svg \
   --out figures/f1.svg
@@ -158,15 +134,15 @@ Writes sibling `figures/f1.meta.json` with `"command": "render"`. No `infer` blo
 
 ## Themes
 
-Pass `--theme` when rendering SVG (`infer --out` or `render`). Read [Theme catalog](references/theme-catalog.md) for built-in themes, use-case guidance, and how `themes list` / `themes show` fit in.
+Pass `--theme` when rendering (`infer --out` or `render`). Read [Theme catalog](references/theme-catalog.md) for built-in themes, use-case guidance, and how `themes list` / `themes show` fit in.
 
 Default for academic papers: **`paper-clean`**.
 
 ## Other commands
 
 ```bash
-bun run packages/cli/src/index.ts themes show paper-clean
-bun run packages/cli/src/index.ts doctor
+vega-paper themes show paper-clean
+vega-paper doctor
 ```
 
 ## References
@@ -181,5 +157,6 @@ bun run packages/cli/src/index.ts doctor
 - [ ] Data columns match `--x`, `--y`, `--color`, etc.
 - [ ] Chart type fits the user's analytical goal
 - [ ] `--lint-profile paper` on infer (and `--strict` only if requested)
-- [ ] Final deliverable includes `.svg` and mention `.meta.json` for reproducibility
-- [ ] SVG-only output in MVP (no PDF/PNG promises)
+- [ ] Output format matches user goal (`svg` for papers; `png` / `pdf` when requested)
+- [ ] Commands in notes use `vega-paper`, not monorepo `bun run` paths
+- [ ] Final deliverable includes rendered output and mention `.meta.json` for reproducibility

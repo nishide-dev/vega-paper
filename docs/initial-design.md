@@ -207,15 +207,13 @@ vega-paper/
         paper-style-guide.md
         theme-catalog.md
       scripts/
-        validate-spec.ts
-        render-chart.ts
+        # validate-spec.ts, render-chart.ts — removed; agents use vega-paper directly
     mcp/
       package.json
       src/
         server.ts
         tools/
-          render-chart.ts
-          validate-spec.ts
+          # (skill scripts removed)
           list-themes.ts
   examples/
     ablation/
@@ -500,8 +498,7 @@ packages/skill/
     paper-style-guide.md
     theme-catalog.md
   scripts/
-    validate-spec.ts
-    render-chart.ts
+    # skill scripts removed — use vega-paper lint / render
 ```
 
 ### 8.2 SKILL.md に書くべき内容
