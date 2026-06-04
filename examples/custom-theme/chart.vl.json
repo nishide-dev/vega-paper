@@ -1,0 +1,17 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "description": "Minimal line chart for custom theme demo.",
+  "data": {
+    "values": [
+      { "x": 1, "y": 2 },
+      { "x": 2, "y": 4 },
+      { "x": 3, "y": 3 },
+      { "x": 4, "y": 5 }
+    ]
+  },
+  "mark": "line",
+  "encoding": {
+    "x": { "field": "x", "type": "quantitative" },
+    "y": { "field": "y", "type": "quantitative" }
+  }
+}

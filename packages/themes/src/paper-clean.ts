@@ -1,4 +1,4 @@
-import type { VegaPaperTheme } from "./index";
+import type { VegaPaperTheme } from "./registry";
 
 export const paperClean: VegaPaperTheme = {
   name: "paper-clean",

@@ -63,7 +63,7 @@ export function registerRenderCommand(
     .argument("<spec>", "Vega or Vega-Lite JSON input path")
     .option("--format <format>", "output format")
     .option("--out <path>", "output file path")
-    .option("--theme <name>", "theme name")
+    .option("--theme <name|path>", "built-in theme name or path to theme JSON")
     .action(async (inputPath: string, options: RenderCommandOptions) => {
       const request = normalizeRenderOptions(inputPath, options);
       const result = await runRender(request);

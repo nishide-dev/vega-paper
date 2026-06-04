@@ -1,0 +1,19 @@
+{
+  "name": "lab-compact",
+  "displayName": "Lab Compact",
+  "description": "Compact two-column lab report styling.",
+  "target": "paper",
+  "mode": "light",
+  "config": {
+    "background": "white",
+    "font": "Helvetica, Arial, sans-serif",
+    "view": {
+      "continuousWidth": 320,
+      "continuousHeight": 200
+    },
+    "axis": {
+      "labelFontSize": 10,
+      "titleFontSize": 11
+    }
+  }
+}

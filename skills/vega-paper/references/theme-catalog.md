@@ -1,6 +1,16 @@
 # Theme catalog for `vega-paper`
 
-Choose `--theme` when rendering SVG (`infer --out` or `render`). This guide covers built-in themes and selection only; see [SKILL.md](../SKILL.md) for infer → lint → render workflow and CLI commands.
+Choose `--theme` when rendering SVG (`infer --out` or `render`). This guide covers built-in themes and selection; see [SKILL.md](../SKILL.md) for workflow and CLI commands.
+
+## Custom theme files
+
+`--theme` accepts either a **built-in `name`** (below) or a **path to a JSON file** (e.g. `lab/theme.json`). Required field: `config` (Vega-Lite top-level config object). Optional metadata: `name`, `displayName`, `description`, `target`, `mode`.
+
+- Inspect a file: `themes show path/to/theme.json`
+- Example in repo: [`examples/custom-theme/`](../../../examples/custom-theme/)
+- Spec: [`docs/superpowers/specs/2026-06-04-vega-paper-custom-themes-design.md`](../../../docs/superpowers/specs/2026-06-04-vega-paper-custom-themes-design.md)
+
+`themes list` shows built-in presets only.
 
 ## Built-in themes
 
@@ -41,7 +51,7 @@ When unsure for a **paper submission**, start with **`paper-clean`**. Use **`nat
 Use the CLI to confirm names and inspect full `config`:
 
 - **`themes list`** — table of all themes (`name`, `target`, `mode`, `description`). Use `--json` for machine-readable output.
-- **`themes show <name>`** — one theme’s metadata plus pretty-printed `config` (fonts, view defaults, axis/legend styling). Use `--json` to copy config into a hand-written spec.
+- **`themes show <name|path>`** — built-in preset or custom JSON file; metadata plus pretty-printed `config`. Use `--json` to copy config into a hand-written spec.
 
 Command examples live in [SKILL.md](../SKILL.md) (**Other commands** and infer/render steps).
 
