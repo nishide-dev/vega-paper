@@ -234,7 +234,7 @@ export function buildRenderFigureMeta(input: BuildRenderFigureMetaInput): Render
 }
 
 function applyOutputFormatMeta(
-  meta: { format: RenderFormat; scale?: number },
+  meta: { format?: RenderFormat; scale?: number },
   format: RenderFormat,
   scale: number,
 ): void {
