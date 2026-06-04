@@ -16,7 +16,7 @@ describe("renderWithExternalVegaCli", () => {
         });
       }),
     ).rejects.toThrow(
-      'Missing Vega CLI binary "vl2svg". Run "bun install" in this workspace and ensure node_modules/.bin is available.',
+      'Missing Vega CLI binary "vl2svg". Install vega-paper via install.sh or ensure vl2svg is on PATH.',
     );
   });
 
@@ -95,6 +95,28 @@ describe("renderWithExternalVegaCli", () => {
   test("returns undefined when a Vega CLI binary is not resolvable", async () => {
     await withTemporaryWorkspace(async () => {
       expect(await resolveVegaCliBinary("vl2svg")).toBeUndefined();
+    });
+  });
+
+  test("resolves Vega-Lite binary from install bin before cwd node_modules", async () => {
+    await withTemporaryWorkspace(async (workspace) => {
+      const originalHome = process.env.VEGA_PAPER_HOME;
+      process.env.VEGA_PAPER_HOME = join(workspace, "home");
+
+      try {
+        const installBinary = join(workspace, "home", "node_modules", ".bin", "vl2svg");
+        const cwdBinary = join(workspace, "node_modules", ".bin", "vl2svg");
+        await createExecutable(installBinary, "#!/bin/sh\nexit 0\n");
+        await createExecutable(cwdBinary, "#!/bin/sh\nexit 1\n");
+
+        expect(await resolveVegaCliBinary("vl2svg")).toBe(installBinary);
+      } finally {
+        if (originalHome === undefined) {
+          delete process.env.VEGA_PAPER_HOME;
+        } else {
+          process.env.VEGA_PAPER_HOME = originalHome;
+        }
+      }
     });
   });
 });

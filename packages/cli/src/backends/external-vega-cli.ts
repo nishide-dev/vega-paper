@@ -3,6 +3,12 @@ import { access, readdir, realpath } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, sep } from "node:path";
 import { VegaPaperError } from "../core/errors";
+import {
+  resolveExecutableOnPath,
+  resolveInstallBinDirectory,
+  resolveVegaPaperHome,
+  shouldUseCliPackageInstallBin,
+} from "../core/install-root";
 import type { SpecType } from "../core/spec";
 
 export type ExternalVegaCliRenderRequest = {
@@ -32,14 +38,31 @@ function getRenderBinary(specType: SpecType, format: "svg"): VegaCliBinaryName {
 }
 
 export async function resolveVegaCliBinary(binary: VegaCliBinaryName): Promise<string | undefined> {
-  const localBinary = join(await getWorkspacePath(), "node_modules", ".bin", binary);
+  const workspace = await getWorkspacePath();
+  const candidates: string[] = [];
 
-  try {
-    await access(localBinary);
-    return localBinary;
-  } catch {
-    return getBunPackageStoreBinary(binary);
+  if (resolveVegaPaperHome()) {
+    candidates.push(join(resolveInstallBinDirectory(), binary));
   }
+
+  candidates.push(join(workspace, "node_modules", ".bin", binary));
+
+  if (await shouldUseCliPackageInstallBin()) {
+    candidates.push(join(resolveInstallBinDirectory(), binary));
+  }
+
+  candidates.push(...(await getBunPackageStoreCandidates(binary, workspace)));
+
+  for (const candidate of candidates) {
+    try {
+      await access(candidate);
+      return candidate;
+    } catch {
+      // Try the next candidate layout.
+    }
+  }
+
+  return resolveExecutableOnPath(binary);
 }
 
 async function getWorkspacePath(): Promise<string> {
@@ -59,10 +82,12 @@ async function getWorkspacePath(): Promise<string> {
   return cwd;
 }
 
-async function getBunPackageStoreBinary(binary: VegaCliBinaryName): Promise<string | undefined> {
+async function getBunPackageStoreCandidates(
+  binary: VegaCliBinaryName,
+  workspace: string,
+): Promise<string[]> {
   const packageName = binary === "vl2svg" ? "vega-lite" : "vega-cli";
-
-  const packageStoreRoot = join("node_modules", ".bun");
+  const packageStoreRoot = join(workspace, "node_modules", ".bun");
   const candidates = [join(packageStoreRoot, "node_modules", packageName, "bin", binary)];
 
   try {
@@ -73,19 +98,10 @@ async function getBunPackageStoreBinary(binary: VegaCliBinaryName): Promise<stri
         .map((entry) => join(packageStoreRoot, entry, "node_modules", packageName, "bin", binary)),
     );
   } catch {
-    return undefined;
+    return candidates;
   }
 
-  for (const candidate of candidates) {
-    try {
-      await access(candidate);
-      return candidate;
-    } catch {
-      // Keep looking through Bun's possible package-store layouts.
-    }
-  }
-
-  return undefined;
+  return candidates;
 }
 
 async function runBinary(command: string, displayName: string, args: string[]): Promise<void> {
@@ -110,7 +126,7 @@ async function runBinary(command: string, displayName: string, args: string[]): 
       if (error.code === "ENOENT") {
         reject(
           new VegaPaperError(
-            `Missing Vega CLI binary "${displayName}". Run "bun install" in this workspace and ensure node_modules/.bin is available.`,
+            `Missing Vega CLI binary "${displayName}". Install vega-paper via install.sh or ensure ${displayName} is on PATH.`,
           ),
         );
         return;

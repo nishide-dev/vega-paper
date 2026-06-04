@@ -1,10 +1,11 @@
 import { spawn } from "node:child_process";
 import { access } from "node:fs/promises";
-import { delimiter, join } from "node:path";
+import { join } from "node:path";
 import {
   resolveVegaCliBinary as resolveInstalledVegaCliBinary,
   type VegaCliBinaryName,
 } from "../backends/external-vega-cli";
+import { resolveExecutableOnPath } from "./install-root";
 
 export type DoctorCheckStatus = "ok" | "warn" | "fail";
 
@@ -67,6 +68,12 @@ export const defaultDoctorEnvironment: DoctorEnvironment = {
 };
 
 async function resolveExecutable(name: string): Promise<string | undefined> {
+  const onPath = await resolveExecutableOnPath(name);
+
+  if (onPath) {
+    return onPath;
+  }
+
   const localBinary = join("node_modules", ".bin", name);
 
   try {
@@ -78,28 +85,7 @@ async function resolveExecutable(name: string): Promise<string | undefined> {
 }
 
 async function resolveEffectiveVegaCliBinary(name: VegaCliBinaryName): Promise<string | undefined> {
-  return (await resolveInstalledVegaCliBinary(name)) ?? resolveExecutableOnPath(name);
-}
-
-export async function resolveExecutableOnPath(name: string): Promise<string | undefined> {
-  const pathValue = process.env.PATH ?? "";
-
-  for (const directory of pathValue.split(delimiter)) {
-    if (!directory) {
-      continue;
-    }
-
-    const candidate = join(directory, name);
-
-    try {
-      await access(candidate);
-      return candidate;
-    } catch {
-      // Keep looking through PATH entries.
-    }
-  }
-
-  return undefined;
+  return resolveInstalledVegaCliBinary(name);
 }
 
 async function getNodeVersion(): Promise<string | undefined> {
