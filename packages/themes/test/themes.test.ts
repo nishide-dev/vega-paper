@@ -6,6 +6,7 @@ describe("theme registry", () => {
     expect(listThemes().map((theme) => theme.name)).toEqual([
       "paper-clean",
       "acl-clean",
+      "neurips-clean",
       "shadcn-light",
       "shadcn-dark",
       "nature-soft",

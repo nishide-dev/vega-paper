@@ -10,6 +10,7 @@ Metadata matches `packages/themes`. Pass the **`name`** value to `--theme`.
 |------|-------------|-------------|--------|------|
 | `paper-clean` | Paper Clean | General publication-ready theme with restrained grids and readable labels. | paper | light |
 | `acl-clean` | ACL Clean | Compact two-column NLP paper theme optimized for small figure widths. | paper | light |
+| `neurips-clean` | NeurIPS Clean | NeurIPS / ICML / ML conference theme with clear series colors and readable single-column figures. | paper | light |
 | `shadcn-light` | shadcn Light | Modern light chart theme inspired by quiet application dashboards. | web | light |
 | `shadcn-dark` | shadcn Dark | Modern dark chart theme for dashboards, demos, and dark UI surfaces. | web | dark |
 | `nature-soft` | Nature Soft | Soft biomedical journal style with minimal axes and muted distinguishable colors. | paper | light |
@@ -23,7 +24,8 @@ MVP output is **SVG only**. Themes adjust Vega-Lite `config` (fonts, colors, def
 | Situation | Recommended `--theme` |
 |-----------|------------------------|
 | General academic paper (default) | `paper-clean` |
-| ACL / EMNLP-style two-column paper, narrow figure column | `acl-clean` |
+| ACL / EMNLP / NAACL two-column paper, narrow figure column | `acl-clean` |
+| NeurIPS / ICML / ML conference single-column figure | `neurips-clean` |
 | Biomedical / Nature-style soft color palette | `nature-soft` |
 | Light web UI, blog, or dashboard (not print-first) | `shadcn-light` |
 | Dark web UI or demo on dark background | `shadcn-dark` |

@@ -1,6 +1,7 @@
 import { aclClean } from "./acl-clean";
 import { monochromePrint } from "./monochrome-print";
 import { natureSoft } from "./nature-soft";
+import { neuripsClean } from "./neurips-clean";
 import { paperClean } from "./paper-clean";
 import { posterDark } from "./poster-dark";
 import { shadcnDark } from "./shadcn-dark";
@@ -21,6 +22,7 @@ export interface VegaPaperTheme {
 export const themes = [
   paperClean,
   aclClean,
+  neuripsClean,
   shadcnLight,
   shadcnDark,
   natureSoft,
