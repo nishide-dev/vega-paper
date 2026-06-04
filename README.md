@@ -21,10 +21,14 @@ Open a new shell (or add `~/.local/bin` to your PATH), then verify:
 vega-paper doctor
 ```
 
-The installer downloads **GitHub Release** binaries for your platform (Phase 4a-2). Until Release artifacts ship, test from a clone:
+The installer downloads **GitHub Release** tarballs for your platform. After the first release is tagged (`v0.1.0`), `curl | bash` works out of the box.
+
+Until then, test from a clone or a locally built tarball:
 
 ```bash
 bash scripts/install.sh --from-repo
+bash scripts/build-release-tarball.sh --version 0.1.0 --target darwin-arm64
+bash scripts/install.sh --from-tarball dist/release/vega-paper-0.1.0-darwin-arm64.tar.gz
 ```
 
 ## Development setup

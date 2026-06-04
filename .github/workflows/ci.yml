@@ -33,3 +33,6 @@ jobs:
 
       - name: Install smoke
         run: bun run install:smoke
+
+      - name: Tarball install smoke
+        run: bun run install:tarball-smoke

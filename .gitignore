@@ -4,4 +4,7 @@ dist/
 examples/**/output.svg
 examples/theme-samples/*.svg
 examples/theme-samples/*.meta.json
-out.vl.json.DS_Store
+out.vl.json
+dist/release/
+packages/cli/out.vl.json
+.DS_Store

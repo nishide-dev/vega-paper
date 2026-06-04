@@ -1,8 +1,11 @@
 import { describe, expect, test } from "bun:test";
+import { mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import {
+  isReleaseInstallHome,
   resolveCliPackageRootFromMeta,
   resolveInstallBinDirectory,
+  resolveInstallBinDirectoryAsync,
 } from "../src/core/install-root";
 
 describe("install-root", () => {
@@ -26,6 +29,25 @@ describe("install-root", () => {
       expect(resolveInstallBinDirectory(import.meta.url)).toBe(
         join("/tmp/vega-paper-home", "node_modules", ".bin"),
       );
+    } finally {
+      if (original === undefined) {
+        delete process.env.VEGA_PAPER_HOME;
+      } else {
+        process.env.VEGA_PAPER_HOME = original;
+      }
+    }
+  });
+
+  test("resolveInstallBinDirectoryAsync uses release bin directory", async () => {
+    const original = process.env.VEGA_PAPER_HOME;
+    process.env.VEGA_PAPER_HOME = "/tmp/vega-paper-release-home";
+
+    try {
+      await mkdir("/tmp/vega-paper-release-home/lib/node_modules", { recursive: true });
+      expect(await resolveInstallBinDirectoryAsync(import.meta.url)).toBe(
+        join("/tmp/vega-paper-release-home", "bin"),
+      );
+      expect(await isReleaseInstallHome("/tmp/vega-paper-release-home")).toBe(true);
     } finally {
       if (original === undefined) {
         delete process.env.VEGA_PAPER_HOME;

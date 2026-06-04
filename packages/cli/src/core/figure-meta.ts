@@ -2,7 +2,11 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, join, parse } from "node:path";
 import { VegaPaperError } from "./errors";
 import type { InferAggregateMethod, InferChartType, VegaLiteFieldType } from "./infer";
-import { resolveCliNodeModulesDirectory, resolveCliPackageRootFromMeta } from "./install-root";
+import {
+  resolveCliNodeModulesDirectory,
+  resolveCliPackageRootFromMeta,
+  resolveVegaPaperHome,
+} from "./install-root";
 
 export type FigureMetaInferSnapshot = {
   chart: InferChartType;
@@ -210,11 +214,27 @@ export function buildRenderFigureMeta(input: BuildRenderFigureMetaInput): Render
 }
 
 export async function resolveFigureMetaVersions(): Promise<FigureMetaVersions> {
+  const home = resolveVegaPaperHome();
   const cliPackageRoot = resolveCliPackageRootFromMeta(import.meta.url);
-  const nodeModules = resolveCliNodeModulesDirectory();
+  const nodeModules = await resolveCliNodeModulesDirectory();
+
+  let vegaPaperVersion: string;
+  if (home) {
+    try {
+      const version = (await readFile(join(home, "VERSION"), "utf8")).trim();
+      if (version.length === 0) {
+        throw new Error("empty VERSION");
+      }
+      vegaPaperVersion = version;
+    } catch {
+      vegaPaperVersion = await readPackageVersion(cliPackageRoot, "vega-paper");
+    }
+  } else {
+    vegaPaperVersion = await readPackageVersion(cliPackageRoot, "vega-paper");
+  }
 
   return {
-    vegaPaperVersion: await readPackageVersion(cliPackageRoot, "vega-paper"),
+    vegaPaperVersion,
     vegaVersion: await readPackageVersion(join(nodeModules, "vega"), "vega"),
     vegaLiteVersion: await readPackageVersion(join(nodeModules, "vega-lite"), "vega-lite"),
   };

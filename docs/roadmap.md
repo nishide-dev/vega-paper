@@ -15,7 +15,7 @@ This document is the **living roadmap** for VegaPaper. It supersedes §13 in [`i
 | 1 | CLI MVP | Done |
 | 2 | AI Skill | Done |
 | 3 | Theme expansion | Done |
-| 4a | CLI distribution & install | **In progress** (4a-1 done; 4a-2 Release install next) |
+| 4a | CLI distribution & install | **Done** (tag `v0.1.0` for public curl install) |
 | 4b | Custom themes | Planned |
 | 5 | MCP wrapper | Planned |
 | 6 | Research workflow integration | Planned |
@@ -84,13 +84,14 @@ Spec: [`superpowers/specs/2026-06-03-vega-paper-github-release-install-design.md
 3. **Install-root resolution** — `VEGA_PAPER_HOME`, Vega CLI lookup from any cwd
 4. **`doctor` + docs** — README, SKILL.md; CI `install:smoke` via `--from-repo`
 
-### Phase 4a-2 — Next
+### Phase 4a-2 — Done (pending first `v*` tag on GitHub)
 
-1. **GitHub Release workflow** — per-OS/arch artifacts (`bun build --compile` + bundled `vl2svg`/`vg2svg` or release tarball)
-2. **`install.sh` production path** — detect platform, download from Release, extract to `~/.local/share/vega-paper`
-3. **Version pinning** — `--version v0.1.0` or `latest`
+1. **`build-release-tarball.sh`** — compile CLI + vendored Vega CLIs per target
+2. **`install.sh` Release path** — GitHub download, `current` symlink, production shims
+3. **`release.yml`** — matrix build on tags; attach tarballs to Release
+4. **`install:tarball-smoke`** — CI validates tarball install + render
 
-Remove / defer: npm publish, `bunx vega-paper`, prefix `bun install vega-paper@…` path in `install.sh`.
+First public install: tag `v0.1.0` and run Release workflow, then `curl | bash`.
 
 **Why before MCP:** MCP wraps the CLI; external clients need a stable install story first.
 
