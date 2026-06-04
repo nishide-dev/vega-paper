@@ -114,6 +114,7 @@ packages/cli/      vega-paper CLI
 packages/themes/   eight built-in themes (paper, ACL, NeurIPS, shadcn, nature, poster, monochrome)
 skills/            agent skills (vega-paper workflow)
 examples/          sample data, reference specs, and READMEs
+docs/              product roadmap and founding design (`roadmap.md`, `initial-design.md`)
 docs/superpowers/  design specs and implementation plans
 ```
 
