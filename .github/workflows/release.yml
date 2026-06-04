@@ -15,8 +15,9 @@ jobs:
         include:
           - target: darwin-arm64
             runs-on: macos-14
+          # Cross-compile via `bun build --target=bun-darwin-x64`; macos-13 runners are deprecated/unavailable.
           - target: darwin-x64
-            runs-on: macos-13
+            runs-on: macos-15
           - target: linux-x64
             runs-on: ubuntu-latest
     runs-on: ${{ matrix.runs-on }}
