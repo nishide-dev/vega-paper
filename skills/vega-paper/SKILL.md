@@ -135,15 +135,9 @@ Writes sibling `figures/f1.meta.json` with `"command": "render"`. No `infer` blo
 
 ## Themes
 
-List themes:
+Pass `--theme` when rendering SVG (`infer --out` or `render`). Read [Theme catalog](references/theme-catalog.md) for built-in themes, use-case guidance, and how `themes list` / `themes show` fit in.
 
-```bash
-bun run packages/cli/src/index.ts themes list
-```
-
-Built-in names: `paper-clean`, `acl-clean`, `shadcn-light`, `monochrome-print`.
-
-Default recommendation for papers: **`paper-clean`**.
+Default for academic papers: **`paper-clean`**.
 
 ## Other commands
 
@@ -155,6 +149,7 @@ bun run packages/cli/src/index.ts doctor
 ## References
 
 - [Chart selection](references/chart-selection.md) — chart types and infer modifiers
+- [Theme catalog](references/theme-catalog.md) — built-in themes and selection guidance
 
 ## Agent checklist
 
