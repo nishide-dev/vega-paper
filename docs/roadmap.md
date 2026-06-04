@@ -71,18 +71,24 @@ Also delivered:
 
 ## Phase 4a: CLI distribution & install — Next
 
-**Goal:** Use `vega-paper` outside a monorepo checkout without `bun run packages/cli/src/index.ts`.
+**Goal:** Use `vega-paper` outside a monorepo checkout. Primary UX: **`curl -fsSL …/install.sh | bash`** → `vega-paper` on PATH (with `vl2svg` / `vg2svg` shims under the hood).
 
-Planned scope (to be detailed in a superpowers spec):
+Spec: [`superpowers/specs/2026-06-03-vega-paper-cli-distribution-design.md`](./superpowers/specs/2026-06-03-vega-paper-cli-distribution-design.md)
 
-1. **Package publish path** — npm-compatible `vega-paper` package; `bunx vega-paper` / workspace bin invocation documented
-2. **Install docs** — README, SKILL.md, and examples updated for installed vs dev-repo usage
-3. **`doctor` on global install** — Vega CLI binary resolution works when not in the vega-paper repo root
-4. **Optional later:** compiled standalone binary (`bun build --compile`) if Bun-free distribution is required
+### Phase 4a-1 (this slice)
 
-**Why before MCP:** MCP is a thin wrapper over the CLI; external clients need a stable install story first.
+1. **Publishable packages** — `@vega-paper/themes` + `vega-paper` on npm; `dist/` builds; `bunx vega-paper` documented
+2. **`install.sh`** — prefix at `~/.local/share/vega-paper`; shims in `~/.local/bin`
+3. **Install-root resolution** — Vega CLI and version lookup work from any cwd
+4. **`doctor` + docs** — README, SKILL.md updated for installed vs dev-repo usage
 
-**Current dev-repo invocation (unchanged until 4a ships):**
+### Phase 4a-2 (deferred)
+
+- GitHub Release **compiled binaries** (`bun build --compile`) for Bun-free targets
+
+**Why before MCP:** MCP wraps the CLI; external clients need a stable install story first.
+
+**Current dev-repo invocation (unchanged for contributors):**
 
 ```bash
 bun run packages/cli/src/index.ts --help
