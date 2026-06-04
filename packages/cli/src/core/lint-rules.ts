@@ -363,7 +363,7 @@ function collectExplicitColors(spec: JsonObject): ExplicitColor[] {
   }
 
   for (const unit of collectVegaLiteUnitSpecs(spec)) {
-    if (typeof unit.spec.mark === "object" && typeof unit.spec.mark.color === "string") {
+    if (isPlainObject(unit.spec.mark) && typeof unit.spec.mark.color === "string") {
       colors.push({
         path: joinJsonPath(unit.path, "mark.color"),
         color: unit.spec.mark.color,
