@@ -38,6 +38,7 @@ describe("render command", () => {
         inputPath,
         outputPath,
         format: "svg",
+        scale: 1,
         themeName: undefined,
       },
     ]);
@@ -48,7 +49,7 @@ describe("render command", () => {
     expect(meta.output).toBe(outputPath);
     expect(meta.specOut).toBeUndefined();
     expect(meta.infer).toBeUndefined();
-    expect(meta.format).toBeUndefined();
+    expect(meta.format).toBe("svg");
   });
 
   test("includes theme in figure meta when --theme is provided", async () => {

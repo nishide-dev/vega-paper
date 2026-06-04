@@ -1,4 +1,3 @@
-import { extname } from "node:path";
 import type { Command } from "commander";
 import { VegaPaperError } from "../core/errors";
 import {
@@ -9,11 +8,13 @@ import {
   writeFigureMeta,
 } from "../core/figure-meta";
 import { type RenderRequest, type RenderResult, renderChart } from "../core/render";
+import { buildRenderRequest } from "../core/render-format";
 
 type RenderCommandOptions = {
   format?: string;
   out?: string;
   theme?: string;
+  scale?: string;
 };
 
 type WriteOutput = (value: string) => void;
@@ -27,27 +28,16 @@ export function normalizeRenderOptions(
   const outputPath = options.out;
 
   if (!outputPath) {
-    throw new VegaPaperError("Missing --out <path>. SVG output must be written to a file.");
+    throw new VegaPaperError("Missing --out <path>. Output must be written to a file.");
   }
 
-  const format = options.format ?? inferFormatFromOutputPath(outputPath);
-
-  if (!format) {
-    throw new VegaPaperError(
-      'Missing or ambiguous --format <format>. Use "--format svg" or an .svg output path.',
-    );
-  }
-
-  if (format !== "svg") {
-    throw new VegaPaperError(`Unsupported format "${format}". This MVP supports only "svg".`);
-  }
-
-  return {
+  return buildRenderRequest({
     inputPath,
     outputPath,
-    format,
+    format: options.format,
+    scale: options.scale,
     themeName: options.theme,
-  };
+  });
 }
 
 export function registerRenderCommand(
@@ -61,8 +51,9 @@ export function registerRenderCommand(
   program
     .command("render")
     .argument("<spec>", "Vega or Vega-Lite JSON input path")
-    .option("--format <format>", "output format")
+    .option("--format <format>", "output format: svg, png, or pdf")
     .option("--out <path>", "output file path")
+    .option("--scale <factor>", "resolution scale for png or pdf (default 1)")
     .option("--theme <name|path>", "built-in theme name or path to theme JSON")
     .action(async (inputPath: string, options: RenderCommandOptions) => {
       const request = normalizeRenderOptions(inputPath, options);
@@ -76,6 +67,8 @@ export function registerRenderCommand(
         inputPath,
         outputPath: request.outputPath,
         themeName: request.themeName,
+        format: request.format,
+        scale: request.scale,
         versions,
       });
 
@@ -87,10 +80,6 @@ export function registerRenderCommand(
 
       writeOutput(`Wrote ${metaOutputPath}\n`);
     });
-}
-
-function inferFormatFromOutputPath(outputPath: string): "svg" | undefined {
-  return extname(outputPath).toLowerCase() === ".svg" ? "svg" : undefined;
 }
 
 function toMetaWriteError(metaOutputPath: string, error: unknown): VegaPaperError {

@@ -135,6 +135,7 @@ describe("buildRenderFigureMeta", () => {
     const meta = buildRenderFigureMeta({
       inputPath: "chart.vl.json",
       outputPath: "figures/f1.svg",
+      format: "svg",
       createdAt: new Date("2026-06-03T12:00:00.000Z"),
       versions: {
         vegaPaperVersion: "0.1.0",
@@ -152,14 +153,17 @@ describe("buildRenderFigureMeta", () => {
       vegaPaperVersion: "0.1.0",
       vegaVersion: "6.2.0",
       vegaLiteVersion: "6.4.1",
+      format: "svg",
     });
   });
 
   test("includes theme when provided", () => {
     const meta = buildRenderFigureMeta({
       inputPath: "chart.vl.json",
-      outputPath: "figure.svg",
+      outputPath: "figure.png",
       themeName: "paper-clean",
+      format: "png",
+      scale: 2,
       createdAt: new Date("2026-06-03T12:00:00.000Z"),
       versions: {
         vegaPaperVersion: "0.1.0",
@@ -169,6 +173,8 @@ describe("buildRenderFigureMeta", () => {
     });
 
     expect(meta.theme).toBe("paper-clean");
+    expect(meta.format).toBe("png");
+    expect(meta.scale).toBe(2);
   });
 });
 

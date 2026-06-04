@@ -7,6 +7,7 @@ import {
   resolveCliPackageRootFromMeta,
   resolveVegaPaperHome,
 } from "./install-root";
+import type { RenderFormat } from "./render-format";
 
 export type FigureMetaInferSnapshot = {
   chart: InferChartType;
@@ -36,6 +37,8 @@ export type InferFigureMeta = {
   vegaVersion: string;
   vegaLiteVersion: string;
   theme?: string;
+  format?: RenderFormat;
+  scale?: number;
   infer: FigureMetaInferSnapshot;
 };
 
@@ -49,6 +52,8 @@ export type RenderFigureMeta = {
   vegaVersion: string;
   vegaLiteVersion: string;
   theme?: string;
+  format: RenderFormat;
+  scale?: number;
 };
 
 export type FigureMeta = InferFigureMeta | RenderFigureMeta;
@@ -75,8 +80,15 @@ export type BuildRenderFigureMetaInput = {
   inputPath: string;
   outputPath: string;
   themeName?: string | undefined;
+  format: RenderFormat;
+  scale?: number | undefined;
   createdAt?: Date;
   versions?: FigureMetaVersions;
+};
+
+export type BuildInferRenderMetaInput = {
+  format: RenderFormat;
+  scale?: number | undefined;
 };
 
 export type BuildFigureMetaInput = {
@@ -85,6 +97,7 @@ export type BuildFigureMetaInput = {
   specOutPath: string;
   chart: InferChartType;
   options: FigureMetaInferOptions;
+  renderOutput?: BuildInferRenderMetaInput | undefined;
   createdAt?: Date;
   versions?: FigureMetaVersions;
 };
@@ -184,6 +197,10 @@ export function buildFigureMeta(input: BuildFigureMetaInput): InferFigureMeta {
     meta.theme = input.options.theme;
   }
 
+  if (input.renderOutput !== undefined) {
+    applyOutputFormatMeta(meta, input.renderOutput.format, input.renderOutput.scale ?? 1);
+  }
+
   return meta;
 }
 
@@ -204,13 +221,28 @@ export function buildRenderFigureMeta(input: BuildRenderFigureMetaInput): Render
     vegaPaperVersion: versions.vegaPaperVersion,
     vegaVersion: versions.vegaVersion,
     vegaLiteVersion: versions.vegaLiteVersion,
+    format: input.format,
   };
 
   if (input.themeName !== undefined) {
     meta.theme = input.themeName;
   }
 
+  applyOutputFormatMeta(meta, input.format, input.scale ?? 1);
+
   return meta;
+}
+
+function applyOutputFormatMeta(
+  meta: { format?: RenderFormat; scale?: number },
+  format: RenderFormat,
+  scale: number,
+): void {
+  meta.format = format;
+
+  if (scale > 1 && format !== "svg") {
+    meta.scale = scale;
+  }
 }
 
 export async function resolveFigureMetaVersions(): Promise<FigureMetaVersions> {

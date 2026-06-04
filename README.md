@@ -67,7 +67,7 @@ More examples live under [`examples/`](examples/README.md).
 | Command | Purpose |
 |---------|---------|
 | `infer` | Build a Vega-Lite spec from CSV/JSON + chart options |
-| `render` | Render a spec to SVG with an optional theme |
+| `render` | Render a spec to SVG, PNG, or PDF with an optional theme |
 | `lint` | Check a spec against paper-oriented lint profiles |
 | `themes` | List built-in themes or `show` a built-in / custom JSON file |
 | `doctor` | Verify render toolchain dependencies |
@@ -97,6 +97,17 @@ bun run packages/cli/src/index.ts lint figures/f1.vl.json --lint-profile paper
 - **Output:** writes `.vl.json`; optionally renders SVG with `--out` and `--theme`
 
 See [`examples/`](examples/) for copy-paste commands.
+
+### Output formats
+
+Default for papers is **SVG** (canonical, diff-friendly). Use **PDF** for LaTeX submission and **PNG** for README or slides.
+
+```bash
+bun run packages/cli/src/index.ts render chart.vl.json --format pdf --out figure.pdf
+bun run packages/cli/src/index.ts render chart.vl.json --out figure.png --scale 2
+```
+
+`infer --out` accepts `.svg`, `.png`, or `.pdf` with the same `--format` / `--scale` options.
 
 ### Custom themes
 

@@ -1,6 +1,6 @@
 # VegaPaper Roadmap
 
-**Last updated:** 2026-06-04
+**Last updated:** 2026-06-04 (Phase 4.5 spec)
 
 This document is the **living roadmap** for VegaPaper. It supersedes §13 in [`initial-design.md`](./initial-design.md) for phase ordering and current status.
 
@@ -17,6 +17,7 @@ This document is the **living roadmap** for VegaPaper. It supersedes §13 in [`i
 | 3 | Theme expansion | Done |
 | 4a | CLI distribution & install | **Done** (tag `v0.1.0` for public curl install) |
 | 4b | Custom themes | **Done** |
+| 4.5 | Output formats (PNG / PDF) | **Done** |
 | 5 | MCP wrapper | Planned |
 | 6 | Research workflow integration | Planned |
 
@@ -120,6 +121,21 @@ Delivered:
 
 ---
 
+## Phase 4.5: Output formats (PNG / PDF) — Done
+
+**Goal:** Extend `render` and `infer` beyond SVG while keeping **SVG the canonical artifact**.
+
+**Spec:** [`superpowers/specs/2026-06-04-vega-paper-output-formats-design.md`](./superpowers/specs/2026-06-04-vega-paper-output-formats-design.md)  
+**Plan:** [`superpowers/plans/2026-06-04-vega-paper-output-formats.md`](./superpowers/plans/2026-06-04-vega-paper-output-formats.md)
+
+Delivered:
+
+- `--format svg|png|pdf` + `--scale` on `render` and `infer`
+- Six Vega CLI shims in tarball / `doctor` / `--from-repo` install
+- Figure meta `format` / `scale`; tarball smoke renders PNG
+
+---
+
 ## Phase 5: MCP wrapper — Planned
 
 Thin MCP server over the stable CLI (stdio first; Cursor / Claude Desktop).
@@ -155,7 +171,8 @@ Items from `initial-design.md` that remain out of scope until a dedicated phase/
 - Full NL → chart intent parser
 - Parquet / Arrow input
 - Animated charts
-- PDF / PNG as first-class outputs (SVG remains canonical)
+- Dual-format single command (SVG + PNG in one invocation)
+- `--format vg|vl` spec export
 
 ---
 

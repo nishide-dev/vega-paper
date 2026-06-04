@@ -15,49 +15,54 @@ describe("normalizeRenderOptions", () => {
       inputPath: "chart.vl.json",
       outputPath: "chart.svg",
       format: "svg",
+      scale: 1,
       themeName: "paper-clean",
     });
   });
 
-  test("infers svg format from output path", () => {
+  test("infers png format from output path", () => {
     expect(
       normalizeRenderOptions("chart.vl.json", {
-        out: "chart.svg",
+        out: "chart.png",
+        scale: "2",
       }),
     ).toEqual({
       inputPath: "chart.vl.json",
-      outputPath: "chart.svg",
-      format: "svg",
+      outputPath: "chart.png",
+      format: "png",
+      scale: 2,
       themeName: undefined,
     });
   });
 
-  test("rejects unsupported formats", () => {
+  test("accepts explicit pdf format", () => {
+    expect(
+      normalizeRenderOptions("chart.vl.json", {
+        format: "pdf",
+        out: "chart.pdf",
+      }),
+    ).toEqual({
+      inputPath: "chart.vl.json",
+      outputPath: "chart.pdf",
+      format: "pdf",
+      scale: 1,
+      themeName: undefined,
+    });
+  });
+
+  test("rejects unknown formats", () => {
     expect(() =>
       normalizeRenderOptions("chart.vl.json", {
-        format: "png",
-        out: "chart.png",
+        format: "gif",
+        out: "chart.gif",
       }),
     ).toThrow(VegaPaperError);
-    expect(() =>
-      normalizeRenderOptions("chart.vl.json", {
-        format: "png",
-        out: "chart.png",
-      }),
-    ).toThrow('Unsupported format "png". This MVP supports only "svg".');
   });
 
   test("requires an output path", () => {
-    expect(() =>
-      normalizeRenderOptions("chart.vl.json", {
-        format: "svg",
-      }),
-    ).toThrow(VegaPaperError);
-    expect(() =>
-      normalizeRenderOptions("chart.vl.json", {
-        format: "svg",
-      }),
-    ).toThrow("Missing --out <path>. SVG output must be written to a file.");
+    expect(() => normalizeRenderOptions("chart.vl.json", { format: "svg" })).toThrow(
+      "Missing --out <path>. Output must be written to a file.",
+    );
   });
 
   test("requires a detectable format", () => {
@@ -65,12 +70,9 @@ describe("normalizeRenderOptions", () => {
       normalizeRenderOptions("chart.vl.json", {
         out: "chart.out",
       }),
-    ).toThrow(VegaPaperError);
-    expect(() =>
-      normalizeRenderOptions("chart.vl.json", {
-        out: "chart.out",
-      }),
-    ).toThrow('Missing or ambiguous --format <format>. Use "--format svg" or an .svg output path.');
+    ).toThrow(
+      "Missing or ambiguous --format <format>. Use svg, png, or pdf, or an .svg/.png/.pdf --out path.",
+    );
   });
 });
 

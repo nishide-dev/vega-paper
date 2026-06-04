@@ -10,32 +10,44 @@ import {
   resolveVegaPaperHome,
   shouldUseCliPackageInstallBin,
 } from "../core/install-root";
+import type { RenderFormat } from "../core/render-format";
 import type { SpecType } from "../core/spec";
 
 export type ExternalVegaCliRenderRequest = {
   specType: SpecType;
   inputPath: string;
   outputPath: string;
-  format: "svg";
+  format: RenderFormat;
+  scale?: number | undefined;
 };
 
-export type VegaCliBinaryName = "vl2svg" | "vg2svg";
+export type VegaCliBinaryName = "vl2svg" | "vl2png" | "vl2pdf" | "vg2svg" | "vg2png" | "vg2pdf";
+
+export function getVegaCliBinaryName(specType: SpecType, format: RenderFormat): VegaCliBinaryName {
+  const prefix = specType === "vega-lite" ? "vl2" : "vg2";
+  return `${prefix}${format}` as VegaCliBinaryName;
+}
 
 export async function renderWithExternalVegaCli(
   request: ExternalVegaCliRenderRequest,
 ): Promise<void> {
-  const binary = getRenderBinary(request.specType, request.format);
+  const binary = getVegaCliBinaryName(request.specType, request.format);
   const command = (await resolveVegaCliBinary(binary)) ?? binary;
+  const args = buildVegaCliArgs(request);
 
-  await runBinary(command, binary, [request.inputPath, request.outputPath]);
+  await runBinary(command, binary, args);
 }
 
-function getRenderBinary(specType: SpecType, format: "svg"): VegaCliBinaryName {
-  if (format !== "svg") {
-    throw new VegaPaperError(`Unsupported format "${format}". This MVP supports only "svg".`);
+export function buildVegaCliArgs(request: ExternalVegaCliRenderRequest): string[] {
+  const args: string[] = [];
+  const scale = request.scale ?? 1;
+
+  if (scale !== 1) {
+    args.push("-s", String(scale));
   }
 
-  return specType === "vega-lite" ? "vl2svg" : "vg2svg";
+  args.push(request.inputPath, request.outputPath);
+  return args;
 }
 
 export async function resolveVegaCliBinary(binary: VegaCliBinaryName): Promise<string | undefined> {
@@ -89,7 +101,7 @@ async function getBunPackageStoreCandidates(
   binary: VegaCliBinaryName,
   workspace: string,
 ): Promise<string[]> {
-  const packageName = binary === "vl2svg" ? "vega-lite" : "vega-cli";
+  const packageName = binary.startsWith("vl2") ? "vega-lite" : "vega-cli";
   const packageStoreRoot = join(workspace, "node_modules", ".bun");
   const candidates = [join(packageStoreRoot, "node_modules", packageName, "bin", binary)];
 

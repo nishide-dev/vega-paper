@@ -36,17 +36,7 @@ describe("doctor core", () => {
       getNodeVersion: async () => "v25.9.0",
       resolveExecutable: async (name) =>
         name === "vega-paper" ? "node_modules/.bin/vega-paper" : undefined,
-      resolveVegaCliBinary: async (name) => {
-        if (name === "vl2svg") {
-          return "node_modules/.bun/vega-lite/bin/vl2svg";
-        }
-
-        if (name === "vg2svg") {
-          return "node_modules/.bun/vega-cli/bin/vg2svg";
-        }
-
-        return undefined;
-      },
+      resolveVegaCliBinary: async (name) => `bin/${name}`,
     };
 
     expect(await runDoctorChecks(environment)).toEqual([
@@ -58,24 +48,12 @@ describe("doctor core", () => {
         message: "node_modules/.bin/vega-paper",
         required: true,
       },
-      {
-        name: "vl2svg",
-        status: "ok",
-        message: "node_modules/.bun/vega-lite/bin/vl2svg",
-        required: true,
-      },
-      {
-        name: "vg2svg",
-        status: "ok",
-        message: "node_modules/.bun/vega-cli/bin/vg2svg",
-        required: true,
-      },
-      {
-        name: "pdf/png",
-        status: "warn",
-        message: "not checked in this MVP",
-        required: false,
-      },
+      { name: "vl2svg", status: "ok", message: "bin/vl2svg", required: true },
+      { name: "vl2png", status: "ok", message: "bin/vl2png", required: true },
+      { name: "vl2pdf", status: "ok", message: "bin/vl2pdf", required: true },
+      { name: "vg2svg", status: "ok", message: "bin/vg2svg", required: true },
+      { name: "vg2png", status: "ok", message: "bin/vg2png", required: true },
+      { name: "vg2pdf", status: "ok", message: "bin/vg2pdf", required: true },
     ]);
   });
 

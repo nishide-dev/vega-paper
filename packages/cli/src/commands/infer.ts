@@ -1,5 +1,5 @@
 import { mkdir, writeFile } from "node:fs/promises";
-import { dirname, extname, join, parse } from "node:path";
+import { dirname, join, parse } from "node:path";
 import type { Command } from "commander";
 import { VegaPaperError } from "../core/errors";
 import {
@@ -20,6 +20,7 @@ import {
 import { type LintResult, lintSpec } from "../core/lint";
 import { getLintProfile } from "../core/lint-profiles";
 import { type RenderRequest, type RenderResult, renderChart } from "../core/render";
+import { buildRenderRequest } from "../core/render-format";
 import { formatHumanLintResult, getLintExitCode } from "./lint";
 
 type InferCommandOptions = {
@@ -31,6 +32,8 @@ type InferCommandOptions = {
   width?: string;
   height?: string;
   theme?: string;
+  format?: string;
+  scale?: string;
   out?: string;
   specOut?: string;
   lintProfile?: string;
@@ -69,7 +72,7 @@ export function registerInferCommand(
   program
     .command("infer")
     .argument("<input>", "CSV or JSON input path")
-    .description("Generate a Vega-Lite spec from CSV or JSON and optionally render SVG")
+    .description("Generate a Vega-Lite spec from CSV or JSON and optionally render output")
     .option("--chart <type>", "chart type: line, bar, scatter, area, heatmap, or boxplot")
     .option("--x <field>", "x encoding field")
     .option("--y <field>", "y encoding field")
@@ -87,7 +90,9 @@ export function registerInferCommand(
       "--theme <name|path>",
       "built-in theme name or path to theme JSON, used only when rendering",
     )
-    .option("--out <path>", "SVG output path")
+    .option("--format <format>", "output format when rendering: svg, png, or pdf")
+    .option("--scale <factor>", "resolution scale for png or pdf (default 1)")
+    .option("--out <path>", "rendered output path (.svg, .png, or .pdf)")
     .option("--spec-out <path>", "Vega-Lite spec output path")
     .option("--x-type <type>", "override inferred type for x encoding")
     .option("--y-type <type>", "override inferred type for y encoding")
@@ -128,12 +133,14 @@ export function registerInferCommand(
       }
 
       if (options.out !== undefined) {
-        const renderResult = await runRender({
+        const renderRequest = buildRenderRequest({
           inputPath: request.specOutputPath,
           outputPath: options.out,
-          format: "svg",
+          format: options.format,
+          scale: options.scale,
           themeName: options.theme,
         });
+        const renderResult = await runRender(renderRequest);
 
         writeOutput(`Rendered ${renderResult.outputPath}\n`);
 
@@ -145,6 +152,10 @@ export function registerInferCommand(
           specOutPath: options.specOut ?? toSiblingSpecPath(options.out),
           chart: request.chart,
           options,
+          renderOutput: {
+            format: renderRequest.format,
+            scale: renderRequest.scale,
+          },
           versions,
         });
 
@@ -182,10 +193,23 @@ export function normalizeInferOptions(
     throw new VegaPaperError('The "--theme" option requires "--out <path>".');
   }
 
-  if (outputPath !== undefined && extname(outputPath).toLowerCase() !== ".svg") {
-    throw new VegaPaperError(
-      `Unsupported output path "${outputPath}". This MVP supports only .svg outputs.`,
-    );
+  if (outputPath !== undefined) {
+    try {
+      buildRenderRequest({
+        inputPath: "placeholder.vl.json",
+        outputPath,
+        format: options.format,
+        scale: options.scale,
+      });
+    } catch (error) {
+      if (error instanceof VegaPaperError) {
+        throw error;
+      }
+
+      throw new VegaPaperError(
+        error instanceof Error ? error.message : "Invalid render output options.",
+      );
+    }
   }
 
   const xType = parseFieldType(options.xType, "--x-type");

@@ -2,15 +2,17 @@ import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { renderWithExternalVegaCli } from "../backends/external-vega-cli";
+import type { RenderFormat } from "./render-format";
 import { applyThemeToSpec, detectSpecType, loadJsonSpec } from "./spec";
 import { getCliTheme } from "./theme";
 
-export type RenderFormat = "svg";
+export type { RenderFormat } from "./render-format";
 
 export type RenderRequest = {
   inputPath: string;
   outputPath: string;
   format: RenderFormat;
+  scale?: number | undefined;
   themeName?: string | undefined;
 };
 
@@ -40,6 +42,7 @@ export async function renderChart(request: RenderRequest): Promise<RenderResult>
     inputPath: tempSpecPath,
     outputPath: request.outputPath,
     format: request.format,
+    scale: request.scale,
   });
 
   return {
