@@ -1,5 +1,7 @@
 # Skill Scripts Design
 
+> **Superseded** by [2026-06-04-vega-paper-cli-invocation-docs-design.md](./2026-06-04-vega-paper-cli-invocation-docs-design.md). Skill scripts were removed; use `vega-paper lint` and `vega-paper render` directly.
+
 Date: 2026-06-03
 
 ## Context

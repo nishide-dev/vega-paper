@@ -52,7 +52,7 @@ See: `docs/superpowers/specs/2026-06-01-vega-paper-render-mvp-design.md` and rel
 
 - `skills/vega-paper/SKILL.md`
 - References: chart selection, theme catalog, paper style guide, Vega-Lite patterns
-- Skill scripts: `validate-spec.ts`, `render-chart.ts` (CLI wrappers for agents)
+- Agents call `vega-paper` directly (skill script wrappers removed; see CLI invocation docs spec)
 - Cursor install instructions in SKILL.md
 
 ---
@@ -102,7 +102,7 @@ Public install: tag `v0.1.0` (or later) + `curl | bash`.
 **Current dev-repo invocation (unchanged for contributors):**
 
 ```bash
-bun run packages/cli/src/index.ts --help
+vega-paper --help
 ```
 
 ---

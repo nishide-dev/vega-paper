@@ -83,7 +83,7 @@ Create `package.json` with:
     "build": "bun run --filter '*' build",
     "test": "bun test",
     "typecheck": "bun run --filter '*' typecheck",
-    "render:example": "bun run packages/cli/src/index.ts render examples/basic-line/chart.vl.json --theme paper-clean --format svg --out examples/basic-line/output.svg"
+    "render:example": "vega-paper render examples/basic-line/chart.vl.json --theme paper-clean --format svg --out examples/basic-line/output.svg"
   },
   "devDependencies": {
     "@types/bun": "latest",
@@ -958,7 +958,7 @@ try {
 Run:
 
 ```bash
-bun run packages/cli/src/index.ts --help
+vega-paper --help
 ```
 
 Expected output includes:
@@ -970,7 +970,7 @@ Usage: vega-paper [options] [command]
 Run:
 
 ```bash
-bun run packages/cli/src/index.ts render --help
+vega-paper render --help
 ```
 
 Expected output includes:
@@ -1306,7 +1306,7 @@ Expected: PASS.
 Run:
 
 ```bash
-bun run packages/cli/src/index.ts render examples/basic-line/chart.vl.json --theme paper-clean --format svg --out examples/basic-line/output.svg
+vega-paper render examples/basic-line/chart.vl.json --theme paper-clean --format svg --out examples/basic-line/output.svg
 ```
 
 Expected output:
@@ -1330,7 +1330,7 @@ Expected: output starts with an SVG tag or XML/SVG header and contains `<svg`.
 Run:
 
 ```bash
-bun run packages/cli/src/index.ts render examples/basic-line/chart.vl.json --theme missing-theme --format svg --out examples/basic-line/missing-theme.svg
+vega-paper render examples/basic-line/chart.vl.json --theme missing-theme --format svg --out examples/basic-line/missing-theme.svg
 ```
 
 Expected: command exits non-zero and prints:

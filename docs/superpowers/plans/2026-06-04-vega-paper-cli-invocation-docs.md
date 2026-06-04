@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Unify all user- and agent-facing CLI documentation on `vega-paper …`, remove redundant skill script wrappers, and sweep the repository for obsolete `bun run packages/cli/src/index.ts` examples.
+**Goal:** Unify all user- and agent-facing CLI documentation on `vega-paper …`, remove redundant skill script wrappers, and sweep the repository for obsolete `vega-paper` examples.
 
 **Architecture:** Documentation-only change. Delete `skills/vega-paper/scripts/` and rewrite `SKILL.md` as the single agent entry point using installed CLI. Bulk-replace monorepo CLI paths in markdown; leave `package.json` maintainer scripts and `scripts/render-gallery.ts` unchanged per spec.
 
@@ -90,7 +90,7 @@ Requires Vega CLI binaries (`vl2svg`, `vl2png`, `vl2pdf`, …). Fix `doctor` fai
 
 ## CLI invocation
 
-**IRON RULE:** Use `vega-paper <subcommand> …` for all CLI operations. Do not use `bun run packages/cli/src/index.ts`.
+**IRON RULE:** Use `vega-paper <subcommand> …` for all CLI operations. Do not use `vega-paper`.
 
 ```bash
 vega-paper <command> ...
@@ -179,7 +179,7 @@ git commit -m "docs(skill): use installed vega-paper CLI in all examples"
 1. Development setup — replace:
 
 ```markdown
-bun run packages/cli/src/index.ts --help
+vega-paper --help
 ```
 
 with:
@@ -190,7 +190,7 @@ vega-paper --help
 
 (Add one line: `Install locally first: bash scripts/install.sh --from-repo`.)
 
-2. Commands section — replace all `bun run packages/cli/src/index.ts` with `vega-paper` (infer, render, lint blocks).
+2. Commands section — replace all `vega-paper` with `vega-paper` (infer, render, lint blocks).
 
 3. Fix lint example flag: `vega-paper lint figures/f1.vl.json --profile paper` (not `--lint-profile`).
 
@@ -203,8 +203,8 @@ vega-paper --help
 Replace:
 
 ```bash
-bun run packages/cli/src/index.ts render ...
-bun run packages/cli/src/index.ts themes show ...
+vega-paper render ...
+vega-paper themes show ...
 ```
 
 with `vega-paper render ...` and `vega-paper themes show ...`.
@@ -234,7 +234,7 @@ git commit -m "docs: use vega-paper in README and example command snippets"
 Replace:
 
 ```text
-bun run packages/cli/src/index.ts
+vega-paper
 ```
 
 with:
@@ -248,7 +248,7 @@ vega-paper
 - [ ] **Step 2: `docs/roadmap.md`**
 
 - Phase 2 skill bullets: change "Skill scripts: validate-spec, render-chart" → "Agents call `vega-paper` directly (skill scripts removed in doc unification)."
-- Replace `bun run packages/cli/src/index.ts --help` with `vega-paper --help` if present.
+- Replace `vega-paper --help` with `vega-paper --help` if present.
 
 - [ ] **Step 3: `docs/initial-design.md`**
 
@@ -271,11 +271,11 @@ git commit -m "docs: align roadmap and releases with vega-paper CLI invocation"
 - [ ] **Step 1: Run replacement from repo root**
 
 ```bash
-rg -l 'bun run packages/cli/src/index.ts' docs/superpowers --glob '*.md' \
+rg -l 'vega-paper' docs/superpowers --glob '*.md' \
   | grep -v '2026-06-04-vega-paper-cli-invocation-docs-design.md' \
   | while read -r f; do
-      sed -i '' 's|PATH="$HOME/.bun/bin:$PATH" bun run packages/cli/src/index.ts|vega-paper|g' "$f"
-      sed -i '' 's|bun run packages/cli/src/index.ts|vega-paper|g' "$f"
+      sed -i '' 's|vega-paper|vega-paper|g' "$f"
+      sed -i '' 's|vega-paper|vega-paper|g' "$f"
     done
 ```
 
@@ -334,7 +334,7 @@ git commit -m "docs(skill): vega-paper prefix in reference docs"
 Run:
 
 ```bash
-rg 'bun run packages/cli/src/index.ts' --glob '*.md'
+rg 'vega-paper' --glob '*.md'
 ```
 
 Expected: **zero hits** (or only inside `2026-06-04-vega-paper-cli-invocation-docs-design.md` when describing the old form — acceptable).

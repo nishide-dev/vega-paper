@@ -389,7 +389,7 @@ Then open a new shell and run `vega-paper doctor`.
 
 ## Development
 
-(clone repo, bun install, bun run packages/cli/src/index.ts …)
+(clone repo, bun install, vega-paper …)
 ```
 
 - [ ] **Step 2: SKILL.md — prefer `vega-paper` when installed; repo path for contributors**

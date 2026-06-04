@@ -9,7 +9,7 @@ SVG outputs in this folder are **not committed** (nor sibling `*.meta.json` side
 ## Render one theme
 
 ```bash
-bun run packages/cli/src/index.ts render examples/basic-line/chart.vl.json \
+vega-paper render examples/basic-line/chart.vl.json \
   --theme paper-clean \
   --format svg \
   --out examples/theme-samples/paper-clean.svg
@@ -45,7 +45,7 @@ Writes `examples/theme-samples/<theme-name>.svg` and sibling `<theme-name>.meta.
 For B&W output, lint with the print profile first:
 
 ```bash
-bun run packages/cli/src/index.ts lint examples/basic-line/chart.vl.json --profile print
+vega-paper lint examples/basic-line/chart.vl.json --profile print
 ```
 
 See [Theme catalog](../../skills/vega-paper/references/theme-catalog.md) for selection guidance.

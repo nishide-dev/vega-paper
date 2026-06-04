@@ -7,7 +7,7 @@ Demonstrates loading a user theme JSON file with `--theme`.
 From the repository root:
 
 ```bash
-bun run packages/cli/src/index.ts render examples/custom-theme/chart.vl.json \
+vega-paper render examples/custom-theme/chart.vl.json \
   --theme examples/custom-theme/theme.json \
   --format svg \
   --out examples/custom-theme/output.svg
@@ -16,7 +16,7 @@ bun run packages/cli/src/index.ts render examples/custom-theme/chart.vl.json \
 Inspect the theme:
 
 ```bash
-bun run packages/cli/src/index.ts themes show examples/custom-theme/theme.json
+vega-paper themes show examples/custom-theme/theme.json
 ```
 
 ## Theme file format

@@ -381,7 +381,7 @@ PATH="$HOME/.bun/bin:$PATH" bun run build
 
 ```bash
 printf '%s\n' 'predicted,actual,count' 'a,a,10' 'a,b,2' 'b,a,1' > /tmp/heatmap-smoke.csv
-PATH="$HOME/.bun/bin:$PATH" bun run packages/cli/src/index.ts infer /tmp/heatmap-smoke.csv \
+vega-paper infer /tmp/heatmap-smoke.csv \
   --chart heatmap --x predicted --y actual --color count \
   --spec-out /tmp/heatmap-smoke.vl.json
 grep -q '"mark": "rect"' /tmp/heatmap-smoke.vl.json && echo SMOKE_HEATMAP=ok

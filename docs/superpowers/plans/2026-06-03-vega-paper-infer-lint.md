@@ -517,7 +517,7 @@ Expected: exit code 0.
 Run:
 
 ```bash
-PATH="$HOME/.bun/bin:$PATH" bun run packages/cli/src/index.ts infer \
+vega-paper infer \
   examples/training-curve/data.csv \
   --chart line \
   --x epoch \
@@ -538,7 +538,7 @@ Expected:
 Run:
 
 ```bash
-PATH="$HOME/.bun/bin:$PATH" bun run packages/cli/src/index.ts infer \
+vega-paper infer \
   examples/training-curve/data.csv \
   --chart line \
   --x epoch \
@@ -560,7 +560,7 @@ Expected:
 Run:
 
 ```bash
-PATH="$HOME/.bun/bin:$PATH" bun run packages/cli/src/index.ts infer \
+vega-paper infer \
   examples/training-curve/data.csv \
   --chart line \
   --x epoch \
