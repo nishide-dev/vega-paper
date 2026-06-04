@@ -4,6 +4,7 @@ Versioned release notes for GitHub Releases. One file per tag:
 
 ```text
 docs/releases/v0.1.0.md   →  tag v0.1.0
+docs/releases/v0.1.2.md   →  tag v0.1.2
 docs/releases/v0.2.0.md   →  tag v0.2.0
 ```
 

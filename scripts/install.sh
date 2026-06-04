@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-VERSION="0.1.1"
+VERSION="0.1.2"
 VEGA_PAPER_HOME="${VEGA_PAPER_HOME:-$HOME/.local/share/vega-paper}"
 PREFIX="${PREFIX:-$HOME/.local}"
 GITHUB_REPO="nishide-dev/vega-paper"

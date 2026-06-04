@@ -23,7 +23,7 @@ bun install
 bun run packages/cli/src/index.ts doctor
 ```
 
-Requires Bun (see `.bun-version`) and Vega CLI binaries (`vl2svg`). Fix `doctor` failures before rendering.
+Requires Bun (see `.bun-version`) and Vega CLI binaries (`vl2svg`, `vl2png`, `vl2pdf`, …). Fix `doctor` failures before rendering.
 
 ## CLI invocation
 

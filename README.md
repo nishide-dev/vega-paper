@@ -1,15 +1,15 @@
 # VegaPaper
 
-CLI for building publication-ready figures from CSV/JSON with [Vega-Lite](https://vega.github.io/vega-lite/). Generate specs with `infer`, apply paper themes, lint for common figure issues, and render SVG.
+CLI for building publication-ready figures from CSV/JSON with [Vega-Lite](https://vega.github.io/vega-lite/). Generate specs with `infer`, apply paper themes, lint for common figure issues, and render to SVG, PNG, or PDF.
 
 ## Requirements
 
 - [Bun](https://bun.sh) `1.3.14` (see [`.bun-version`](.bun-version))
-- Node-compatible Vega CLI binaries for SVG rendering (checked by `doctor`)
+- Node.js and Vega CLI binaries for rendering (`vl2svg`, `vl2png`, `vl2pdf`, … — checked by `doctor`)
 
 ## Install
 
-Install `vega-paper` to `~/.local/bin` (includes `vl2svg` / `vg2svg` shims):
+Install `vega-paper` to `~/.local/bin` (includes Vega CLI shims for svg/png/pdf):
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/nishide-dev/vega-paper/main/scripts/install.sh | bash
@@ -21,14 +21,20 @@ Open a new shell (or add `~/.local/bin` to your PATH), then verify:
 vega-paper doctor
 ```
 
-The installer downloads **GitHub Release** tarballs for your platform. After the first release is tagged (`v0.1.0`), `curl | bash` works out of the box.
+The installer downloads **GitHub Release** tarballs for your platform ([latest release](https://github.com/nishide-dev/vega-paper/releases/latest)).
 
-Until then, test from a clone or a locally built tarball:
+Pin a version:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/nishide-dev/vega-paper/main/scripts/install.sh | bash -s -- --version 0.1.2
+```
+
+Develop from a clone or a locally built tarball:
 
 ```bash
 bash scripts/install.sh --from-repo
-bash scripts/build-release-tarball.sh --version 0.1.0 --target darwin-arm64
-bash scripts/install.sh --from-tarball dist/release/vega-paper-0.1.0-darwin-arm64.tar.gz
+bash scripts/build-release-tarball.sh --version 0.1.2 --target darwin-arm64
+bash scripts/install.sh --from-tarball dist/release/vega-paper-0.1.2-darwin-arm64.tar.gz
 ```
 
 ## Development setup
@@ -94,7 +100,7 @@ bun run packages/cli/src/index.ts lint figures/f1.vl.json --lint-profile paper
 
 - **Charts:** `line`, `bar`, `scatter`, `area`, `heatmap`, `boxplot`
 - **Options:** `--x`, `--y`, `--color`, `--facet`, `--aggregate`, `--error-band`, type overrides, `--inline-data`
-- **Output:** writes `.vl.json`; optionally renders SVG with `--out` and `--theme`
+- **Output:** writes `.vl.json`; optionally renders with `--out` (`.svg`, `.png`, `.pdf`) and `--theme`
 
 See [`examples/`](examples/) for copy-paste commands.
 
@@ -169,4 +175,4 @@ docs/superpowers/  design specs and implementation plans
 
 ## License
 
-See repository defaults; version `0.1.0` (pre-release MVP).
+See repository defaults. Current release: [v0.1.2](https://github.com/nishide-dev/vega-paper/releases/tag/v0.1.2).
