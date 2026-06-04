@@ -1,6 +1,6 @@
-import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { randomBytes } from "node:crypto";
+import { mkdir, rm, writeFile } from "node:fs/promises";
+import { dirname, join, resolve } from "node:path";
 import { renderWithExternalVegaCli } from "../backends/external-vega-cli";
 import type { RenderFormat } from "./render-format";
 import { applyThemeToSpec, detectSpecType, loadJsonSpec } from "./spec";
@@ -29,21 +29,25 @@ export async function renderChart(request: RenderRequest): Promise<RenderResult>
 
   await mkdir(dirname(request.outputPath), { recursive: true });
 
-  const tempDirectory = await mkdtemp(join(tmpdir(), "vega-paper-"));
+  const specDirectory = dirname(resolve(request.inputPath));
   const tempSpecPath = join(
-    tempDirectory,
-    specType === "vega-lite" ? "spec.vl.json" : "spec.vg.json",
+    specDirectory,
+    `.vega-paper-render-${randomBytes(8).toString("hex")}.${specType === "vega-lite" ? "vl" : "vg"}.json`,
   );
 
   await writeFile(tempSpecPath, `${JSON.stringify(renderedSpec, null, 2)}\n`, "utf8");
 
-  await renderWithExternalVegaCli({
-    specType,
-    inputPath: tempSpecPath,
-    outputPath: request.outputPath,
-    format: request.format,
-    scale: request.scale,
-  });
+  try {
+    await renderWithExternalVegaCli({
+      specType,
+      inputPath: tempSpecPath,
+      outputPath: request.outputPath,
+      format: request.format,
+      scale: request.scale,
+    });
+  } finally {
+    await rm(tempSpecPath, { force: true });
+  }
 
   return {
     outputPath: request.outputPath,

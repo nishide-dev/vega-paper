@@ -32,6 +32,33 @@ describe("render integration", () => {
     expect(svg).toContain("<svg");
     expect(svg).toContain("</svg>");
   });
+
+  test("renders specs with relative data.url using the source spec directory", async () => {
+    const boxplotOutputPath = "examples/boxplot/output.svg";
+
+    if (!(await hasVegaLiteSvgBinary())) {
+      console.warn("Skipping render integration: no vl2svg binary is installed.");
+      return;
+    }
+
+    await rm(boxplotOutputPath, { force: true });
+    await mkdir(dirname(boxplotOutputPath), { recursive: true });
+
+    try {
+      await renderChart({
+        inputPath: "examples/boxplot/chart.vl.json",
+        outputPath: boxplotOutputPath,
+        format: "svg",
+        themeName: "paper-clean",
+      });
+
+      const svg = await readFile(boxplotOutputPath, "utf8");
+      expect(svg).not.toContain("0 values");
+      expect(svg).toContain("role-mark");
+    } finally {
+      await rm(boxplotOutputPath, { force: true });
+    }
+  });
 });
 
 async function hasVegaLiteSvgBinary(): Promise<boolean> {
