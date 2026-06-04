@@ -1,4 +1,8 @@
+import { categoryRangeFromPalette } from "./palettes/apply-palette";
+import { getPalette } from "./palettes/registry";
 import type { VegaPaperTheme } from "./registry";
+
+const palette = getPalette("ft-line-web");
 
 export const neuripsClean: VegaPaperTheme = {
   name: "neurips-clean",
@@ -7,6 +11,8 @@ export const neuripsClean: VegaPaperTheme = {
     "NeurIPS / ICML / ML conference theme with clear series colors and readable single-column figures.",
   target: "paper",
   mode: "light",
+  paletteId: palette.id,
+  paletteAttribution: palette.attribution,
   config: {
     background: "white",
     font: "Arial, Helvetica, sans-serif",
@@ -43,7 +49,7 @@ export const neuripsClean: VegaPaperTheme = {
       size: 58,
     },
     range: {
-      category: ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b"],
+      category: categoryRangeFromPalette("ft-line-web"),
     },
   },
 };

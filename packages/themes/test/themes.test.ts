@@ -45,7 +45,14 @@ describe("theme registry", () => {
     const freshTheme = getTheme("paper-clean") as any;
 
     expect(freshTheme.displayName).toBe("Paper Clean");
-    expect(freshTheme.config.range.category[0]).toBe("#2563eb");
+    expect(freshTheme.config.range.category[0]).toBe("#6929C4");
+  });
+
+  test("paper-clean references carbon-categorical palette", () => {
+    const theme = getTheme("paper-clean");
+
+    expect(theme.paletteId).toBe("carbon-categorical");
+    expect(theme.paletteAttribution?.name).toContain("Carbon");
   });
 
   test("getTheme returns themes that cannot corrupt registry state", () => {
