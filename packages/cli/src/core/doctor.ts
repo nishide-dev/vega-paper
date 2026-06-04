@@ -31,26 +31,29 @@ export function getDoctorExitCode(checks: DoctorCheck[]): 0 | 1 {
 export async function runDoctorChecks(
   environment: DoctorEnvironment = defaultDoctorEnvironment,
 ): Promise<DoctorCheck[]> {
-  const [bunVersion, nodeVersion, vegaPaperBin, vl2svg, vg2svg] = await Promise.all([
-    environment.getBunVersion(),
-    environment.getNodeVersion(),
-    environment.resolveExecutable("vega-paper"),
-    environment.resolveVegaCliBinary("vl2svg"),
-    environment.resolveVegaCliBinary("vg2svg"),
-  ]);
+  const [bunVersion, nodeVersion, vegaPaperBin, vl2svg, vl2png, vl2pdf, vg2svg, vg2png, vg2pdf] =
+    await Promise.all([
+      environment.getBunVersion(),
+      environment.getNodeVersion(),
+      environment.resolveExecutable("vega-paper"),
+      environment.resolveVegaCliBinary("vl2svg"),
+      environment.resolveVegaCliBinary("vl2png"),
+      environment.resolveVegaCliBinary("vl2pdf"),
+      environment.resolveVegaCliBinary("vg2svg"),
+      environment.resolveVegaCliBinary("vg2png"),
+      environment.resolveVegaCliBinary("vg2pdf"),
+    ]);
 
   return [
     requiredCheck("bun", bunVersion),
     requiredCheck("node", nodeVersion),
     requiredCheck("vega-paper bin", vegaPaperBin),
     requiredCheck("vl2svg", vl2svg),
+    requiredCheck("vl2png", vl2png),
+    requiredCheck("vl2pdf", vl2pdf),
     requiredCheck("vg2svg", vg2svg),
-    {
-      name: "pdf/png",
-      status: "warn",
-      message: "not checked in this MVP",
-      required: false,
-    },
+    requiredCheck("vg2png", vg2png),
+    requiredCheck("vg2pdf", vg2pdf),
   ];
 }
 

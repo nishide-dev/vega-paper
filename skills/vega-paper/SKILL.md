@@ -62,7 +62,9 @@ Before running `infer`, make these explicit (ask the user if unclear):
 | `--chart` | yes | See chart selection |
 | `--x`, `--y` | yes | Column/field names |
 | `--color` | sometimes | Required for `heatmap`; optional otherwise |
-| `--theme` | for SVG | built-in name (e.g. `paper-clean`) or path to theme JSON |
+| `--theme` | when rendering | built-in name (e.g. `paper-clean`) or path to theme JSON |
+| `--format` | when rendering | `svg` (default for papers), `png`, or `pdf` — match `--out` extension |
+| `--scale` | png/pdf | resolution factor (e.g. `2` for 2× PNG/PDF pixels) |
 | Output paths | yes | `--spec-out` and/or `--out` |
 
 Optional flags: `--facet`, `--aggregate`, `--error-band`, `--title`, `--width`, `--height`, `--inline-data`, `--x-type`, `--y-type`, `--color-type`.

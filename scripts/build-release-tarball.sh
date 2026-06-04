@@ -113,7 +113,11 @@ EOF
 }
 
 write_tool_shim "vl2svg"
+write_tool_shim "vl2png"
+write_tool_shim "vl2pdf"
 write_tool_shim "vg2svg"
+write_tool_shim "vg2png"
+write_tool_shim "vg2pdf"
 
 mkdir -p "$OUTDIR"
 ARCHIVE="${OUTDIR}/${ROOT_NAME}.tar.gz"

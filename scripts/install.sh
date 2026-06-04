@@ -126,7 +126,11 @@ EOF
 
   write_shim "vega-paper"
   write_shim "vl2svg"
+  write_shim "vl2png"
+  write_shim "vl2pdf"
   write_shim "vg2svg"
+  write_shim "vg2png"
+  write_shim "vg2pdf"
 }
 
 if [[ "$FROM_REPO" -eq 1 ]]; then
@@ -150,7 +154,11 @@ EOF
 
   write_repo_shim "vega-paper" "\"${VEGA_PAPER_HOME}/packages/cli/dist/index.js\""
   write_repo_shim "vl2svg" "\"${VEGA_PAPER_HOME}/node_modules/.bin/vl2svg\""
+  write_repo_shim "vl2png" "\"${VEGA_PAPER_HOME}/node_modules/.bin/vl2png\""
+  write_repo_shim "vl2pdf" "\"${VEGA_PAPER_HOME}/node_modules/.bin/vl2pdf\""
   write_repo_shim "vg2svg" "\"${VEGA_PAPER_HOME}/node_modules/.bin/vg2svg\""
+  write_repo_shim "vg2png" "\"${VEGA_PAPER_HOME}/node_modules/.bin/vg2png\""
+  write_repo_shim "vg2pdf" "\"${VEGA_PAPER_HOME}/node_modules/.bin/vg2pdf\""
 
 elif [[ -n "$FROM_TARBALL" ]]; then
   echo "Installing from tarball ${FROM_TARBALL}..."

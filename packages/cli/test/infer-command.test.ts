@@ -108,6 +108,7 @@ describe("infer command", () => {
         inputPath: specOutputPath,
         outputPath,
         format: "svg",
+        scale: 1,
         themeName: undefined,
       },
     ]);
@@ -153,6 +154,7 @@ describe("infer command", () => {
         inputPath: specOutputPath,
         outputPath,
         format: "svg",
+        scale: 1,
         themeName: undefined,
       },
     ]);
@@ -196,6 +198,7 @@ describe("infer command", () => {
         inputPath: join(workspace, "figures", "chart.vl.json"),
         outputPath,
         format: "svg",
+        scale: 1,
         themeName: "paper-clean",
       },
     ]);
@@ -289,6 +292,7 @@ describe("infer command", () => {
         inputPath: specOutputPath,
         outputPath,
         format: "svg",
+        scale: 1,
         themeName: undefined,
       },
     ]);
@@ -631,9 +635,13 @@ describe("infer command", () => {
     ).rejects.toThrow(new VegaPaperError("Missing required option --y <field>."));
   });
 
-  test("rejects non-svg --out paths", async () => {
-    await expect(
-      runInferCommand([
+  test("accepts png --out paths when rendering", async () => {
+    const workspace = await createWorkspace();
+    const outputPath = join(workspace, "figures", "chart.png");
+    const calls = createSpies();
+
+    await runInferCommand(
+      [
         "infer",
         "results.csv",
         "--chart",
@@ -643,13 +651,32 @@ describe("infer command", () => {
         "--y",
         "score",
         "--out",
-        "chart.png",
-      ]),
-    ).rejects.toThrow(
-      new VegaPaperError(
-        'Unsupported output path "chart.png". This MVP supports only .svg outputs.',
-      ),
+        outputPath,
+        "--scale",
+        "2",
+      ],
+      {
+        ...calls,
+        infer: async (request) => {
+          calls.inferCalls.push(request);
+          return createInferResult("../results.csv");
+        },
+        render: async (request) => {
+          calls.renderCalls.push(request);
+          return { outputPath: request.outputPath, warnings: [] };
+        },
+      },
     );
+
+    const specOutputPath = join(workspace, "figures", "chart.vl.json");
+
+    expect(calls.renderCalls[0]).toEqual({
+      inputPath: specOutputPath,
+      outputPath,
+      format: "png",
+      scale: 2,
+      themeName: undefined,
+    });
   });
 
   test("wraps spec write failures in VegaPaperError", async () => {

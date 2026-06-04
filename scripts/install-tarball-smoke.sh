@@ -53,4 +53,12 @@ vega-paper render "${ROOT_DIR}/examples/basic-line/chart.vl.json" \
   --out "${SMOKE_HOME}/output.svg"
 
 test -f "${SMOKE_HOME}/output.svg"
+
+echo "Rendering PNG from basic-line example..."
+vega-paper render "${ROOT_DIR}/examples/basic-line/chart.vl.json" \
+  --theme paper-clean \
+  --format png \
+  --out "${SMOKE_HOME}/output.png"
+
+test -f "${SMOKE_HOME}/output.png"
 echo "Tarball install smoke passed."
