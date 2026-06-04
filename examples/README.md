@@ -9,12 +9,16 @@ Small datasets and reference Vega-Lite specs for trying the CLI. Each folder has
 | [confusion-matrix/](confusion-matrix/) | `infer` heatmap; sum aggregation from trial rows |
 | [faceted-training/](faceted-training/) | `infer` with `--facet` small multiples |
 | [boxplot/](boxplot/) | `infer` boxplot from raw sample rows; optional `--color` grouping |
+| [theme-samples/](theme-samples/) | Same spec rendered with every built-in theme |
 
 ## Quick start
 
 ```bash
 # Render the hand-written line chart
 bun run render:example
+
+# Compare all built-in themes (writes SVGs under theme-samples/)
+bun run render:theme-samples
 
 # Generate and render a training curve from CSV
 bun run infer:training-curve
@@ -31,4 +35,4 @@ bun run infer:examples
 
 This overwrites committed `chart*.vl.json` files under `examples/`. See each folder README for individual commands.
 
-SVG outputs (`output.svg`) are not committed. Add them locally with the `render:*` scripts or the render commands in each README.
+SVG outputs (`output.svg`, `theme-samples/*.{svg,meta.json}`) are not committed. Add them locally with the `render:*` scripts or the render commands in each README.
