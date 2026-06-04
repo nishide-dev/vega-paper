@@ -4,8 +4,9 @@ import { tmpdir } from "node:os";
 import { join, sep } from "node:path";
 import { VegaPaperError } from "../core/errors";
 import {
+  resolveCliPackageRootFromMeta,
   resolveExecutableOnPath,
-  resolveInstallBinDirectory,
+  resolveInstallBinDirectoryAsync,
   resolveVegaPaperHome,
   shouldUseCliPackageInstallBin,
 } from "../core/install-root";
@@ -42,13 +43,15 @@ export async function resolveVegaCliBinary(binary: VegaCliBinaryName): Promise<s
   const candidates: string[] = [];
 
   if (resolveVegaPaperHome()) {
-    candidates.push(join(resolveInstallBinDirectory(), binary));
+    candidates.push(join(await resolveInstallBinDirectoryAsync(), binary));
   }
 
   candidates.push(join(workspace, "node_modules", ".bin", binary));
 
   if (await shouldUseCliPackageInstallBin()) {
-    candidates.push(join(resolveInstallBinDirectory(), binary));
+    candidates.push(
+      join(resolveCliPackageRootFromMeta(import.meta.url), "node_modules", ".bin", binary),
+    );
   }
 
   candidates.push(...(await getBunPackageStoreCandidates(binary, workspace)));

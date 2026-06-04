@@ -2,6 +2,15 @@ import { access, readFile } from "node:fs/promises";
 import { delimiter, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+export async function isReleaseInstallHome(home: string): Promise<boolean> {
+  try {
+    await access(join(home, "lib", "node_modules"));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function resolveCliPackageRootFromMeta(importMetaUrl: string): string {
   const moduleDirectory = dirname(fileURLToPath(importMetaUrl));
 
@@ -17,6 +26,10 @@ export function resolveCliPackageRootFromMeta(importMetaUrl: string): string {
     return join(moduleDirectory, "..");
   }
 
+  if (moduleDirectory.endsWith("bin")) {
+    return join(moduleDirectory, "..");
+  }
+
   return join(moduleDirectory, "..", "..");
 }
 
@@ -29,6 +42,22 @@ export function resolveInstallBinDirectory(importMetaUrl: string = import.meta.u
   const home = resolveVegaPaperHome();
 
   if (home) {
+    return join(home, "node_modules", ".bin");
+  }
+
+  return join(resolveCliPackageRootFromMeta(importMetaUrl), "node_modules", ".bin");
+}
+
+export async function resolveInstallBinDirectoryAsync(
+  importMetaUrl: string = import.meta.url,
+): Promise<string> {
+  const home = resolveVegaPaperHome();
+
+  if (home) {
+    if (await isReleaseInstallHome(home)) {
+      return join(home, "bin");
+    }
+
     return join(home, "node_modules", ".bin");
   }
 
@@ -60,10 +89,16 @@ export async function shouldUseCliPackageInstallBin(
   return true;
 }
 
-export function resolveCliNodeModulesDirectory(importMetaUrl: string = import.meta.url): string {
+export async function resolveCliNodeModulesDirectory(
+  importMetaUrl: string = import.meta.url,
+): Promise<string> {
   const home = resolveVegaPaperHome();
 
   if (home) {
+    if (await isReleaseInstallHome(home)) {
+      return join(home, "lib", "node_modules");
+    }
+
     return join(home, "node_modules");
   }
 

@@ -8,6 +8,7 @@
   "scripts": {
     "build": "bun scripts/run-if-sources.ts build -- bun run --filter '*' build",
     "install:smoke": "bash scripts/install-local-smoke.sh",
+    "install:tarball-smoke": "bash scripts/install-tarball-smoke.sh",
     "test": "bun test --pass-with-no-tests",
     "typecheck": "bun scripts/run-if-sources.ts typecheck -- bun run --filter '*' typecheck",
     "check": "biome check .",
