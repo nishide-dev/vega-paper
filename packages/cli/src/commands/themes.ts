@@ -1,7 +1,7 @@
-import { getTheme, listThemes } from "@vega-paper/themes";
+import { listThemes } from "@vega-paper/themes";
 import type { Command } from "commander";
-import { VegaPaperError } from "../core/errors";
 import { formatTable, toPrettyJson } from "../core/format";
+import { getCliTheme } from "../core/theme";
 
 type JsonOption = {
   json?: boolean;
@@ -44,11 +44,11 @@ export function registerThemesCommand(
 
   themes
     .command("show")
-    .argument("<name>", "theme name")
+    .argument("<name>", "built-in theme name or path to theme JSON")
     .description("Show a theme")
     .option("--json", "print JSON")
-    .action((name: string, options: JsonOption) => {
-      const theme = getCliTheme(name);
+    .action(async (name: string, options: JsonOption) => {
+      const theme = await getCliTheme(name);
 
       if (options.json) {
         writeOutput(toPrettyJson(theme));
@@ -68,16 +68,4 @@ export function registerThemesCommand(
         ].join("\n"),
       );
     });
-}
-
-function getCliTheme(name: string): ReturnType<typeof getTheme> {
-  try {
-    return getTheme(name);
-  } catch (error) {
-    if (error instanceof Error && error.message === `Unknown theme "${name}"`) {
-      throw new VegaPaperError(error.message);
-    }
-
-    throw error;
-  }
 }

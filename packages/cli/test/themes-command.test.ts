@@ -1,4 +1,6 @@
 import { describe, expect, test } from "bun:test";
+import { mkdir, rm } from "node:fs/promises";
+import { join } from "node:path";
 import { Command } from "commander";
 import { registerThemesCommand } from "../src/commands/themes";
 import { VegaPaperError } from "../src/core/errors";
@@ -46,6 +48,26 @@ describe("themes command", () => {
     await expect(runThemesCommand(["themes", "show", "missing-theme"])).rejects.toBeInstanceOf(
       VegaPaperError,
     );
+  });
+
+  test("shows a custom theme file", async () => {
+    const themePath = join(import.meta.dir, ".tmp-themes-command", "custom.json");
+    await mkdir(join(import.meta.dir, ".tmp-themes-command"), { recursive: true });
+    await Bun.write(
+      themePath,
+      JSON.stringify({
+        name: "custom-show",
+        config: { background: "white" },
+      }),
+    );
+
+    const output = await runThemesCommand(["themes", "show", themePath, "--json"]);
+    const theme = JSON.parse(output.stdout) as { name: string; config: { background: string } };
+
+    expect(theme.name).toBe("custom-show");
+    expect(theme.config.background).toBe("white");
+
+    await rm(join(import.meta.dir, ".tmp-themes-command"), { recursive: true, force: true });
   });
 });
 

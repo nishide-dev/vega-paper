@@ -83,7 +83,10 @@ export function registerInferCommand(
     .option("--title <text>", "chart title")
     .option("--width <number>", "chart width")
     .option("--height <number>", "chart height")
-    .option("--theme <name>", "theme name, used only when rendering")
+    .option(
+      "--theme <name|path>",
+      "built-in theme name or path to theme JSON, used only when rendering",
+    )
     .option("--out <path>", "SVG output path")
     .option("--spec-out <path>", "Vega-Lite spec output path")
     .option("--x-type <type>", "override inferred type for x encoding")

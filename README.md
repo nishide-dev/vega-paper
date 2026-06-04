@@ -69,7 +69,7 @@ More examples live under [`examples/`](examples/README.md).
 | `infer` | Build a Vega-Lite spec from CSV/JSON + chart options |
 | `render` | Render a spec to SVG with an optional theme |
 | `lint` | Check a spec against paper-oriented lint profiles |
-| `themes` | List or inspect built-in themes |
+| `themes` | List built-in themes or `show` a built-in / custom JSON file |
 | `doctor` | Verify render toolchain dependencies |
 
 Example:
@@ -97,6 +97,19 @@ bun run packages/cli/src/index.ts lint figures/f1.vl.json --lint-profile paper
 - **Output:** writes `.vl.json`; optionally renders SVG with `--out` and `--theme`
 
 See [`examples/`](examples/) for copy-paste commands.
+
+### Custom themes
+
+Pass a path to a theme JSON file instead of a built-in name:
+
+```bash
+bun run packages/cli/src/index.ts render chart.vl.json \
+  --theme path/to/theme.json \
+  --format svg \
+  --out figure.svg
+```
+
+Format and example: [`examples/custom-theme/`](examples/custom-theme/) and [`docs/superpowers/specs/2026-06-04-vega-paper-custom-themes-design.md`](docs/superpowers/specs/2026-06-04-vega-paper-custom-themes-design.md).
 
 ## AI Skill
 

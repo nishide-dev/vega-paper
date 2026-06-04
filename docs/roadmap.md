@@ -1,6 +1,6 @@
 # VegaPaper Roadmap
 
-**Last updated:** 2026-06-03
+**Last updated:** 2026-06-04
 
 This document is the **living roadmap** for VegaPaper. It supersedes §13 in [`initial-design.md`](./initial-design.md) for phase ordering and current status.
 
@@ -16,7 +16,7 @@ This document is the **living roadmap** for VegaPaper. It supersedes §13 in [`i
 | 2 | AI Skill | Done |
 | 3 | Theme expansion | Done |
 | 4a | CLI distribution & install | **Done** (tag `v0.1.0` for public curl install) |
-| 4b | Custom themes | Planned |
+| 4b | Custom themes | **Done** |
 | 5 | MCP wrapper | Planned |
 | 6 | Research workflow integration | Planned |
 
@@ -104,17 +104,19 @@ bun run packages/cli/src/index.ts --help
 
 ---
 
-## Phase 4b: Custom themes — Planned
+## Phase 4b: Custom themes — Done
 
 **Goal:** Load user theme config (JSON) in addition to built-in TypeScript presets.
 
-Likely direction (spec TBD):
+**Spec:** [`superpowers/specs/2026-06-04-vega-paper-custom-themes-design.md`](./superpowers/specs/2026-06-04-vega-paper-custom-themes-design.md)  
+**Plan:** [`superpowers/plans/2026-06-04-vega-paper-custom-themes.md`](./superpowers/plans/2026-06-04-vega-paper-custom-themes.md)
 
-- `--theme path/to/theme.json` or named preset + optional override file
-- Merge user `config` onto spec (same semantics as built-in themes)
-- Lint integration unchanged unless print/grayscale rules need theme-aware checks
+Delivered:
 
-**Depends on:** Phase 4a (easier to test and document on an installable CLI).
+- `resolveThemeRef` / `loadThemeFromFile` in `@vega-paper/themes`
+- `--theme <name|path>` on `render` and `infer`
+- `themes show` for custom JSON files
+- `examples/custom-theme/` + README / Skill docs
 
 ---
 

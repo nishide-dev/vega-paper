@@ -1,4 +1,4 @@
-import type { VegaPaperTheme } from "./index";
+import type { VegaPaperTheme } from "./registry";
 
 export const posterDark: VegaPaperTheme = {
   name: "poster-dark",
