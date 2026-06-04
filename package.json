@@ -15,6 +15,7 @@
     "check:fix": "biome check --write .",
     "render:example": "bun run packages/cli/src/index.ts render examples/basic-line/chart.vl.json --theme paper-clean --format svg --out examples/basic-line/output.svg",
     "render:theme-samples": "bun scripts/render-theme-samples.ts",
+    "render:gallery": "bun scripts/render-gallery.ts",
     "infer:examples": "bun run infer:training-curve && bun run infer:training-curve-aggregate && bun run infer:training-curve-error-band && bun run infer:confusion-matrix && bun run infer:confusion-matrix-trials && bun run infer:faceted-training && bun run infer:boxplot && bun run infer:boxplot-by-split",
     "infer:training-curve": "bun run packages/cli/src/index.ts infer examples/training-curve/data.csv --chart line --x epoch --y f1 --color model --title \"Training F1\" --spec-out examples/training-curve/chart.vl.json",
     "infer:training-curve-aggregate": "bun run packages/cli/src/index.ts infer examples/training-curve/runs.csv --chart line --x epoch --y f1 --color model --aggregate mean --title \"Training F1 (mean over runs)\" --spec-out examples/training-curve/chart-aggregate.vl.json",

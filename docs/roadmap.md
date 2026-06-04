@@ -1,6 +1,6 @@
 # VegaPaper Roadmap
 
-**Last updated:** 2026-06-04 (Phase 4c spec)
+**Last updated:** 2026-06-04 (Phase 4d done)
 
 This document is the **living roadmap** for VegaPaper. It supersedes §13 in [`initial-design.md`](./initial-design.md) for phase ordering and current status.
 
@@ -19,6 +19,7 @@ This document is the **living roadmap** for VegaPaper. It supersedes §13 in [`i
 | 4b | Custom themes | **Done** |
 | 4.5 | Output formats (PNG / PDF) | **Done** |
 | 4c | Curated design palettes | **Done** |
+| 4d | README figure gallery | **Done** |
 | 5 | MCP wrapper | **Deferred** (after 4c; thin CLI wrapper, low impact on figure aesthetics) |
 | 6 | Research workflow integration | Planned |
 
@@ -154,6 +155,20 @@ Delivered:
 Released: tag **`v0.1.3`**.
 
 **Why before MCP:** MCP does not improve chart aesthetics; palette curation addresses the primary design concern.
+
+---
+
+## Phase 4d: README figure gallery — Done
+
+**Goal:** Commit PNG previews under `docs/assets/gallery/` and embed theme + example grids in root and `examples/README.md`.
+
+**Spec:** [`superpowers/specs/2026-06-04-vega-paper-readme-gallery-design.md`](./superpowers/specs/2026-06-04-vega-paper-readme-gallery-design.md)
+
+Delivered:
+
+- `scripts/render-gallery.ts` + `bun run render:gallery` (14 PNGs at `--scale 2`)
+- Theme grid in root `README.md`; example gallery in `examples/README.md`
+- `scripts/render-gallery.test.ts` asserts committed assets exist
 
 ---
 

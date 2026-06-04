@@ -8,7 +8,7 @@ Inspect a theme’s palette at runtime:
 vega-paper themes show paper-clean
 ```
 
-Visual comparison: [`examples/theme-samples/`](../examples/theme-samples/) (regenerate with `bun run render:theme-samples`).
+Visual comparison: see the [theme grid in the root README](../README.md#figure-previews) or PNG files under [`docs/assets/gallery/themes/`](./assets/gallery/themes/).
 
 ## Palettes
 

@@ -68,6 +68,19 @@ bun run render:training-curve
 
 More examples live under [`examples/`](examples/README.md).
 
+## Figure previews
+
+Same [basic-line](examples/basic-line/chart.vl.json) spec with every built-in theme (`--format png --scale 2`). Palette sources: [docs/palettes.md](docs/palettes.md).
+
+| | | | |
+|:---:|:---:|:---:|:---:|
+| ![paper-clean](docs/assets/gallery/themes/paper-clean.png) | ![acl-clean](docs/assets/gallery/themes/acl-clean.png) | ![neurips-clean](docs/assets/gallery/themes/neurips-clean.png) | ![nature-soft](docs/assets/gallery/themes/nature-soft.png) |
+| `paper-clean` | `acl-clean` | `neurips-clean` | `nature-soft` |
+| ![shadcn-light](docs/assets/gallery/themes/shadcn-light.png) | ![shadcn-dark](docs/assets/gallery/themes/shadcn-dark.png) | ![monochrome-print](docs/assets/gallery/themes/monochrome-print.png) | ![poster-dark](docs/assets/gallery/themes/poster-dark.png) |
+| `shadcn-light` | `shadcn-dark` | `monochrome-print` | `poster-dark` |
+
+Regenerate: `bun run render:gallery`
+
 ## Commands
 
 | Command | Purpose |
@@ -159,6 +172,7 @@ The CLI prefix in `SKILL.md` remains canonical; scripts are thin entry points fo
 | `bun run build` | Build workspace packages |
 | `bun run install:smoke` | Test install.sh + render from shims |
 | `bun run infer:examples` | Regenerate committed example specs |
+| `bun run render:gallery` | Regenerate README gallery PNGs |
 
 Note: `bun run check` is **code** quality (Biome). `vega-paper lint` is **figure spec** quality (Vega-Lite).
 
