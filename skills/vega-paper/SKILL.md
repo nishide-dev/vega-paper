@@ -120,7 +120,7 @@ If `--strict` lint fails, the command exits before render and **no** `.meta.json
 
 ## Secondary workflow (render)
 
-Use when the user already has a Vega-Lite spec (e.g. `examples/basic-line/chart.vl.json`):
+Use when the user already has a Vega-Lite spec. Read [Vega-Lite patterns](references/vega-lite-patterns.md) for when to prefer `render`, spec requirements, repo examples, and hand-written lint.
 
 ```bash
 bun run packages/cli/src/index.ts render figures/f1.vl.json \
@@ -149,6 +149,7 @@ bun run packages/cli/src/index.ts doctor
 - [Chart selection](references/chart-selection.md) — chart types and infer modifiers
 - [Theme catalog](references/theme-catalog.md) — built-in themes and selection guidance
 - [Paper style guide](references/paper-style-guide.md) — lint profiles, figure sizes, and style rules
+- [Vega-Lite patterns](references/vega-lite-patterns.md) — hand-written specs and the render workflow
 
 ## Agent checklist
 
