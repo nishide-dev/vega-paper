@@ -90,7 +90,7 @@ export function registerInferCommand(
     .option("--y-type <type>", "override inferred type for y encoding")
     .option("--color-type <type>", "override color encoding type")
     .option("--inline-data", "embed parsed data in the generated spec as data.values")
-    .option("--lint-profile <name>", "lint profile: paper, web, or acl")
+    .option("--lint-profile <name>", "lint profile: paper, web, acl, or print")
     .option("--strict", "exit with code 1 when warnings are present when linting")
     .action(async (inputPath: string, options: InferCommandOptions) => {
       if (options.lintProfile !== undefined) {

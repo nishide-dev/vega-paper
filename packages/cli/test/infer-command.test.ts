@@ -468,7 +468,9 @@ describe("infer command", () => {
         },
       ),
     ).rejects.toThrow(
-      new VegaPaperError('Unknown lint profile "unknown". Expected one of: paper, web, acl.'),
+      new VegaPaperError(
+        'Unknown lint profile "unknown". Expected one of: paper, web, acl, print.',
+      ),
     );
 
     expect(calls.inferCalls).toEqual([]);

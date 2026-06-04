@@ -1,6 +1,6 @@
 import { VegaPaperError } from "./errors";
 
-export type LintProfileName = "paper" | "web" | "acl";
+export type LintProfileName = "paper" | "web" | "acl" | "print";
 
 export type LintProfile = {
   name: LintProfileName;
@@ -10,11 +10,12 @@ export type LintProfile = {
   maxInlineRows: number;
   maxColorCategories: number;
   minFontSize: number;
+  grayscaleSafe: boolean;
 };
 
 export const DEFAULT_LINT_PROFILE_NAME: LintProfileName = "paper";
 
-const LINT_PROFILE_ORDER: LintProfileName[] = ["paper", "web", "acl"];
+const LINT_PROFILE_ORDER: LintProfileName[] = ["paper", "web", "acl", "print"];
 
 export const LINT_PROFILES: Record<LintProfileName, LintProfile> = {
   paper: {
@@ -25,6 +26,7 @@ export const LINT_PROFILES: Record<LintProfileName, LintProfile> = {
     maxInlineRows: 500,
     maxColorCategories: 12,
     minFontSize: 8,
+    grayscaleSafe: false,
   },
   web: {
     name: "web",
@@ -34,6 +36,7 @@ export const LINT_PROFILES: Record<LintProfileName, LintProfile> = {
     maxInlineRows: 1000,
     maxColorCategories: 20,
     minFontSize: 10,
+    grayscaleSafe: false,
   },
   acl: {
     name: "acl",
@@ -43,6 +46,17 @@ export const LINT_PROFILES: Record<LintProfileName, LintProfile> = {
     maxInlineRows: 300,
     maxColorCategories: 8,
     minFontSize: 9,
+    grayscaleSafe: false,
+  },
+  print: {
+    name: "print",
+    titleMaxLength: 70,
+    widthRange: { min: 180, max: 480 },
+    heightRange: { min: 120, max: 360 },
+    maxInlineRows: 300,
+    maxColorCategories: 6,
+    minFontSize: 9,
+    grayscaleSafe: true,
   },
 };
 

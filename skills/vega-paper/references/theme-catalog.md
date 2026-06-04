@@ -28,7 +28,7 @@ MVP output is **SVG only**. Themes adjust Vega-Lite `config` (fonts, colors, def
 | Light web UI, blog, or dashboard (not print-first) | `shadcn-light` |
 | Dark web UI or demo on dark background | `shadcn-dark` |
 | Conference poster or slide on dark background | `poster-dark` |
-| Grayscale print, arXiv B&W, or color-unreliable output | `monochrome-print` |
+| Grayscale print, arXiv B&W, or color-unreliable output | `monochrome-print` + `--lint-profile print` |
 
 When unsure for a **paper submission**, start with **`paper-clean`**. Use **`nature-soft`** for softer journal-style color. Switch to **`acl-clean`** only when the figure must fit a very narrow column width. Use **`monochrome-print`** when color must not carry meaning. Reserve **`poster-dark`** / **`shadcn-dark`** for slides and screens, not print-first papers.
 

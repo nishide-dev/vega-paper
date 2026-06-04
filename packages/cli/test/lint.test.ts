@@ -605,6 +605,74 @@ describe("runLintRules", () => {
       ),
     ).toEqual([]);
   });
+
+  test("does not run grayscale rules for non-print profiles", () => {
+    const spec = cleanVegaLiteSpec({
+      config: {
+        range: {
+          category: ["#2563eb", "#dc2626"],
+        },
+      },
+    });
+
+    expect(runRules(spec, "vega-lite", "paper").map((issue) => issue.ruleId)).toEqual([]);
+  });
+
+  test("warns about non-grayscale explicit palette colors for print profile", () => {
+    const spec = cleanVegaLiteSpec({
+      config: {
+        range: {
+          category: ["#111111", "#2563eb"],
+        },
+      },
+    });
+
+    expect(runRules(spec, "vega-lite", "print")).toEqual([
+      expect.objectContaining({
+        ruleId: "grayscale-unsafe-color",
+        path: "$.config.range.category[1]",
+      }),
+    ]);
+  });
+
+  test("warns when multi-series lines differ only by color for print profile", () => {
+    const spec = cleanVegaLiteSpec({
+      data: {
+        values: [
+          { epoch: 1, accuracy: 0.62, model: "baseline" },
+          { epoch: 1, accuracy: 0.65, model: "improved" },
+        ],
+      },
+    });
+
+    expect(runRules(spec, "vega-lite", "print")).toEqual([
+      expect.objectContaining({
+        ruleId: "color-only-series",
+        path: "$.encoding.color",
+      }),
+    ]);
+  });
+
+  test("accepts multi-series lines with strokeDash encoding for print profile", () => {
+    const spec = cleanVegaLiteSpec({
+      data: {
+        values: [
+          { epoch: 1, accuracy: 0.62, model: "baseline", style: "solid" },
+          { epoch: 1, accuracy: 0.65, model: "improved", style: "dashed" },
+        ],
+      },
+      encoding: {
+        x: { field: "epoch", type: "quantitative", title: "Epoch" },
+        y: { field: "accuracy", type: "quantitative", title: "Accuracy" },
+        color: { field: "model", type: "nominal", title: "Model" },
+        strokeDash: { field: "style", type: "nominal" },
+      },
+    });
+
+    expect(runRules(spec, "vega-lite", "print").map((issue) => issue.ruleId)).not.toContain(
+      "color-only-series",
+    );
+  });
 });
 
 describe("lintSpec", () => {
@@ -710,7 +778,7 @@ describe("lintSpec", () => {
       } catch (error) {
         expect(error).toBeInstanceOf(Error);
         expect((error as Error).message).toBe(
-          'Unknown lint profile "unknown". Expected one of: paper, web, acl.',
+          'Unknown lint profile "unknown". Expected one of: paper, web, acl, print.',
         );
       }
     });
@@ -753,7 +821,7 @@ describe("lint command", () => {
     } catch (error) {
       expect(error).toBeInstanceOf(Error);
       expect((error as Error).message).toBe(
-        'Unknown lint profile "unknown". Expected one of: paper, web, acl.',
+        'Unknown lint profile "unknown". Expected one of: paper, web, acl, print.',
       );
     }
   });

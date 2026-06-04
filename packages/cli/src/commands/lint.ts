@@ -28,7 +28,7 @@ export function registerLintCommand(
     .argument("<spec>", "Vega or Vega-Lite JSON input path")
     .description("Check a Vega or Vega-Lite spec for paper figure issues")
     .option("--json", "print JSON")
-    .option("--profile <name>", "lint profile: paper, web, or acl")
+    .option("--profile <name>", "lint profile: paper, web, acl, or print")
     .option("--strict", "exit with code 1 when warnings are present")
     .action(async (inputPath: string, options: LintOptions) => {
       if (options.profile !== undefined) {

@@ -8,11 +8,12 @@ Thresholds match `packages/cli/src/core/lint-profiles.ts` and `lint-rules.ts`.
 
 Pass `--lint-profile <name>` on `infer` and `lint`. Default: **`paper`**.
 
-| Profile | Title max (chars) | Width range | Height range | Max inline rows | Max color categories | Min font size |
-|---------|-------------------|-------------|--------------|-----------------|----------------------|---------------|
-| `paper` | 90 | 180–720 | 120–540 | 500 | 12 | 8 |
-| `web` | 120 | 240–1200 | 160–800 | 1000 | 20 | 10 |
-| `acl` | 70 | 240–480 | 160–360 | 300 | 8 | 9 |
+| Profile | Title max (chars) | Width range | Height range | Max inline rows | Max color categories | Min font size | Grayscale checks |
+|---------|-------------------|-------------|--------------|-----------------|----------------------|---------------|------------------|
+| `paper` | 90 | 180–720 | 120–540 | 500 | 12 | 8 | no |
+| `web` | 120 | 240–1200 | 160–800 | 1000 | 20 | 10 | no |
+| `acl` | 70 | 240–480 | 160–360 | 300 | 8 | 9 | no |
+| `print` | 70 | 180–480 | 120–360 | 300 | 6 | 9 | **yes** |
 
 All style rules below emit **warnings** unless noted. Errors (`spec-unreadable`, `spec-unknown-type`) block lint before style checks run.
 
@@ -23,10 +24,11 @@ All style rules below emit **warnings** unless noted. Errors (`spec-unreadable`,
 | General academic paper (default) | `paper` |
 | ACL / EMNLP-style two-column, tight figure column | `acl` |
 | Slides, blog, or large in-app figure | `web` |
+| Grayscale / B&W print, arXiv, review PDF | `print` |
 
 Match profile to the **venue layout**, not the render theme. Themes (`--theme`) control colors and fonts at SVG export; lint profiles control size and readability checks on the spec.
 
-Pair **`acl`** lint with **`acl-clean`** theme when targeting a narrow NLP column. See [Theme catalog](theme-catalog.md).
+Pair **`acl`** lint with **`acl-clean`** theme when targeting a narrow NLP column. Pair **`print`** lint with **`monochrome-print`** theme for B&W output. See [Theme catalog](theme-catalog.md).
 
 ## Recommended figure sizes
 
@@ -40,6 +42,7 @@ Starting points inside each profile range:
 |---------|------------------------------|-------|
 | `paper` | 360 × 220 | Matches `paper-clean` default view; adjust for legend or facets |
 | `acl` | 320 × 200 | Matches `acl-clean` default view; stay within narrow width cap |
+| `print` | 360 × 220 | Same canvas as `paper-clean`; stricter color/category limits |
 | `web` | 480 × 300 | Larger canvas for screens; still set explicit dimensions |
 
 If `size-out-of-range` fires, shrink or grow within the profile table above rather than switching profiles without reason.
@@ -69,6 +72,8 @@ Prefer fixing **`infer` flags** (`--title`, `--width`, `--height`, `--aggregate`
 | `legend-too-many-categories` | Too many distinct color categories | Drop `--color`, group series, facet, or filter data |
 | `font-size-small` | Config font size below profile minimum | Raise `config.axis.*FontSize` / `legend.*FontSize`, or use a paper theme |
 | `bar-y-axis-zero-missing` | Bar chart with quantitative y lacks `scale.zero: true` | Set `encoding.y.scale.zero` to `true` unless zero is misleading |
+| `grayscale-unsafe-color` | Explicit palette color is not grayscale-safe (**`print` profile only**) | Use gray hex values, `monochrome-print`, or non-color encodings |
+| `color-only-series` | Multi-series line/bar differs only by `color` (**`print` profile only**) | Add `strokeDash` or `shape`, reduce series, or facet |
 
 Errors (always blocking):
 
