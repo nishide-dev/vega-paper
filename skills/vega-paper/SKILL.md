@@ -29,6 +29,17 @@ bun run packages/cli/src/index.ts <command> ...
 
 Do not assume a globally installed `vega-paper` binary in this repository.
 
+## Skill scripts
+
+Optional thin wrappers around `lint` and `render` (run from repo root). The CLI prefix above remains canonical.
+
+```bash
+bun run skills/vega-paper/scripts/validate-spec.ts figures/f1.vl.json --lint-profile paper
+bun run skills/vega-paper/scripts/render-chart.ts figures/f1.vl.json --out figures/f1.svg --theme paper-clean
+```
+
+Add `--strict` to `validate-spec.ts` when warnings must fail the command.
+
 ## Constrained inputs
 
 Before running `infer`, make these explicit (ask the user if unclear):
