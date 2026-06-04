@@ -74,16 +74,14 @@ bun run packages/cli/src/index.ts infer DATA.csv \
   --lint-profile paper
 ```
 
-Use `--lint-profile paper` unless the user asks for `web` or `acl`.
-
-Add `--strict` **only** when the user wants warnings to block the command (CI-like). Default: read warnings and fix without `--strict`.
+Use `--lint-profile paper` by default. Read [Paper style guide](references/paper-style-guide.md) for profile thresholds, lint rules, recommended sizes, and `--strict` usage.
 
 ### Step 4 — Revision loop
 
 On lint issues:
 
 1. Read CLI lint output (rule id, path, message).
-2. Prefer fixing **infer options** (title, width/height, field types) over editing JSON.
+2. Prefer fixing **infer options** (title, width/height, field types) over editing JSON — see the paper style guide for rule-by-rule fixes.
 3. Re-run the same `infer` command after changes.
 4. Optionally run standalone lint:
 
@@ -150,6 +148,7 @@ bun run packages/cli/src/index.ts doctor
 
 - [Chart selection](references/chart-selection.md) — chart types and infer modifiers
 - [Theme catalog](references/theme-catalog.md) — built-in themes and selection guidance
+- [Paper style guide](references/paper-style-guide.md) — lint profiles, figure sizes, and style rules
 
 ## Agent checklist
 
