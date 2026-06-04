@@ -1,4 +1,8 @@
+import { categoryRangeFromPalette } from "./palettes/apply-palette";
+import { getPalette } from "./palettes/registry";
 import type { VegaPaperTheme } from "./registry";
+
+const palette = getPalette("catppuccin-mocha");
 
 export const posterDark: VegaPaperTheme = {
   name: "poster-dark",
@@ -6,6 +10,8 @@ export const posterDark: VegaPaperTheme = {
   description: "Dark poster and slide theme with large labels and high-contrast lines.",
   target: "poster",
   mode: "dark",
+  paletteId: palette.id,
+  paletteAttribution: palette.attribution,
   config: {
     background: "#1a1a2e",
     font: "Arial, Helvetica, sans-serif",
@@ -40,7 +46,7 @@ export const posterDark: VegaPaperTheme = {
       size: 80,
     },
     range: {
-      category: ["#ff6b6b", "#4ecdc4", "#ffe66d", "#95e1d3", "#f38181", "#aa96da"],
+      category: categoryRangeFromPalette(palette.id),
     },
   },
 };

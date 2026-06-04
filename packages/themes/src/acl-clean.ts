@@ -1,4 +1,8 @@
+import { categoryRangeFromPalette } from "./palettes/apply-palette";
+import { getPalette } from "./palettes/registry";
 import type { VegaPaperTheme } from "./registry";
+
+const palette = getPalette("carbon-categorical");
 
 export const aclClean: VegaPaperTheme = {
   name: "acl-clean",
@@ -6,6 +10,8 @@ export const aclClean: VegaPaperTheme = {
   description: "Compact two-column NLP paper theme optimized for small figure widths.",
   target: "paper",
   mode: "light",
+  paletteId: palette.id,
+  paletteAttribution: palette.attribution,
   config: {
     background: "white",
     font: "Arial, Helvetica, sans-serif",
@@ -40,7 +46,7 @@ export const aclClean: VegaPaperTheme = {
       size: 48,
     },
     range: {
-      category: ["#1d4ed8", "#b91c1c", "#047857", "#7e22ce", "#c2410c", "#0e7490"],
+      category: categoryRangeFromPalette(palette.id),
     },
   },
 };

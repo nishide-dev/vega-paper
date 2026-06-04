@@ -1,4 +1,8 @@
+import { categoryRangeFromPalette } from "./palettes/apply-palette";
+import { getPalette } from "./palettes/registry";
 import type { VegaPaperTheme } from "./registry";
+
+const palette = getPalette("catppuccin-latte");
 
 export const shadcnLight: VegaPaperTheme = {
   name: "shadcn-light",
@@ -6,6 +10,8 @@ export const shadcnLight: VegaPaperTheme = {
   description: "Modern light chart theme inspired by quiet application dashboards.",
   target: "web",
   mode: "light",
+  paletteId: palette.id,
+  paletteAttribution: palette.attribution,
   config: {
     background: "white",
     font: "Inter, ui-sans-serif, system-ui, sans-serif",
@@ -38,7 +44,7 @@ export const shadcnLight: VegaPaperTheme = {
       size: 60,
     },
     range: {
-      category: ["#0f766e", "#2563eb", "#be123c", "#7c3aed", "#ca8a04", "#0891b2"],
+      category: categoryRangeFromPalette(palette.id),
     },
   },
 };

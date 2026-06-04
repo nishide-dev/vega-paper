@@ -1,4 +1,8 @@
+import { categoryRangeFromPalette } from "./palettes/apply-palette";
+import { getPalette } from "./palettes/registry";
 import type { VegaPaperTheme } from "./registry";
+
+const palette = getPalette("ft-line-web");
 
 export const natureSoft: VegaPaperTheme = {
   name: "nature-soft",
@@ -6,6 +10,8 @@ export const natureSoft: VegaPaperTheme = {
   description: "Soft biomedical journal style with minimal axes and muted distinguishable colors.",
   target: "paper",
   mode: "light",
+  paletteId: palette.id,
+  paletteAttribution: palette.attribution,
   config: {
     background: "white",
     font: "Helvetica, Arial, sans-serif",
@@ -38,7 +44,7 @@ export const natureSoft: VegaPaperTheme = {
       size: 50,
     },
     range: {
-      category: ["#4a90a4", "#7b6fa6", "#c97b63", "#6b8e6b", "#b5875a", "#8c8c8c"],
+      category: categoryRangeFromPalette(palette.id),
     },
   },
 };

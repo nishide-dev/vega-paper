@@ -1,4 +1,8 @@
+import { categoryRangeFromPalette } from "./palettes/apply-palette";
+import { getPalette } from "./palettes/registry";
 import type { VegaPaperTheme } from "./registry";
+
+const palette = getPalette("catppuccin-mocha");
 
 export const shadcnDark: VegaPaperTheme = {
   name: "shadcn-dark",
@@ -6,6 +10,8 @@ export const shadcnDark: VegaPaperTheme = {
   description: "Modern dark chart theme for dashboards, demos, and dark UI surfaces.",
   target: "web",
   mode: "dark",
+  paletteId: palette.id,
+  paletteAttribution: palette.attribution,
   config: {
     background: "#0f172a",
     font: "Inter, ui-sans-serif, system-ui, sans-serif",
@@ -38,7 +44,7 @@ export const shadcnDark: VegaPaperTheme = {
       size: 60,
     },
     range: {
-      category: ["#2dd4bf", "#60a5fa", "#fb7185", "#a78bfa", "#fbbf24", "#22d3ee"],
+      category: categoryRangeFromPalette(palette.id),
     },
   },
 };

@@ -2,6 +2,7 @@ import { aclClean } from "./acl-clean";
 import { monochromePrint } from "./monochrome-print";
 import { natureSoft } from "./nature-soft";
 import { neuripsClean } from "./neurips-clean";
+import type { PaletteAttribution } from "./palettes/types";
 import { paperClean } from "./paper-clean";
 import { posterDark } from "./poster-dark";
 import { shadcnDark } from "./shadcn-dark";
@@ -16,6 +17,8 @@ export interface VegaPaperTheme {
   description: string;
   target: VegaPaperThemeTarget;
   mode: VegaPaperThemeMode;
+  paletteId?: string;
+  paletteAttribution?: PaletteAttribution;
   config: Record<string, unknown>;
 }
 

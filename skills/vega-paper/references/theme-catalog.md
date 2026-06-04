@@ -14,18 +14,18 @@ Choose `--theme` when rendering SVG (`infer --out` or `render`). This guide cove
 
 ## Built-in themes
 
-Metadata matches `packages/themes`. Pass the **`name`** value to `--theme`.
+Metadata matches `packages/themes`. Pass the **`name`** value to `--theme`. Series colors come from [curated palettes](../../../docs/palettes.md); run `themes show <name>` for `paletteId` and source URL.
 
-| name | displayName | description | target | mode |
-|------|-------------|-------------|--------|------|
-| `paper-clean` | Paper Clean | General publication-ready theme with restrained grids and readable labels. | paper | light |
-| `acl-clean` | ACL Clean | Compact two-column NLP paper theme optimized for small figure widths. | paper | light |
-| `neurips-clean` | NeurIPS Clean | NeurIPS / ICML / ML conference theme with clear series colors and readable single-column figures. | paper | light |
-| `shadcn-light` | shadcn Light | Modern light chart theme inspired by quiet application dashboards. | web | light |
-| `shadcn-dark` | shadcn Dark | Modern dark chart theme for dashboards, demos, and dark UI surfaces. | web | dark |
-| `nature-soft` | Nature Soft | Soft biomedical journal style with minimal axes and muted distinguishable colors. | paper | light |
-| `monochrome-print` | Monochrome Print | Grayscale-safe print theme for review PDFs and black-and-white output. | paper | print |
-| `poster-dark` | Poster Dark | Dark poster and slide theme with large labels and high-contrast lines. | poster | dark |
+| name | displayName | palette | target | mode |
+|------|-------------|---------|--------|------|
+| `paper-clean` | Paper Clean | `carbon-categorical` | paper | light |
+| `acl-clean` | ACL Clean | `carbon-categorical` | paper | light |
+| `neurips-clean` | NeurIPS Clean | `ft-line-web` | paper | light |
+| `shadcn-light` | shadcn Light | `catppuccin-latte` | web | light |
+| `shadcn-dark` | shadcn Dark | `catppuccin-mocha` | web | dark |
+| `nature-soft` | Nature Soft | `ft-line-web` | paper | light |
+| `monochrome-print` | Monochrome Print | _(grayscale)_ | paper | print |
+| `poster-dark` | Poster Dark | `catppuccin-mocha` | poster | dark |
 
 MVP output is **SVG only**. Themes adjust Vega-Lite `config` (fonts, colors, default view size); they do not change data or encodings.
 

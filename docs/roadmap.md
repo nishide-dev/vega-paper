@@ -1,6 +1,6 @@
 # VegaPaper Roadmap
 
-**Last updated:** 2026-06-04 (Phase 4.5 spec)
+**Last updated:** 2026-06-04 (Phase 4c spec)
 
 This document is the **living roadmap** for VegaPaper. It supersedes §13 in [`initial-design.md`](./initial-design.md) for phase ordering and current status.
 
@@ -18,7 +18,8 @@ This document is the **living roadmap** for VegaPaper. It supersedes §13 in [`i
 | 4a | CLI distribution & install | **Done** (tag `v0.1.0` for public curl install) |
 | 4b | Custom themes | **Done** |
 | 4.5 | Output formats (PNG / PDF) | **Done** |
-| 5 | MCP wrapper | Planned |
+| 4c | Curated design palettes | **Done** |
+| 5 | MCP wrapper | **Deferred** (after 4c; thin CLI wrapper, low impact on figure aesthetics) |
 | 6 | Research workflow integration | Planned |
 
 ---
@@ -136,9 +137,29 @@ Delivered:
 
 ---
 
-## Phase 5: MCP wrapper — Planned
+## Phase 4c: Curated design palettes — Done
 
-Thin MCP server over the stable CLI (stdio first; Cursor / Claude Desktop).
+**Goal:** Replace ad hoc built-in series colors with **attributed, professionally designed palettes** (product/media + popular curated design systems).
+
+**Spec:** [`superpowers/specs/2026-06-04-vega-paper-curated-palettes-design.md`](./superpowers/specs/2026-06-04-vega-paper-curated-palettes-design.md)  
+**Plan:** [`superpowers/plans/2026-06-04-vega-paper-curated-palettes.md`](./superpowers/plans/2026-06-04-vega-paper-curated-palettes.md)
+
+Delivered:
+
+- Palette registry: Carbon categorical, FT lineWeb, Catppuccin Latte/Mocha
+- Built-in themes wired to `paletteId` + attribution
+- `themes show` surfaces palette source
+- [`docs/palettes.md`](./palettes.md) (regenerate `examples/theme-samples/` locally via `bun run render:theme-samples`; SVGs are gitignored)
+
+Target release: **v0.1.3** (tag pending).
+
+**Why before MCP:** MCP does not improve chart aesthetics; palette curation addresses the primary design concern.
+
+---
+
+## Phase 5: MCP wrapper — Deferred
+
+Thin MCP server over the stable CLI (stdio first; Cursor / Claude Desktop). **Implement after Phase 4c** unless an external MCP-only client becomes the blocker.
 
 Initial tools (from `initial-design.md` §9.2, narrowed for first slice):
 

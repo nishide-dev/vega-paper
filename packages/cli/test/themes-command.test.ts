@@ -44,6 +44,14 @@ describe("themes command", () => {
     expect(theme.config).toBeDefined();
   });
 
+  test("shows palette attribution for built-in themes", async () => {
+    const output = await runThemesCommand(["themes", "show", "paper-clean"]);
+
+    expect(output.stdout).toContain("paletteId: carbon-categorical");
+    expect(output.stdout).toContain("paletteSource:");
+    expect(output.stdout).toContain("IBM Carbon");
+  });
+
   test("throws VegaPaperError for unknown themes", async () => {
     await expect(runThemesCommand(["themes", "show", "missing-theme"])).rejects.toBeInstanceOf(
       VegaPaperError,
