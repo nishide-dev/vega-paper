@@ -1,5 +1,7 @@
 # Theme Samples
 
+Committed theme PNGs for README live under [`docs/assets/gallery/themes/`](../../docs/assets/gallery/themes/). This folder is for **local SVG** comparison via `bun run render:theme-samples` (gitignored).
+
 Render the same hand-written spec with **every built-in theme** to compare styling. Uses [basic-line/chart.vl.json](../basic-line/chart.vl.json) (line + color encoding).
 
 SVG outputs in this folder are **not committed** (nor sibling `*.meta.json` sidecars). Generate them locally with the commands below or `bun run render:theme-samples` from the repo root.

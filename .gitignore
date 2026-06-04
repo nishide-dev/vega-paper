@@ -4,6 +4,7 @@ dist/
 examples/**/output.svg
 examples/theme-samples/*.svg
 examples/theme-samples/*.meta.json
+docs/assets/gallery/**/*.meta.json
 out.vl.json
 dist/release/
 packages/cli/out.vl.json
