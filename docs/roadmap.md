@@ -151,7 +151,7 @@ Delivered:
 - `themes show` surfaces palette source
 - [`docs/palettes.md`](./palettes.md) (regenerate `examples/theme-samples/` locally via `bun run render:theme-samples`; SVGs are gitignored)
 
-Target release: **v0.1.3** (tag pending).
+Released: tag **`v0.1.3`**.
 
 **Why before MCP:** MCP does not improve chart aesthetics; palette curation addresses the primary design concern.
 

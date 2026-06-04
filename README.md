@@ -26,15 +26,15 @@ The installer downloads **GitHub Release** tarballs for your platform ([latest r
 Pin a version:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/nishide-dev/vega-paper/main/scripts/install.sh | bash -s -- --version 0.1.2
+curl -fsSL https://raw.githubusercontent.com/nishide-dev/vega-paper/main/scripts/install.sh | bash -s -- --version 0.1.3
 ```
 
 Develop from a clone or a locally built tarball:
 
 ```bash
 bash scripts/install.sh --from-repo
-bash scripts/build-release-tarball.sh --version 0.1.2 --target darwin-arm64
-bash scripts/install.sh --from-tarball dist/release/vega-paper-0.1.2-darwin-arm64.tar.gz
+bash scripts/build-release-tarball.sh --version 0.1.3 --target darwin-arm64
+bash scripts/install.sh --from-tarball dist/release/vega-paper-0.1.3-darwin-arm64.tar.gz
 ```
 
 ## Development setup
@@ -175,4 +175,4 @@ docs/superpowers/  design specs and implementation plans
 
 ## License
 
-See repository defaults. Current release: [v0.1.2](https://github.com/nishide-dev/vega-paper/releases/tag/v0.1.2).
+See repository defaults. Current release: [v0.1.3](https://github.com/nishide-dev/vega-paper/releases/tag/v0.1.3).
