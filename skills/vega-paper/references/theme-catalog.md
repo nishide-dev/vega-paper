@@ -26,7 +26,7 @@ MVP output is **SVG only**. Themes adjust Vega-Lite `config` (fonts, colors, def
 
 When unsure for a **paper submission**, start with **`paper-clean`**. Switch to **`acl-clean`** only when the figure must fit a very narrow column width. Use **`monochrome-print`** when color must not carry meaning.
 
-`--theme` applies at **render** time (including `infer` when `--out` is set). Lint profiles (`--lint-profile`) are separate; see the future paper-style guide for size and lint rules.
+`--theme` applies at **render** time (including `infer` when `--out` is set). Lint profiles (`--lint-profile`) are separate; see [Paper style guide](paper-style-guide.md) for size and lint rules.
 
 ## Inspecting themes
 
