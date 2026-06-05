@@ -93,4 +93,18 @@ describe("examples", () => {
       color: { field: "split", type: "nominal" },
     });
   });
+
+  test("embedding-scatter chart is a point plot colored by label", async () => {
+    const spec = await readExampleSpec("examples/embedding-scatter/chart.vl.json");
+
+    expect(spec.data).toEqual({ url: "data.csv" });
+    expect(spec.mark).toBe("point");
+    expect(spec.encoding).toMatchObject({
+      x: { field: "x", type: "quantitative" },
+      y: { field: "y", type: "quantitative" },
+      color: { field: "label", type: "nominal" },
+    });
+    expect(spec.width).toBe(360);
+    expect(spec.height).toBe(360);
+  });
 });

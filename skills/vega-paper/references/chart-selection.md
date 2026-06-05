@@ -15,7 +15,7 @@ Choose `--chart` and encoding fields **before** running `infer`. This guide cove
 
 Supported values for `--chart`: `line`, `bar`, `scatter`, `area`, `heatmap`, `boxplot`.
 
-There is no dedicated `examples/` folder for `bar`, `scatter`, or `area` yet; use the same encoding rules above when the goal matches.
+There is no dedicated `examples/` folder for `bar` or `area` yet; `scatter` is covered by [embedding-scatter/](../../../examples/embedding-scatter/).
 
 ## Decision guide
 
@@ -77,6 +77,7 @@ Copy-paste commands live in each folder README.
 | [confusion-matrix/](../../../examples/confusion-matrix/) | `heatmap` | `--aggregate sum` from trial rows |
 | [faceted-training/](../../../examples/faceted-training/) | `line` | `--facet`, `--color` |
 | [boxplot/](../../../examples/boxplot/) | `boxplot` | optional `--color` grouping |
+| [embedding-scatter/](../../../examples/embedding-scatter/) | `scatter` | `--color` for class/cluster labels |
 | [basic-line/](../../../examples/basic-line/) | (hand-written spec) | `render` / `lint` only — not `infer` |
 
 Index: [examples/README.md](../../../examples/README.md).

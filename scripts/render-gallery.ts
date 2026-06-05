@@ -41,6 +41,11 @@ const exampleJobs: GalleryJob[] = [
     out: `${GALLERY}/examples/boxplot.png`,
   },
   {
+    spec: "examples/embedding-scatter/chart.vl.json",
+    theme: "paper-clean",
+    out: `${GALLERY}/examples/embedding-scatter.png`,
+  },
+  {
     spec: "examples/custom-theme/chart.vl.json",
     theme: "examples/custom-theme/theme.json",
     out: `${GALLERY}/examples/custom-theme.png`,
