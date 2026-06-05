@@ -10,6 +10,7 @@ const EXAMPLE_PREVIEWS = [
   "confusion-matrix",
   "faceted-training",
   "boxplot",
+  "embedding-scatter",
   "custom-theme",
 ];
 

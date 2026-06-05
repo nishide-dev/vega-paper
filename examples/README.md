@@ -9,6 +9,7 @@ Small datasets and reference Vega-Lite specs for trying the CLI. Each folder has
 | [confusion-matrix/](confusion-matrix/) | `infer` heatmap; sum aggregation from trial rows |
 | [faceted-training/](faceted-training/) | `infer` with `--facet` small multiples |
 | [boxplot/](boxplot/) | `infer` boxplot from raw sample rows; optional `--color` grouping |
+| [embedding-scatter/](embedding-scatter/) | `infer` scatter; 2D embedding with `--color` |
 | [theme-samples/](theme-samples/) | Same spec rendered with every built-in theme |
 
 ## Gallery
@@ -22,6 +23,7 @@ Committed PNG previews (`paper-clean` unless noted). Theme comparison: [root REA
 | [confusion-matrix/](confusion-matrix/) | ![confusion-matrix](../docs/assets/gallery/examples/confusion-matrix.png) |
 | [faceted-training/](faceted-training/) | ![faceted-training](../docs/assets/gallery/examples/faceted-training.png) |
 | [boxplot/](boxplot/) | ![boxplot](../docs/assets/gallery/examples/boxplot.png) |
+| [embedding-scatter/](embedding-scatter/) | ![embedding-scatter](../docs/assets/gallery/examples/embedding-scatter.png) |
 | [custom-theme/](custom-theme/) | ![custom-theme](../docs/assets/gallery/examples/custom-theme.png) |
 
 Regenerate: `bun run render:gallery`
