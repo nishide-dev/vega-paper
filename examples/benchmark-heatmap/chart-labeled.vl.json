@@ -1,0 +1,50 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "data": {
+    "url": "data.csv"
+  },
+  "width": 420,
+  "height": 240,
+  "title": "Benchmark results",
+  "encoding": {
+    "x": {
+      "field": "task",
+      "type": "ordinal"
+    },
+    "y": {
+      "field": "model",
+      "type": "ordinal"
+    }
+  },
+  "layer": [
+    {
+      "mark": "rect",
+      "encoding": {
+        "color": {
+          "field": "score",
+          "type": "quantitative"
+        }
+      }
+    },
+    {
+      "mark": {
+        "type": "text",
+        "fontSize": 10
+      },
+      "encoding": {
+        "text": {
+          "field": "score",
+          "type": "quantitative",
+          "format": ".1f"
+        },
+        "color": {
+          "condition": {
+            "test": "datum.score > 70",
+            "value": "white"
+          },
+          "value": "black"
+        }
+      }
+    }
+  ]
+}
