@@ -1,4 +1,4 @@
-import type { LintIssue } from "./lint";
+import type { LintDomain, LintIssue } from "./lint";
 import type { LintProfile } from "./lint-profiles";
 import type { JsonObject, SpecType } from "./spec";
 
@@ -7,6 +7,8 @@ export type LintRuleContext = {
   spec: JsonObject;
   specType: SpecType;
   profile: LintProfile;
+  domain?: LintDomain | undefined;
+  externalDataRows?: JsonObject[] | undefined;
 };
 
 export type LintRule = (context: LintRuleContext) => LintIssue[];

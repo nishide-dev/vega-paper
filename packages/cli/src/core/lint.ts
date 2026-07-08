@@ -20,9 +20,24 @@ export type LintResult = {
   issues: LintIssue[];
 };
 
+export type LintDomain = "ml";
+
+const LINT_DOMAINS: LintDomain[] = ["ml"];
+
+export function parseLintDomain(value: string): LintDomain {
+  if ((LINT_DOMAINS as string[]).includes(value)) {
+    return value as LintDomain;
+  }
+
+  throw new VegaPaperError(
+    `Unknown lint domain "${value}". Expected one of: ${LINT_DOMAINS.join(", ")}.`,
+  );
+}
+
 export type LintRequest = {
   inputPath: string;
   profileName?: string | undefined;
+  domain?: LintDomain | undefined;
 };
 
 export async function lintSpec(request: LintRequest): Promise<LintResult> {
@@ -74,6 +89,7 @@ export async function lintSpec(request: LintRequest): Promise<LintResult> {
       spec,
       specType,
       profile,
+      domain: request.domain,
     }),
   );
 }
