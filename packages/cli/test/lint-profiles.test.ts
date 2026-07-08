@@ -22,6 +22,8 @@ describe("lint profiles", () => {
       maxColorCategories: 12,
       minFontSize: 8,
       grayscaleSafe: false,
+      mlMaxSeries: 8,
+      mlMaxTextLabels: 20,
     });
   });
 
@@ -35,6 +37,8 @@ describe("lint profiles", () => {
       maxColorCategories: 20,
       minFontSize: 10,
       grayscaleSafe: false,
+      mlMaxSeries: 12,
+      mlMaxTextLabels: 30,
     });
   });
 
@@ -48,6 +52,8 @@ describe("lint profiles", () => {
       maxColorCategories: 8,
       minFontSize: 9,
       grayscaleSafe: false,
+      mlMaxSeries: 8,
+      mlMaxTextLabels: 15,
     });
   });
 
@@ -61,6 +67,8 @@ describe("lint profiles", () => {
       maxColorCategories: 6,
       minFontSize: 9,
       grayscaleSafe: true,
+      mlMaxSeries: 6,
+      mlMaxTextLabels: 20,
     });
   });
 

@@ -11,6 +11,8 @@ export type LintProfile = {
   maxColorCategories: number;
   minFontSize: number;
   grayscaleSafe: boolean;
+  mlMaxSeries: number;
+  mlMaxTextLabels: number;
 };
 
 export const DEFAULT_LINT_PROFILE_NAME: LintProfileName = "paper";
@@ -27,6 +29,8 @@ export const LINT_PROFILES: Record<LintProfileName, LintProfile> = {
     maxColorCategories: 12,
     minFontSize: 8,
     grayscaleSafe: false,
+    mlMaxSeries: 8,
+    mlMaxTextLabels: 20,
   },
   web: {
     name: "web",
@@ -37,6 +41,8 @@ export const LINT_PROFILES: Record<LintProfileName, LintProfile> = {
     maxColorCategories: 20,
     minFontSize: 10,
     grayscaleSafe: false,
+    mlMaxSeries: 12,
+    mlMaxTextLabels: 30,
   },
   acl: {
     name: "acl",
@@ -47,6 +53,8 @@ export const LINT_PROFILES: Record<LintProfileName, LintProfile> = {
     maxColorCategories: 8,
     minFontSize: 9,
     grayscaleSafe: false,
+    mlMaxSeries: 8,
+    mlMaxTextLabels: 15,
   },
   print: {
     name: "print",
@@ -57,6 +65,8 @@ export const LINT_PROFILES: Record<LintProfileName, LintProfile> = {
     maxColorCategories: 6,
     minFontSize: 9,
     grayscaleSafe: true,
+    mlMaxSeries: 6,
+    mlMaxTextLabels: 20,
   },
 };
 
