@@ -135,6 +135,49 @@ describe("ml-panel-label-missing", () => {
   });
 });
 
+describe("ml-crowded-labels", () => {
+  test("warns when a text mark labels more rows than the paper threshold", () => {
+    const spec = textLabelSpec(21);
+
+    expect(mlIssues(runMlRules(spec, { domain: "ml" }), "ml-crowded-labels")).toEqual([
+      {
+        severity: "warning",
+        ruleId: "ml-crowded-labels",
+        path: "$.layer[1].encoding.text",
+        message: "Text mark labels 21 rows; more than 20 labels crowd a paper figure.",
+        suggestion: "Label only top-k points, aggregate the data, or drop the text layer.",
+      },
+    ]);
+  });
+
+  test("does not warn at the threshold boundary", () => {
+    expect(mlIssues(runMlRules(textLabelSpec(20), { domain: "ml" }), "ml-crowded-labels")).toEqual(
+      [],
+    );
+  });
+
+  test("uses profile-specific text label thresholds", () => {
+    const spec = textLabelSpec(16);
+
+    expect(
+      mlIssues(runMlRules(spec, { domain: "ml", profileName: "acl" }), "ml-crowded-labels"),
+    ).toHaveLength(1);
+    expect(mlIssues(runMlRules(spec, { domain: "ml" }), "ml-crowded-labels")).toEqual([]);
+  });
+
+  test("ignores text channels on non-text marks", () => {
+    const spec = textLabelSpec(21);
+    const layer = spec.layer as JsonObject[];
+    (layer[1] as JsonObject).mark = "point";
+
+    expect(mlIssues(runMlRules(spec, { domain: "ml" }), "ml-crowded-labels")).toEqual([]);
+  });
+
+  test("does not run without domain ml", () => {
+    expect(mlIssues(runMlRules(textLabelSpec(21)), "ml-crowded-labels")).toEqual([]);
+  });
+});
+
 // --- helpers -------------------------------------------------------------
 
 function runMlRules(
@@ -194,6 +237,38 @@ function multiPanelSpec(
         y: { field: "accuracy", type: "quantitative", title: "Accuracy" },
       },
     })),
+  });
+  delete spec.mark;
+  delete spec.encoding;
+  return spec;
+}
+
+function textLabelSpec(rowCount: number): JsonObject {
+  const spec = cleanVegaLiteSpec({
+    data: {
+      values: Array.from({ length: rowCount }, (_, index) => ({
+        latency: index + 1,
+        score: index / 100,
+        model: `model-${index}`,
+      })),
+    },
+    layer: [
+      {
+        mark: "point",
+        encoding: {
+          x: { field: "latency", type: "quantitative", title: "Latency" },
+          y: { field: "score", type: "quantitative", title: "Score" },
+        },
+      },
+      {
+        mark: { type: "text", dy: -8 },
+        encoding: {
+          x: { field: "latency", type: "quantitative", title: "Latency" },
+          y: { field: "score", type: "quantitative", title: "Score" },
+          text: { field: "model", type: "nominal" },
+        },
+      },
+    ],
   });
   delete spec.mark;
   delete spec.encoding;

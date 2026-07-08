@@ -31,7 +31,7 @@ export const paperLintRules: LintRule[] = [
   checkColorOnlySeriesDistinction,
 ];
 
-export const mlLintRules: LintRule[] = [checkMlPanelLabels];
+export const mlLintRules: LintRule[] = [checkMlPanelLabels, checkMlCrowdedLabels];
 
 export function runLintRules(context: LintRuleContext): LintIssue[] {
   const rules = context.domain === "ml" ? [...paperLintRules, ...mlLintRules] : paperLintRules;
@@ -395,6 +395,49 @@ function checkMlPanelLabels({ spec, specType }: LintRuleContext): LintIssue[] {
   return issues;
 }
 
+function checkMlCrowdedLabels({
+  spec,
+  specType,
+  profile,
+  externalDataRows,
+}: LintRuleContext): LintIssue[] {
+  if (specType !== "vega-lite") {
+    return [];
+  }
+
+  const issues: LintIssue[] = [];
+  const rootValues = getInlineDataValues(spec);
+
+  for (const unit of collectVegaLiteUnitSpecs(spec)) {
+    if (!isTextMark(unit.spec.mark)) {
+      continue;
+    }
+
+    const encoding = getObject(unit.spec, "encoding");
+    const text = encoding ? getObject(encoding, "text") : undefined;
+
+    if (!text || typeof text.field !== "string") {
+      continue;
+    }
+
+    const values = getRuleDataValues(unit.spec, spec, rootValues, externalDataRows);
+
+    if (!values || values.length <= profile.mlMaxTextLabels) {
+      continue;
+    }
+
+    issues.push({
+      severity: "warning",
+      ruleId: "ml-crowded-labels",
+      path: joinJsonPath(unit.path, "encoding.text"),
+      message: `Text mark labels ${values.length} rows; more than ${profile.mlMaxTextLabels} labels crowd a ${profile.name} figure.`,
+      suggestion: "Label only top-k points, aggregate the data, or drop the text layer.",
+    });
+  }
+
+  return issues;
+}
+
 type ExplicitColor = {
   path: string;
   color: string;
@@ -531,6 +574,33 @@ function isLineMark(mark: unknown): boolean {
   }
 
   return isPlainObject(mark) && mark.type === "line";
+}
+
+function isTextMark(mark: unknown): boolean {
+  if (mark === "text") {
+    return true;
+  }
+
+  return isPlainObject(mark) && mark.type === "text";
+}
+
+function getRuleDataValues(
+  unitSpec: JsonObject,
+  rootSpec: JsonObject,
+  rootValues: unknown[] | undefined,
+  externalDataRows: JsonObject[] | undefined,
+): unknown[] | undefined {
+  const unitValues = getInlineDataValues(unitSpec);
+
+  if (unitValues) {
+    return unitValues;
+  }
+
+  if (unitSpec !== rootSpec && hasDataDefinition(unitSpec)) {
+    return undefined;
+  }
+
+  return rootValues ?? externalDataRows;
 }
 
 function getInlineDataValues(spec: JsonObject): unknown[] | undefined {
