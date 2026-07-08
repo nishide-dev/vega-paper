@@ -79,7 +79,13 @@ describe("buildParetoFrontierSpec", () => {
 
     expect(spec).toEqual({
       $schema: "https://vega.github.io/schema/vega-lite/v6.json",
-      data: { url: "data.csv" },
+      data: {
+        url: "data.csv",
+        format: {
+          type: "csv",
+          parse: { score: "number", latency_ms: "number", params_b: "number" },
+        },
+      },
       width: 360,
       height: 240,
       layer: [

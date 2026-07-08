@@ -28,6 +28,24 @@ function createRequest(
 }
 
 describe("buildScalingLawSpec", () => {
+  test("adds number parse hints for numeric CSV columns in data.format", () => {
+    const spec = buildScalingLawSpec(createRequest());
+
+    expect(spec.data).toEqual({
+      url: "data.csv",
+      format: {
+        type: "csv",
+        parse: {
+          params_b: "number",
+          tokens_b: "number",
+          flops: "number",
+          loss: "number",
+          accuracy: "number",
+        },
+      },
+    });
+  });
+
   test("builds a log-x line spec with a grouped log regression layer", () => {
     const spec = buildScalingLawSpec(
       createRequest({ colorField: "family", xScale: "log", fit: "regression" }),
@@ -35,7 +53,19 @@ describe("buildScalingLawSpec", () => {
 
     expect(spec).toEqual({
       $schema: "https://vega.github.io/schema/vega-lite/v6.json",
-      data: { url: "data.csv" },
+      data: {
+        url: "data.csv",
+        format: {
+          type: "csv",
+          parse: {
+            params_b: "number",
+            tokens_b: "number",
+            flops: "number",
+            loss: "number",
+            accuracy: "number",
+          },
+        },
+      },
       width: 360,
       height: 240,
       layer: [

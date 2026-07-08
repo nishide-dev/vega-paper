@@ -3,7 +3,14 @@
   "hconcat": [
     {
       "data": {
-        "url": "../training-curve/data.csv"
+        "url": "../training-curve/data.csv",
+        "format": {
+          "type": "csv",
+          "parse": {
+            "epoch": "number",
+            "f1": "number"
+          }
+        }
       },
       "mark": "line",
       "width": 360,
@@ -30,7 +37,14 @@
     },
     {
       "data": {
-        "url": "../ablation-bar/data.csv"
+        "url": "../ablation-bar/data.csv",
+        "format": {
+          "type": "csv",
+          "parse": {
+            "score": "number",
+            "stderr": "number"
+          }
+        }
       },
       "mark": "bar",
       "width": 420,

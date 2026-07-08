@@ -146,7 +146,10 @@ describe("inferVegaLiteSpec", () => {
       spec: {
         $schema: "https://vega.github.io/schema/vega-lite/v6.json",
         title: "Revenue",
-        data: { url: "../data.csv" },
+        data: {
+          url: "../data.csv",
+          format: { type: "csv", parse: { year: "number", value: "number" } },
+        },
         mark: "line",
         width: 360,
         height: 240,
@@ -522,12 +525,12 @@ describe("inferVegaLiteSpec", () => {
     expect(result.spec.data).not.toHaveProperty("url");
   });
 
-  test("embeds CSV rows as all-string objects when inlineData is true", async () => {
+  test("embeds CSV rows with numeric columns converted to numbers when inlineData is true", async () => {
     const workspace = await createWorkspace();
     const inputPath = join(workspace, "data.csv");
     const specOutputPath = join(workspace, "chart.vl.json");
 
-    await Bun.write(inputPath, "epoch,f1\n1,0.61\n2,0.68\n");
+    await Bun.write(inputPath, "epoch,f1,model\n1,0.61,base\n2,0.68,base\n");
 
     const result = await inferVegaLiteSpec({
       inputPath,
@@ -540,11 +543,55 @@ describe("inferVegaLiteSpec", () => {
 
     expect(result.spec.data).toEqual({
       values: [
-        { epoch: "1", f1: "0.61" },
-        { epoch: "2", f1: "0.68" },
+        { epoch: 1, f1: 0.61, model: "base" },
+        { epoch: 2, f1: 0.68, model: "base" },
       ],
     });
     expect(result.spec.data).not.toHaveProperty("url");
+  });
+
+  test("adds number parse hints for numeric CSV columns in data.format", async () => {
+    const workspace = await createWorkspace();
+    const inputPath = join(workspace, "data.csv");
+    const specOutputPath = join(workspace, "chart.vl.json");
+
+    await Bun.write(inputPath, "epoch,f1,f1_se,model\n1,0.61,0.02,base\n2,0.68,0.015,base\n");
+
+    const result = await inferVegaLiteSpec({
+      inputPath,
+      chart: "line",
+      xField: "epoch",
+      yField: "f1",
+      colorField: "model",
+      errorBandField: "f1_se",
+      specOutputPath,
+    });
+
+    expect(result.spec.data).toEqual({
+      url: "data.csv",
+      format: {
+        type: "csv",
+        parse: { epoch: "number", f1: "number", f1_se: "number" },
+      },
+    });
+  });
+
+  test("omits data.format when the CSV has no numeric columns", async () => {
+    const workspace = await createWorkspace();
+    const inputPath = join(workspace, "data.csv");
+    const specOutputPath = join(workspace, "chart.vl.json");
+
+    await Bun.write(inputPath, "category,label\nA,low\nB,high\n");
+
+    const result = await inferVegaLiteSpec({
+      inputPath,
+      chart: "bar",
+      xField: "category",
+      yField: "label",
+      specOutputPath,
+    });
+
+    expect(result.spec.data).toEqual({ url: "data.csv" });
   });
 
   test("yType ordinal overrides quantitative inference for numeric y field", async () => {
@@ -588,7 +635,10 @@ describe("inferVegaLiteSpec", () => {
 
     expect(result.spec).toEqual({
       $schema: "https://vega.github.io/schema/vega-lite/v6.json",
-      data: { url: "data.csv" },
+      data: {
+        url: "data.csv",
+        format: { type: "csv", parse: { epoch: "number", f1: "number" } },
+      },
       facet: { field: "model", type: "nominal" },
       spec: {
         mark: "line",
@@ -821,7 +871,10 @@ describe("inferVegaLiteSpec", () => {
 
     expect(result.spec).toEqual({
       $schema: "https://vega.github.io/schema/vega-lite/v6.json",
-      data: { url: "data.csv" },
+      data: {
+        url: "data.csv",
+        format: { type: "csv", parse: { f1: "number" } },
+      },
       mark: "boxplot",
       width: 360,
       height: 240,

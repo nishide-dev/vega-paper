@@ -1,7 +1,14 @@
 {
   "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
   "data": {
-    "url": "data.csv"
+    "url": "data.csv",
+    "format": {
+      "type": "csv",
+      "parse": {
+        "seed": "number",
+        "score": "number"
+      }
+    }
   },
   "mark": "boxplot",
   "width": 360,

@@ -34,7 +34,10 @@ describe("buildBenchmarkHeatmapSpec", () => {
   test("builds a layered rect+text spec with score labels by default", () => {
     expect(buildBenchmarkHeatmapSpec(createRequest())).toEqual({
       $schema: "https://vega.github.io/schema/vega-lite/v6.json",
-      data: { url: "data.csv" },
+      data: {
+        url: "data.csv",
+        format: { type: "csv", parse: { score: "number" } },
+      },
       width: 360,
       height: 240,
       layer: [

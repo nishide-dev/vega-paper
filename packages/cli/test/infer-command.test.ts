@@ -862,7 +862,10 @@ describe("infer command", () => {
 
     expect(await readSpec(specOutputPath)).toEqual({
       $schema: "https://vega.github.io/schema/vega-lite/v6.json",
-      data: { url: "../results.csv" },
+      data: {
+        url: "../results.csv",
+        format: { type: "csv", parse: { epoch: "number", f1: "number" } },
+      },
       mark: "line",
       width: 360,
       height: 240,

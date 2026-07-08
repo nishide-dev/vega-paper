@@ -32,7 +32,13 @@ describe("buildCalibrationCurveSpec", () => {
 
     expect(spec).toEqual({
       $schema: "https://vega.github.io/schema/vega-lite/v6.json",
-      data: { url: "data.csv" },
+      data: {
+        url: "data.csv",
+        format: {
+          type: "csv",
+          parse: { bin: "number", confidence: "number", accuracy: "number", count: "number" },
+        },
+      },
       width: 360,
       height: 240,
       layer: [

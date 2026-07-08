@@ -1,7 +1,15 @@
 {
   "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
   "data": {
-    "url": "data-with-error.csv"
+    "url": "data-with-error.csv",
+    "format": {
+      "type": "csv",
+      "parse": {
+        "epoch": "number",
+        "f1": "number",
+        "f1_se": "number"
+      }
+    }
   },
   "width": 360,
   "height": 240,

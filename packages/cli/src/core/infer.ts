@@ -180,6 +180,14 @@ export async function inferVegaLiteSpec(request: InferRequest): Promise<InferRes
     ? { values: buildInlineValues(tabular) }
     : { url: toRelativeDataUrl(request.specOutputPath, request.inputPath) };
 
+  if (!request.inlineData && tabular.jsonValues === undefined) {
+    const parse = buildCsvNumberParse(tabular.header, tabular.rows);
+
+    if (parse !== undefined) {
+      data.format = { type: "csv", parse };
+    }
+  }
+
   const innerSpec: JsonObject =
     chart === "line" && request.errorBandField !== undefined
       ? buildErrorBandLineSpec(request, encoding)
@@ -362,6 +370,12 @@ function buildInlineValues(tabular: TabularInput): JsonObject[] {
     return tabular.jsonValues;
   }
 
+  const numericColumns = new Set(
+    tabular.header
+      .map((_, index) => index)
+      .filter((index) => inferFieldType(tabular.rows, index) === "quantitative"),
+  );
+
   return tabular.rows.map((row) => {
     const record: JsonObject = {};
 
@@ -372,7 +386,8 @@ function buildInlineValues(tabular: TabularInput): JsonObject[] {
         continue;
       }
 
-      record[key] = row[index] ?? "";
+      const cell = row[index] ?? "";
+      record[key] = numericColumns.has(index) && cell.trim() !== "" ? Number(cell) : cell;
     }
 
     return record;
@@ -479,6 +494,23 @@ export function findFieldIndex(header: string[], field: string): number {
   }
 
   return index;
+}
+
+export function buildCsvNumberParse(
+  header: string[],
+  rows: string[][],
+): Record<string, "number"> | undefined {
+  const parse: Record<string, "number"> = {};
+
+  for (let index = 0; index < header.length; index += 1) {
+    const field = header[index];
+
+    if (field !== undefined && inferFieldType(rows, index) === "quantitative") {
+      parse[field] = "number";
+    }
+  }
+
+  return Object.keys(parse).length > 0 ? parse : undefined;
 }
 
 function inferFieldType(rows: string[][], index: number): InferredFieldType {
