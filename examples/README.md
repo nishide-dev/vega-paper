@@ -10,6 +10,7 @@ Small datasets and reference Vega-Lite specs for trying the CLI. Each folder has
 | [faceted-training/](faceted-training/) | `infer` with `--facet` small multiples |
 | [boxplot/](boxplot/) | `infer` boxplot from raw sample rows; optional `--color` grouping |
 | [embedding-scatter/](embedding-scatter/) | `infer` scatter; 2D embedding with `--color` |
+| [multipanel-paper-figure/](multipanel-paper-figure/) | Hand-written `hconcat` spec with `(a)`/`(b)`/`(c)` panel labels; `template multipanel` composition |
 | [ablation-bar/](ablation-bar/) | `infer` bar; ablation and grouped benchmark comparison |
 | [benchmark-heatmap/](benchmark-heatmap/) | `infer` heatmap; hand-written labeled variant (rect + text) |
 | [run-distribution/](run-distribution/) | `infer` boxplot over seeds; hand-written boxplot + raw points overlay |
@@ -32,6 +33,7 @@ Committed PNG previews (`paper-clean` unless noted). Theme comparison: [root REA
 | [benchmark-heatmap/](benchmark-heatmap/) | ![benchmark-heatmap](../docs/assets/gallery/examples/benchmark-heatmap.png) |
 | [run-distribution/](run-distribution/) | ![run-distribution](../docs/assets/gallery/examples/run-distribution.png) |
 | [custom-theme/](custom-theme/) | ![custom-theme](../docs/assets/gallery/examples/custom-theme.png) |
+| [multipanel-paper-figure/](multipanel-paper-figure/) | ![multipanel-paper-figure](../docs/assets/gallery/examples/multipanel-paper-figure.png) |
 
 Regenerate: `bun run render:gallery`
 

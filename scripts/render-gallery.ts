@@ -70,6 +70,11 @@ const exampleJobs: GalleryJob[] = [
     theme: "examples/custom-theme/theme.json",
     out: `${GALLERY}/examples/custom-theme.png`,
   },
+  {
+    spec: "examples/multipanel-paper-figure/chart.vl.json",
+    theme: "paper-clean",
+    out: `${GALLERY}/examples/multipanel-paper-figure.png`,
+  },
 ];
 
 async function renderJob(job: GalleryJob): Promise<void> {

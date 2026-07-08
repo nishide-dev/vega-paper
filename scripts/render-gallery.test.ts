@@ -16,6 +16,7 @@ const EXAMPLE_PREVIEWS = [
   "benchmark-heatmap",
   "run-distribution",
   "custom-theme",
+  "multipanel-paper-figure",
 ];
 
 describe("readme gallery assets", () => {
