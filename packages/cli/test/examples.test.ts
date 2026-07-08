@@ -7,18 +7,22 @@ async function readExampleSpec(relativePath: string): Promise<Record<string, unk
   return (await Bun.file(join(REPO_ROOT, relativePath)).json()) as Record<string, unknown>;
 }
 
+function csvData(url: string, parse: Record<string, "number">): Record<string, unknown> {
+  return { url, format: { type: "csv", parse } };
+}
+
 describe("examples", () => {
   test("training-curve chart links to data.csv", async () => {
     const spec = await readExampleSpec("examples/training-curve/chart.vl.json");
 
-    expect(spec.data).toEqual({ url: "data.csv" });
+    expect(spec.data).toEqual(csvData("data.csv", { epoch: "number", f1: "number" }));
     expect(spec.mark).toBe("line");
   });
 
   test("training-curve aggregate chart links to runs.csv with mean transform", async () => {
     const spec = await readExampleSpec("examples/training-curve/chart-aggregate.vl.json");
 
-    expect(spec.data).toEqual({ url: "runs.csv" });
+    expect(spec.data).toEqual(csvData("runs.csv", { epoch: "number", f1: "number" }));
     expect(spec.transform).toEqual([
       {
         aggregate: [{ op: "mean", field: "f1", as: "f1" }],
@@ -30,7 +34,9 @@ describe("examples", () => {
   test("training-curve error-band chart links to data-with-error.csv with layered errorband", async () => {
     const spec = await readExampleSpec("examples/training-curve/chart-error-band.vl.json");
 
-    expect(spec.data).toEqual({ url: "data-with-error.csv" });
+    expect(spec.data).toEqual(
+      csvData("data-with-error.csv", { epoch: "number", f1: "number", f1_se: "number" }),
+    );
     expect(spec.layer).toEqual([
       {
         mark: { type: "errorband", extent: "stderr", opacity: 0.25 },
@@ -64,7 +70,7 @@ describe("examples", () => {
   test("confusion-matrix trials chart sums n per cell", async () => {
     const spec = await readExampleSpec("examples/confusion-matrix/chart-from-trials.vl.json");
 
-    expect(spec.data).toEqual({ url: "trials.csv" });
+    expect(spec.data).toEqual(csvData("trials.csv", { n: "number" }));
     expect(spec.transform).toEqual([
       {
         aggregate: [{ op: "sum", field: "n", as: "n" }],
@@ -88,7 +94,7 @@ describe("examples", () => {
   test("boxplot chart uses boxplot mark with y scale zero false", async () => {
     const spec = await readExampleSpec("examples/boxplot/chart.vl.json");
 
-    expect(spec.data).toEqual({ url: "data.csv" });
+    expect(spec.data).toEqual(csvData("data.csv", { f1: "number" }));
     expect(spec.mark).toBe("boxplot");
     expect(spec.encoding).toEqual({
       x: { field: "model", type: "nominal" },
@@ -103,7 +109,7 @@ describe("examples", () => {
   test("boxplot by-split chart adds nominal color encoding", async () => {
     const spec = await readExampleSpec("examples/boxplot/chart-by-split.vl.json");
 
-    expect(spec.data).toEqual({ url: "data-by-split.csv" });
+    expect(spec.data).toEqual(csvData("data-by-split.csv", { f1: "number" }));
     expect(spec.encoding).toMatchObject({
       color: { field: "split", type: "nominal" },
     });
@@ -112,7 +118,7 @@ describe("examples", () => {
   test("embedding-scatter chart is a point plot colored by label", async () => {
     const spec = await readExampleSpec("examples/embedding-scatter/chart.vl.json");
 
-    expect(spec.data).toEqual({ url: "data.csv" });
+    expect(spec.data).toEqual(csvData("data.csv", { x: "number", y: "number" }));
     expect(spec.mark).toBe("point");
     expect(spec.encoding).toMatchObject({
       x: { field: "x", type: "quantitative" },
@@ -126,7 +132,7 @@ describe("examples", () => {
   test("ablation-bar chart is a bar chart of score by component and method", async () => {
     const spec = await readExampleSpec("examples/ablation-bar/chart.vl.json");
 
-    expect(spec.data).toEqual({ url: "data.csv" });
+    expect(spec.data).toEqual(csvData("data.csv", { score: "number", stderr: "number" }));
     expect(spec.mark).toBe("bar");
     expect(spec.encoding).toMatchObject({
       x: { field: "component", type: "nominal" },
@@ -140,7 +146,7 @@ describe("examples", () => {
   test("ablation-bar grouped chart compares methods across datasets", async () => {
     const spec = await readExampleSpec("examples/ablation-bar/chart-grouped.vl.json");
 
-    expect(spec.data).toEqual({ url: "grouped.csv" });
+    expect(spec.data).toEqual(csvData("grouped.csv", { score: "number", stderr: "number" }));
     expect(spec.mark).toBe("bar");
     expect(spec.encoding).toMatchObject({
       x: { field: "dataset", type: "nominal" },
@@ -152,7 +158,7 @@ describe("examples", () => {
   test("benchmark-heatmap chart is a rect heatmap of scores", async () => {
     const spec = await readExampleSpec("examples/benchmark-heatmap/chart.vl.json");
 
-    expect(spec.data).toEqual({ url: "data.csv" });
+    expect(spec.data).toEqual(csvData("data.csv", { score: "number" }));
     expect(spec.mark).toBe("rect");
     expect(spec.encoding).toMatchObject({
       x: { field: "task", type: "ordinal" },
@@ -192,7 +198,7 @@ describe("examples", () => {
   test("run-distribution boxplot chart summarizes score by method", async () => {
     const spec = await readExampleSpec("examples/run-distribution/chart-boxplot.vl.json");
 
-    expect(spec.data).toEqual({ url: "data.csv" });
+    expect(spec.data).toEqual(csvData("data.csv", { seed: "number", score: "number" }));
     expect(spec.mark).toBe("boxplot");
     expect(spec.encoding).toEqual({
       x: { field: "method", type: "nominal" },
@@ -221,7 +227,7 @@ describe("examples", () => {
     const spec = await readExampleSpec("examples/benchmark-heatmap/chart-template.vl.json");
     const layer = spec.layer as Array<Record<string, unknown>>;
 
-    expect(spec.data).toEqual({ url: "data.csv" });
+    expect(spec.data).toEqual(csvData("data.csv", { score: "number" }));
     expect(layer).toHaveLength(3);
     expect(layer[0]?.mark).toBe("rect");
     expect(layer[1]?.mark).toBe("text");
@@ -237,7 +243,9 @@ describe("examples", () => {
     const spec = await readExampleSpec("examples/pareto-frontier/chart.vl.json");
     const layer = spec.layer as Array<Record<string, unknown>>;
 
-    expect(spec.data).toEqual({ url: "data.csv" });
+    expect(spec.data).toEqual(
+      csvData("data.csv", { score: "number", latency_ms: "number", params_b: "number" }),
+    );
     expect(layer).toHaveLength(3);
     expect(layer[0]?.data).toEqual({
       values: [
@@ -259,7 +267,15 @@ describe("examples", () => {
     const spec = await readExampleSpec("examples/scaling-law/chart.vl.json");
     const layer = spec.layer as Array<Record<string, unknown>>;
 
-    expect(spec.data).toEqual({ url: "data.csv" });
+    expect(spec.data).toEqual(
+      csvData("data.csv", {
+        params_b: "number",
+        tokens_b: "number",
+        flops: "number",
+        loss: "number",
+        accuracy: "number",
+      }),
+    );
     expect(layer).toHaveLength(2);
     expect(layer[0]?.encoding).toMatchObject({
       x: { field: "flops", type: "quantitative", scale: { type: "log" } },
@@ -273,7 +289,14 @@ describe("examples", () => {
     const spec = await readExampleSpec("examples/calibration-curve/chart.vl.json");
     const layer = spec.layer as Array<Record<string, unknown>>;
 
-    expect(spec.data).toEqual({ url: "data.csv" });
+    expect(spec.data).toEqual(
+      csvData("data.csv", {
+        bin: "number",
+        confidence: "number",
+        accuracy: "number",
+        count: "number",
+      }),
+    );
     expect(layer).toHaveLength(4);
     expect(layer[0]?.encoding).toEqual({
       x: { datum: 0 },
@@ -320,8 +343,12 @@ describe("examples", () => {
     const panels = spec.hconcat as Array<Record<string, unknown>>;
 
     expect(panels).toHaveLength(2);
-    expect(panels[0]?.data).toEqual({ url: "../training-curve/data.csv" });
-    expect(panels[1]?.data).toEqual({ url: "../ablation-bar/data.csv" });
+    expect(panels[0]?.data).toEqual(
+      csvData("../training-curve/data.csv", { epoch: "number", f1: "number" }),
+    );
+    expect(panels[1]?.data).toEqual(
+      csvData("../ablation-bar/data.csv", { score: "number", stderr: "number" }),
+    );
     expect(panels[0]?.title).toEqual({
       text: "(a) Training",
       anchor: "start",

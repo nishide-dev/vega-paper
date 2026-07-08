@@ -56,7 +56,10 @@ describe("template command", () => {
     const layer = spec.layer as Array<Record<string, unknown>>;
 
     expect(stdout).toBe(`Wrote ${specOutputPath}\n`);
-    expect(spec.data).toEqual({ url: "../data.csv" });
+    expect(spec.data).toEqual({
+      url: "../data.csv",
+      format: { type: "csv", parse: { score: "number" } },
+    });
     expect(layer).toHaveLength(2);
     expect(layer[0]?.mark).toBe("rect");
     expect(layer[1]?.mark).toBe("text");

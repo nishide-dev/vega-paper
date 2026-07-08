@@ -33,6 +33,34 @@ describe("render integration", () => {
     expect(svg).toContain("</svg>");
   });
 
+  test("renders the error-band example with a non-degenerate band", async () => {
+    const errorBandOutputPath = "examples/training-curve/output-error-band.svg";
+
+    if (!(await hasVegaLiteSvgBinary())) {
+      console.warn("Skipping render integration: no vl2svg binary is installed.");
+      return;
+    }
+
+    await rm(errorBandOutputPath, { force: true });
+
+    try {
+      await renderChart({
+        inputPath: "examples/training-curve/chart-error-band.vl.json",
+        outputPath: errorBandOutputPath,
+        format: "svg",
+      });
+
+      const svg = await readFile(errorBandOutputPath, "utf8");
+
+      // CSV values reaching Vega-Lite as strings make the band's upper edge
+      // NaN ("0.61" + "0.02" concatenates), collapsing the band to zero area.
+      expect(svg).not.toContain("NaN");
+      expect(svg).toContain('aria-roledescription="errorband"');
+    } finally {
+      await rm(errorBandOutputPath, { force: true });
+    }
+  });
+
   test("renders specs with relative data.url using the source spec directory", async () => {
     const boxplotOutputPath = "examples/boxplot/output.svg";
 

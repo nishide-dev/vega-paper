@@ -1,7 +1,13 @@
 {
   "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
   "data": {
-    "url": "data.csv"
+    "url": "data.csv",
+    "format": {
+      "type": "csv",
+      "parse": {
+        "count": "number"
+      }
+    }
   },
   "mark": "rect",
   "width": 360,

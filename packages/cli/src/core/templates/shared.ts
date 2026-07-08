@@ -1,5 +1,5 @@
 import { VegaPaperError } from "../errors";
-import { toRelativeDataUrl } from "../infer";
+import { buildCsvNumberParse, toRelativeDataUrl } from "../infer";
 import type { JsonObject } from "../spec";
 import type { TemplateCommonRequest } from "../template";
 
@@ -26,9 +26,18 @@ export function buildTemplateFrame(
   request: TemplateCommonRequest,
   layer: JsonObject[],
 ): JsonObject {
+  const data: JsonObject = {
+    url: toRelativeDataUrl(request.specOutputPath, request.inputPath),
+  };
+  const parse = buildCsvNumberParse(request.table.header, request.table.rows);
+
+  if (parse !== undefined) {
+    data.format = { type: "csv", parse };
+  }
+
   const spec: JsonObject = {
     $schema: TEMPLATE_VEGA_LITE_SCHEMA,
-    data: { url: toRelativeDataUrl(request.specOutputPath, request.inputPath) },
+    data,
     width: request.width ?? TEMPLATE_DEFAULT_WIDTH,
     height: request.height ?? TEMPLATE_DEFAULT_HEIGHT,
     layer,
