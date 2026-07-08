@@ -94,12 +94,12 @@ Errors (always blocking):
 
 ## LaTeX and captions
 
-MVP output is **SVG**. Treat the SVG + Vega-Lite spec + `*.meta.json` as the reproducible figure bundle.
+Rendered output formats are **SVG**, **PNG**, and **PDF** (`--format` on `render`/`infer`). Use SVG as the canonical editable vector artifact where possible, PDF for LaTeX venues that prefer or require PDF figures, and PNG for README, slides, and raster previews. Treat the spec + rendered vector output + `*.meta.json` as the reproducible figure bundle.
 
 ### Embedding SVG
 
 - Prefer **vector SVG** for LaTeX: scalable in `\includegraphics[width=\linewidth]{...}` when your toolchain accepts SVG (e.g. XeLaTeX/LuaLaTeX with `svg` package, or `\includesvg` from `svg` / `inkscape` conversion).
-- **pdfLaTeX** often requires converting SVG to PDF/EPS first; VegaPaper does not ship a PDF export in MVP — convert externally if the venue requires PDF figures only.
+- **pdfLaTeX** venues usually require PDF figures: render them directly with `--format pdf` (e.g. `--out figures/f1.pdf`) — no external SVG conversion step is needed.
 - Keep figure **width** aligned with the column: use lint profile ranges and [recommended sizes](#recommended-figure-sizes); set `--width` on `infer` or spec `width` to match `\linewidth` or the venue’s max figure width in pixels.
 
 ### Title vs caption
@@ -112,8 +112,9 @@ MVP output is **SVG**. Treat the SVG + Vega-Lite spec + `*.meta.json` as the rep
 
 | Artifact | Role |
 |----------|------|
-| `*.vl.json` | Source spec; regenerate or edit figure |
-| `*.svg` | Vector figure for the paper |
+| `*.vl.json` / `*.vg.json` | Source spec; regenerate or edit figure |
+| `*.svg` or `*.pdf` | Rendered vector figure for the paper (PDF for pdfLaTeX venues) |
+| Source data or data-generation script | Reproduce the spec from raw results |
 | `*.meta.json` | Provenance (`command`, versions, infer snapshot when applicable) |
 
-Do not promise PNG/PDF export from VegaPaper MVP; SVG is the canonical artifact (see repository README).
+PNG (`--format png`) is for README, slides, and raster previews — keep a vector format as the paper artifact.
