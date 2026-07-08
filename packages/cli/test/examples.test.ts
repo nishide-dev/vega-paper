@@ -148,4 +148,72 @@ describe("examples", () => {
       color: { field: "method", type: "nominal" },
     });
   });
+
+  test("benchmark-heatmap chart is a rect heatmap of scores", async () => {
+    const spec = await readExampleSpec("examples/benchmark-heatmap/chart.vl.json");
+
+    expect(spec.data).toEqual({ url: "data.csv" });
+    expect(spec.mark).toBe("rect");
+    expect(spec.encoding).toMatchObject({
+      x: { field: "task", type: "ordinal" },
+      y: { field: "model", type: "ordinal" },
+      color: { field: "score", type: "quantitative" },
+    });
+  });
+
+  test("benchmark-heatmap labeled chart layers rect and text marks", async () => {
+    const spec = await readExampleSpec("examples/benchmark-heatmap/chart-labeled.vl.json");
+
+    expect(spec.data).toEqual({ url: "data.csv" });
+    const layers = spec.layer as Record<string, unknown>[];
+    expect(layers).toHaveLength(2);
+    expect(layers[0]).toMatchObject({
+      mark: "rect",
+      encoding: { color: { field: "score", type: "quantitative" } },
+    });
+    expect(layers[1]).toMatchObject({
+      mark: { type: "text" },
+      encoding: { text: { field: "score", type: "quantitative" } },
+    });
+  });
+
+  test("benchmark-heatmap data covers at least 4 models and 5 tasks", async () => {
+    const csv = await Bun.file(join(REPO_ROOT, "examples/benchmark-heatmap/data.csv")).text();
+    const rows = csv
+      .trim()
+      .split("\n")
+      .slice(1)
+      .map((line) => line.split(","));
+
+    expect(new Set(rows.map((row) => row[0])).size).toBeGreaterThanOrEqual(4);
+    expect(new Set(rows.map((row) => row[1])).size).toBeGreaterThanOrEqual(5);
+  });
+
+  test("run-distribution boxplot chart summarizes score by method", async () => {
+    const spec = await readExampleSpec("examples/run-distribution/chart-boxplot.vl.json");
+
+    expect(spec.data).toEqual({ url: "data.csv" });
+    expect(spec.mark).toBe("boxplot");
+    expect(spec.encoding).toEqual({
+      x: { field: "method", type: "nominal" },
+      y: {
+        field: "score",
+        type: "quantitative",
+        scale: { zero: false },
+      },
+    });
+  });
+
+  test("run-distribution points chart layers boxplot and jittered raw points", async () => {
+    const spec = await readExampleSpec("examples/run-distribution/chart-points.vl.json");
+
+    expect(spec.data).toEqual({ url: "data.csv" });
+    const layers = spec.layer as Record<string, unknown>[];
+    expect(layers).toHaveLength(2);
+    expect(layers[0]).toMatchObject({ mark: { type: "boxplot" } });
+    expect(layers[1]).toMatchObject({
+      mark: { type: "point" },
+      encoding: { xOffset: { field: "jitter", type: "quantitative" } },
+    });
+  });
 });

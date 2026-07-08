@@ -82,6 +82,8 @@ Copy-paste commands live in each folder README.
 | [boxplot/](../../../examples/boxplot/) | `boxplot` | optional `--color` grouping |
 | [embedding-scatter/](../../../examples/embedding-scatter/) | `scatter` | `--color` for class/cluster labels |
 | [ablation-bar/](../../../examples/ablation-bar/) | `bar` | ablation and grouped benchmark comparison with `--color` |
+| [benchmark-heatmap/](../../../examples/benchmark-heatmap/) | `heatmap` | model × task scores; hand-written labeled variant (rect + text) |
+| [run-distribution/](../../../examples/run-distribution/) | `boxplot` | seed/run variability; hand-written boxplot + raw points overlay |
 | [basic-line/](../../../examples/basic-line/) | (hand-written spec) | `render` / `lint` only — not `infer` |
 
 Index: [examples/README.md](../../../examples/README.md).
