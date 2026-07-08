@@ -33,7 +33,25 @@ vega-paper render examples/benchmark-heatmap/chart-labeled.vl.json \
   --out examples/benchmark-heatmap/output-labeled.svg
 ```
 
-Label color flips to white on dark cells via a `condition` on the score; adjust the `datum.score > 70` threshold to your score range when reusing the spec. A `benchmark-heatmap` template command that generates this shape (plus best-score highlighting) is planned.
+Label color flips to white on dark cells via a `condition` on the score; adjust the `datum.score > 70` threshold to your score range when reusing the spec. The `benchmark-heatmap` template (below) generates this shape plus best-score highlighting.
+
+## Labeled heatmap with best-score highlight (template)
+
+The `benchmark-heatmap` template layers formatted score labels (`.1f`) on top of the heatmap. `--highlight-best` outlines the best score in each task column; the winning cells are computed from the CSV when the spec is generated and embedded inline in the spec.
+
+```bash
+vega-paper template benchmark-heatmap examples/benchmark-heatmap/data.csv \
+  --x task \
+  --y model \
+  --score score \
+  --label score \
+  --highlight-best \
+  --title "Benchmark results" \
+  --width 420 \
+  --spec-out examples/benchmark-heatmap/chart-template.vl.json
+```
+
+`chart-template.vl.json` is regenerated with `bun run template:benchmark-heatmap` from the repo root. Passing `--theme paper-clean --out examples/benchmark-heatmap/output.svg` directly to the `template` command renders in one step and also writes `output.meta.json` with `command: "template"` provenance.
 
 ## Render / lint
 

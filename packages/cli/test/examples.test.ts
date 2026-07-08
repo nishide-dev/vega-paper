@@ -216,4 +216,20 @@ describe("examples", () => {
       encoding: { xOffset: { field: "jitter", type: "quantitative" } },
     });
   });
+
+  test("benchmark-heatmap template chart layers rect, text, and best-cell outline", async () => {
+    const spec = await readExampleSpec("examples/benchmark-heatmap/chart-template.vl.json");
+    const layer = spec.layer as Array<Record<string, unknown>>;
+
+    expect(spec.data).toEqual({ url: "data.csv" });
+    expect(layer).toHaveLength(3);
+    expect(layer[0]?.mark).toBe("rect");
+    expect(layer[1]?.mark).toBe("text");
+    expect(layer[2]?.mark).toEqual({
+      type: "rect",
+      fill: null,
+      stroke: "#1a1a1a",
+      strokeWidth: 2,
+    });
+  });
 });
