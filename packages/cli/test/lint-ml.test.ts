@@ -435,7 +435,61 @@ describe("lintSpec data loading degrades gracefully", () => {
   });
 });
 
+describe("lintSpec --domain ml end to end", () => {
+  test("loads relative data.url CSV and reports ml-too-many-series", async () => {
+    await withTemporaryWorkspace(async (workspacePath) => {
+      const inputPath = join(workspacePath, "chart.vl.json");
+      const header = "epoch,accuracy,model\n";
+      const rows = Array.from({ length: 9 }, (_, index) => `1,0.${50 + index},model-${index}`).join(
+        "\n",
+      );
+      await writeFile(join(workspacePath, "data.csv"), `${header}${rows}\n`, "utf8");
+      await writeJson(inputPath, cleanVegaLiteSpec({ data: { url: "data.csv" } }));
+
+      const mlResult = await lintSpec({ inputPath, domain: "ml" });
+      const defaultResult = await lintSpec({ inputPath });
+
+      expect(mlResult.issues.map((issue) => issue.ruleId)).toContain("ml-too-many-series");
+      expect(defaultResult.issues.map((issue) => issue.ruleId)).not.toContain("ml-too-many-series");
+    });
+  });
+
+  test("example fixtures lint without errors under domain ml", async () => {
+    for (const examplePath of [
+      "examples/scaling-law/chart.vl.json",
+      "examples/multipanel-paper-figure/chart.vl.json",
+    ]) {
+      const result = await lintSpec({
+        inputPath: join(REPO_ROOT, examplePath),
+        domain: "ml",
+      });
+
+      expect(result.errorCount).toBe(0);
+    }
+  });
+
+  test("labeled title objects in the multipanel example satisfy ml-panel-label-missing", async () => {
+    const result = await lintSpec({
+      inputPath: join(REPO_ROOT, "examples/multipanel-paper-figure/chart.vl.json"),
+      domain: "ml",
+    });
+
+    expect(result.issues.map((issue) => issue.ruleId)).not.toContain("ml-panel-label-missing");
+  });
+
+  test("the scaling-law example's existing log x scale satisfies ml-log-scale-candidate", async () => {
+    const result = await lintSpec({
+      inputPath: join(REPO_ROOT, "examples/scaling-law/chart.vl.json"),
+      domain: "ml",
+    });
+
+    expect(result.issues.map((issue) => issue.ruleId)).not.toContain("ml-log-scale-candidate");
+  });
+});
+
 // --- helpers -------------------------------------------------------------
+
+const REPO_ROOT = join(import.meta.dir, "../../..");
 
 function runMlRules(
   spec: JsonObject,
