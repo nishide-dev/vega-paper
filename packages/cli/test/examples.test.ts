@@ -232,4 +232,26 @@ describe("examples", () => {
       strokeWidth: 2,
     });
   });
+
+  test("pareto-frontier chart layers frontier line, points, and labels with log x", async () => {
+    const spec = await readExampleSpec("examples/pareto-frontier/chart.vl.json");
+    const layer = spec.layer as Array<Record<string, unknown>>;
+
+    expect(spec.data).toEqual({ url: "data.csv" });
+    expect(layer).toHaveLength(3);
+    expect(layer[0]?.data).toEqual({
+      values: [
+        { latency_ms: 12, score: 68.1 },
+        { latency_ms: 18, score: 73 },
+        { latency_ms: 42, score: 77.2 },
+      ],
+    });
+    expect(layer[1]?.encoding).toMatchObject({
+      x: { field: "latency_ms", type: "quantitative", scale: { type: "log" } },
+      size: { field: "params_b", type: "quantitative" },
+    });
+    expect(layer[2]?.encoding).toMatchObject({
+      text: { field: "model", type: "nominal" },
+    });
+  });
 });
