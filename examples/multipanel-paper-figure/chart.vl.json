@@ -1,0 +1,89 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "hconcat": [
+    {
+      "title": {
+        "text": "(a) Training",
+        "anchor": "start",
+        "fontWeight": "bold"
+      },
+      "width": 200,
+      "height": 170,
+      "data": {
+        "url": "learning-curve.csv"
+      },
+      "mark": "line",
+      "encoding": {
+        "x": {
+          "field": "epoch",
+          "type": "quantitative"
+        },
+        "y": {
+          "field": "f1",
+          "type": "quantitative",
+          "scale": {
+            "zero": false
+          }
+        },
+        "color": {
+          "field": "model",
+          "type": "nominal"
+        }
+      }
+    },
+    {
+      "title": {
+        "text": "(b) Ablation",
+        "anchor": "start",
+        "fontWeight": "bold"
+      },
+      "width": 200,
+      "height": 170,
+      "data": {
+        "url": "ablation.csv"
+      },
+      "mark": "bar",
+      "encoding": {
+        "x": {
+          "field": "component",
+          "type": "nominal",
+          "sort": null
+        },
+        "y": {
+          "field": "score",
+          "type": "quantitative"
+        }
+      }
+    },
+    {
+      "title": {
+        "text": "(c) Quality vs latency",
+        "anchor": "start",
+        "fontWeight": "bold"
+      },
+      "width": 200,
+      "height": 170,
+      "data": {
+        "url": "pareto.csv"
+      },
+      "mark": "point",
+      "encoding": {
+        "x": {
+          "field": "latency_ms",
+          "type": "quantitative"
+        },
+        "y": {
+          "field": "score",
+          "type": "quantitative",
+          "scale": {
+            "zero": false
+          }
+        },
+        "color": {
+          "field": "family",
+          "type": "nominal"
+        }
+      }
+    }
+  ]
+}

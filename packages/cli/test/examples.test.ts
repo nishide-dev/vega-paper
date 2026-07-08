@@ -285,4 +285,33 @@ describe("examples", () => {
       text: { value: "ECE = 0.041" },
     });
   });
+
+  test("multipanel-paper-figure composes three labeled panels with hconcat", async () => {
+    const spec = await readExampleSpec("examples/multipanel-paper-figure/chart.vl.json");
+
+    expect(spec.$schema).toBe("https://vega.github.io/schema/vega-lite/v6.json");
+
+    const panels = spec.hconcat as Array<Record<string, unknown>>;
+
+    expect(Array.isArray(panels)).toBe(true);
+    expect(panels).toHaveLength(3);
+    expect(panels[0]?.data).toEqual({ url: "learning-curve.csv" });
+    expect(panels[1]?.data).toEqual({ url: "ablation.csv" });
+    expect(panels[2]?.data).toEqual({ url: "pareto.csv" });
+
+    const titles = panels.map((panel) => panel.title as { text: string; anchor: string });
+
+    expect(titles[0]?.text).toStartWith("(a) ");
+    expect(titles[1]?.text).toStartWith("(b) ");
+    expect(titles[2]?.text).toStartWith("(c) ");
+
+    for (const title of titles) {
+      expect(title.anchor).toBe("start");
+    }
+
+    for (const panel of panels) {
+      expect(panel.width).toBe(200);
+      expect(panel.height).toBe(170);
+    }
+  });
 });
