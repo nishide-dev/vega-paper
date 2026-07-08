@@ -314,4 +314,23 @@ describe("examples", () => {
       expect(panel.height).toBe(170);
     }
   });
+
+  test("multipanel-paper-figure composed chart references sibling example data", async () => {
+    const spec = await readExampleSpec("examples/multipanel-paper-figure/chart-composed.vl.json");
+    const panels = spec.hconcat as Array<Record<string, unknown>>;
+
+    expect(panels).toHaveLength(2);
+    expect(panels[0]?.data).toEqual({ url: "../training-curve/data.csv" });
+    expect(panels[1]?.data).toEqual({ url: "../ablation-bar/data.csv" });
+    expect(panels[0]?.title).toEqual({
+      text: "(a) Training",
+      anchor: "start",
+      fontWeight: "bold",
+    });
+    expect(panels[1]?.title).toEqual({
+      text: "(b) Ablation",
+      anchor: "start",
+      fontWeight: "bold",
+    });
+  });
 });

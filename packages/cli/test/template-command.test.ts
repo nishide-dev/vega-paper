@@ -136,7 +136,7 @@ describe("template command", () => {
       ),
     ).rejects.toThrow(
       new VegaPaperError(
-        'Unknown template "violin". Expected one of: benchmark-heatmap, pareto-frontier, scaling-law, calibration-curve.',
+        'Unknown template "violin". Expected one of: benchmark-heatmap, pareto-frontier, scaling-law, calibration-curve, multipanel.',
       ),
     );
   });

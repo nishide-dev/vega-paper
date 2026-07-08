@@ -39,7 +39,8 @@
     "render:confusion-matrix": "bun run packages/cli/src/index.ts render examples/confusion-matrix/chart.vl.json --theme paper-clean --format svg --out examples/confusion-matrix/output.svg",
     "render:faceted-training": "bun run packages/cli/src/index.ts render examples/faceted-training/chart.vl.json --theme paper-clean --format svg --out examples/faceted-training/output.svg",
     "render:boxplot": "bun run packages/cli/src/index.ts render examples/boxplot/chart.vl.json --theme paper-clean --format svg --out examples/boxplot/output.svg",
-    "render:multipanel": "bun run packages/cli/src/index.ts render examples/multipanel-paper-figure/chart.vl.json --theme paper-clean --format svg --out examples/multipanel-paper-figure/output.svg"
+    "render:multipanel": "bun run packages/cli/src/index.ts render examples/multipanel-paper-figure/chart.vl.json --theme paper-clean --format svg --out examples/multipanel-paper-figure/output.svg",
+    "template:multipanel": "bun run packages/cli/src/index.ts template multipanel --panel examples/training-curve/chart.vl.json:a:Training --panel examples/ablation-bar/chart.vl.json:b:Ablation --layout hconcat --spec-out examples/multipanel-paper-figure/chart-composed.vl.json"
   },
   "dependencies": {
     "vega-paper": "workspace:*"

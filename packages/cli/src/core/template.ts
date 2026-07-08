@@ -2,6 +2,7 @@ import { VegaPaperError } from "./errors";
 import type { JsonObject } from "./spec";
 import { buildBenchmarkHeatmapSpec } from "./templates/benchmark-heatmap";
 import { buildCalibrationCurveSpec } from "./templates/calibration-curve";
+import { buildMultipanelSpec, type MultipanelRequest } from "./templates/multipanel";
 import { buildParetoFrontierSpec } from "./templates/pareto-frontier";
 import { buildScalingLawSpec } from "./templates/scaling-law";
 
@@ -10,6 +11,7 @@ export const TEMPLATE_NAMES = [
   "pareto-frontier",
   "scaling-law",
   "calibration-curve",
+  "multipanel",
 ] as const;
 
 export type TemplateName = (typeof TEMPLATE_NAMES)[number];
@@ -83,11 +85,14 @@ export type CalibrationCurveRequest = TemplateCommonRequest & {
   options: CalibrationCurveOptions;
 };
 
+export type MultipanelTemplateRequest = { template: "multipanel" } & MultipanelRequest;
+
 export type TemplateRequest =
   | BenchmarkHeatmapRequest
   | ParetoFrontierRequest
   | ScalingLawRequest
-  | CalibrationCurveRequest;
+  | CalibrationCurveRequest
+  | MultipanelTemplateRequest;
 
 export function parseTemplateName(value: string): TemplateName {
   if ((TEMPLATE_NAMES as readonly string[]).includes(value)) {
@@ -109,5 +114,7 @@ export function buildTemplateSpec(request: TemplateRequest): JsonObject {
       return buildScalingLawSpec(request);
     case "calibration-curve":
       return buildCalibrationCurveSpec(request);
+    case "multipanel":
+      return buildMultipanelSpec(request);
   }
 }

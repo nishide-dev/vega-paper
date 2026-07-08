@@ -14,7 +14,7 @@ describe("parseTemplateName", () => {
   test("rejects unknown template names", () => {
     expect(() => parseTemplateName("violin")).toThrow(
       new VegaPaperError(
-        'Unknown template "violin". Expected one of: benchmark-heatmap, pareto-frontier, scaling-law, calibration-curve.',
+        'Unknown template "violin". Expected one of: benchmark-heatmap, pareto-frontier, scaling-law, calibration-curve, multipanel.',
       ),
     );
   });

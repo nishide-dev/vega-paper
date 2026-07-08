@@ -1,4 +1,4 @@
-import { extname } from "node:path";
+import { dirname, extname } from "node:path";
 import type { Command } from "commander";
 import { VegaPaperError } from "../core/errors";
 import {
@@ -12,7 +12,12 @@ import {
 import { parseCsv } from "../core/infer";
 import { type RenderRequest, type RenderResult, renderChart } from "../core/render";
 import { buildRenderRequest } from "../core/render-format";
-import type { JsonObject } from "../core/spec";
+import { detectSpecType, type JsonObject, loadJsonSpec } from "../core/spec";
+import {
+  type MultipanelLayout,
+  type MultipanelPanel,
+  rebaseDataUrl,
+} from "../core/templates/multipanel";
 import {
   buildTemplateSpec,
   parseTemplateName,
@@ -47,6 +52,8 @@ type TemplateCommandOptions = {
   scale?: string;
   out?: string;
   specOut?: string;
+  panel?: string[];
+  layout?: string;
 };
 
 type WriteOutput = (value: string) => void;
@@ -68,7 +75,7 @@ export function registerTemplateCommand(
   program
     .command("template")
     .argument("<template-name>", `template name: ${TEMPLATE_NAMES.join(", ")}`)
-    .argument("<data>", "CSV input path")
+    .argument("[data]", "CSV input path (not used by the multipanel template)")
     .description("Generate a structured ML paper figure spec from a named template")
     .option("--x <field>", "x encoding field")
     .option("--y <field>", "y encoding field")
@@ -84,6 +91,13 @@ export function registerTemplateCommand(
     .option("--x-scale <type>", "x axis scale: linear or log")
     .option("--frontier <mode>", "Pareto frontier mode: max-y-min-x")
     .option("--fit <method>", "fitted trend overlay: regression")
+    .option(
+      "--panel <value>",
+      "multipanel panel as <spec-path>:<label>[:<title>] (repeatable)",
+      collectPanelValues,
+      [] as string[],
+    )
+    .option("--layout <layout>", "multipanel layout: hconcat or vconcat (default hconcat)")
     .option("--title <text>", "chart title")
     .option("--width <number>", "chart width")
     .option("--height <number>", "chart height")
@@ -96,8 +110,39 @@ export function registerTemplateCommand(
     .option("--out <path>", "rendered output path (.svg, .png, or .pdf)")
     .option("--spec-out <path>", "Vega-Lite spec output path")
     .action(
-      async (templateNameValue: string, inputPath: string, options: TemplateCommandOptions) => {
+      async (
+        templateNameValue: string,
+        inputPath: string | undefined,
+        options: TemplateCommandOptions,
+      ) => {
         const template = parseTemplateName(templateNameValue);
+
+        if (template === "multipanel") {
+          if (inputPath !== undefined) {
+            throw new VegaPaperError(
+              "The multipanel template does not take a <data> argument. Pass panels with --panel <spec-path>:<label>[:<title>].",
+            );
+          }
+
+          await runMultipanelTemplate(options, {
+            writeOutput,
+            runRender,
+            writeSpec,
+            writeFigureMetaFile,
+          });
+          return;
+        }
+
+        if (inputPath === undefined) {
+          throw new VegaPaperError("Missing required argument <data>.");
+        }
+
+        if ((options.panel ?? []).length > 0 || options.layout !== undefined) {
+          throw new VegaPaperError(
+            'The "--panel" and "--layout" options are only valid with the multipanel template.',
+          );
+        }
+
         const specOutputPath = resolveTemplateOutputs(options);
         const table = await loadTable(inputPath);
         const request = buildTemplateRequest(template, inputPath, specOutputPath, options, table);
@@ -175,6 +220,7 @@ const ALLOWED_OPTIONS_BY_TEMPLATE: Record<TemplateName, readonly TemplateOptionK
   "pareto-frontier": ["x", "y", "label", "color", "size", "xScale", "frontier"],
   "scaling-law": ["x", "y", "color", "xScale", "fit"],
   "calibration-curve": ["confidence", "accuracy", "count", "ece"],
+  multipanel: [],
 };
 
 export function buildTemplateRequest(
@@ -239,9 +285,15 @@ export function buildTemplateRequest(
     };
   }
 
+  if (template === "multipanel") {
+    throw new VegaPaperError(
+      "The multipanel template is handled separately and does not use CSV input.",
+    );
+  }
+
   return {
     ...common,
-    template,
+    template: "calibration-curve",
     options: {
       confidenceField: requireOption(options.confidence, "--confidence <field>"),
       accuracyField: requireOption(options.accuracy, "--accuracy <field>"),
@@ -488,4 +540,140 @@ function toMetaWriteError(metaOutputPath: string, error: unknown): VegaPaperErro
   }
 
   return new VegaPaperError(`Could not write figure meta to ${metaOutputPath}.`);
+}
+
+export type ParsedPanelOption = {
+  specPath: string;
+  label: string;
+  title?: string | undefined;
+};
+
+export function parsePanelOption(value: string): ParsedPanelOption {
+  const parts = value.split(":");
+
+  if (parts.length < 2) {
+    throw new VegaPaperError(
+      `Invalid --panel value "${value}". Expected <spec-path>:<label>[:<title>].`,
+    );
+  }
+
+  const [specPath = "", label = "", ...titleParts] = parts;
+
+  if (specPath === "" || label === "") {
+    throw new VegaPaperError(
+      `Invalid --panel value "${value}". Spec path and label must be non-empty.`,
+    );
+  }
+
+  const title = titleParts.join(":");
+
+  return {
+    specPath,
+    label,
+    title: title === "" ? undefined : title,
+  };
+}
+
+export function parseMultipanelLayout(value: string | undefined): MultipanelLayout {
+  if (value === undefined || value === "hconcat") {
+    return "hconcat";
+  }
+
+  if (value === "vconcat") {
+    return "vconcat";
+  }
+
+  throw new VegaPaperError(
+    `Invalid value "${value}" for --layout. Expected one of: hconcat, vconcat.`,
+  );
+}
+
+function collectPanelValues(value: string, previous: string[]): string[] {
+  return [...previous, value];
+}
+
+type MultipanelTemplateDeps = {
+  writeOutput: (value: string) => void;
+  runRender: (request: RenderRequest) => Promise<RenderResult>;
+  writeSpec: (specOutputPath: string, spec: JsonObject) => Promise<void>;
+  writeFigureMetaFile: (metaOutputPath: string, meta: FigureMeta) => Promise<void>;
+};
+
+async function runMultipanelTemplate(
+  options: TemplateCommandOptions,
+  deps: MultipanelTemplateDeps,
+): Promise<void> {
+  const panelValues = options.panel ?? [];
+
+  if (panelValues.length < 2) {
+    throw new VegaPaperError("The multipanel template requires at least two --panel values.");
+  }
+
+  const layout = parseMultipanelLayout(options.layout);
+  const specOutputPath = resolveTemplateOutputs(options);
+  const outputDirectory = dirname(specOutputPath);
+  const panels: MultipanelPanel[] = [];
+
+  for (const value of panelValues) {
+    const parsed = parsePanelOption(value);
+    const panelSpec = await loadJsonSpec(parsed.specPath);
+
+    if (detectSpecType(panelSpec) !== "vega-lite") {
+      throw new VegaPaperError(
+        `Multipanel panels must be Vega-Lite specs. Not Vega-Lite: ${parsed.specPath}`,
+      );
+    }
+
+    panels.push({
+      spec: rebaseDataUrl(panelSpec, dirname(parsed.specPath), outputDirectory),
+      label: parsed.label,
+      title: parsed.title,
+    });
+  }
+
+  const spec = buildTemplateSpec({ template: "multipanel", panels, layout });
+
+  try {
+    await deps.writeSpec(specOutputPath, spec);
+  } catch (error) {
+    throw toSpecWriteError(specOutputPath, error);
+  }
+
+  deps.writeOutput(`Wrote ${specOutputPath}\n`);
+
+  if (options.out === undefined) {
+    return;
+  }
+
+  const renderRequest = buildRenderRequest({
+    inputPath: specOutputPath,
+    outputPath: options.out,
+    format: options.format,
+    scale: options.scale,
+    themeName: options.theme,
+  });
+  const renderResult = await deps.runRender(renderRequest);
+
+  deps.writeOutput(`Rendered ${renderResult.outputPath}\n`);
+
+  const metaOutputPath = toSiblingMetaPath(options.out);
+  const versions = await resolveFigureMetaVersions();
+  const meta = buildTemplateFigureMeta({
+    template: "multipanel",
+    outputPath: options.out,
+    specOutPath: specOutputPath,
+    themeName: options.theme,
+    format: renderRequest.format,
+    scale: renderRequest.scale,
+    versions,
+    options: { panels: panelValues, layout },
+  });
+
+  try {
+    await deps.writeFigureMetaFile(metaOutputPath, meta);
+  } catch (error) {
+    throw toMetaWriteError(metaOutputPath, error);
+  }
+
+  deps.writeOutput(`Wrote ${metaOutputPath}\n`);
 }

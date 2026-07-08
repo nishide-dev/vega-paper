@@ -1,0 +1,59 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "hconcat": [
+    {
+      "data": {
+        "url": "../training-curve/data.csv"
+      },
+      "mark": "line",
+      "width": 360,
+      "height": 240,
+      "encoding": {
+        "x": {
+          "field": "epoch",
+          "type": "quantitative"
+        },
+        "y": {
+          "field": "f1",
+          "type": "quantitative"
+        },
+        "color": {
+          "field": "model",
+          "type": "nominal"
+        }
+      },
+      "title": {
+        "text": "(a) Training",
+        "anchor": "start",
+        "fontWeight": "bold"
+      }
+    },
+    {
+      "data": {
+        "url": "../ablation-bar/data.csv"
+      },
+      "mark": "bar",
+      "width": 420,
+      "height": 240,
+      "encoding": {
+        "x": {
+          "field": "component",
+          "type": "nominal"
+        },
+        "y": {
+          "field": "score",
+          "type": "quantitative"
+        },
+        "color": {
+          "field": "method",
+          "type": "nominal"
+        }
+      },
+      "title": {
+        "text": "(b) Ablation",
+        "anchor": "start",
+        "fontWeight": "bold"
+      }
+    }
+  ]
+}

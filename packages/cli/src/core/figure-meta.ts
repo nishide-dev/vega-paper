@@ -57,13 +57,13 @@ export type RenderFigureMeta = {
   scale?: number;
 };
 
-export type TemplateOptionsSnapshot = Record<string, string | number | boolean>;
+export type TemplateOptionsSnapshot = Record<string, string | number | boolean | string[]>;
 
 export type TemplateFigureMeta = {
   generatedBy: "vega-paper";
   command: "template";
   template: TemplateName;
-  input: string;
+  input?: string;
   output: string;
   specOut: string;
   createdAt: string;
@@ -108,7 +108,7 @@ export type BuildRenderFigureMetaInput = {
 
 export type BuildTemplateFigureMetaInput = {
   template: TemplateName;
-  inputPath: string;
+  inputPath?: string | undefined;
   outputPath: string;
   specOutPath: string;
   themeName?: string | undefined;
@@ -278,7 +278,6 @@ export function buildTemplateFigureMeta(input: BuildTemplateFigureMetaInput): Te
     generatedBy: "vega-paper",
     command: "template",
     template: input.template,
-    input: input.inputPath,
     output: input.outputPath,
     specOut: input.specOutPath,
     createdAt: createdAt.toISOString(),
@@ -287,6 +286,10 @@ export function buildTemplateFigureMeta(input: BuildTemplateFigureMetaInput): Te
     vegaLiteVersion: versions.vegaLiteVersion,
     options: input.options,
   };
+
+  if (input.inputPath !== undefined) {
+    meta.input = input.inputPath;
+  }
 
   if (input.themeName !== undefined) {
     meta.theme = input.themeName;
