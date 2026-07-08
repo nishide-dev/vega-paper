@@ -34,7 +34,7 @@ Then add modifiers if needed:
 |------|----------|-------|
 | Roll up duplicate x rows | `--aggregate <method>` | Not with `boxplot` or `--error-band` |
 | Small multiples by a third field | `--facet <field>` | Must differ from `--x`, `--y`, `--color` |
-| Symmetric uncertainty on y | `--error-band <field>` | Cartesian charts only; not with `--aggregate` |
+| Symmetric uncertainty on y | `--error-band <field>` | Shaded band on `line`; `yError` on `bar`/`scatter`/`area`; not with `--aggregate` |
 
 See repo examples in the table below and [Chart types](#chart-types) for encoding details.
 
@@ -61,11 +61,14 @@ Split the chart into small multiples by `field`.
 
 ### `--error-band <field>`
 
-Symmetric error magnitude on `--y` (maps to `encoding.yError`).
+Symmetric error magnitude on `--y`.
 
-- Allowed on cartesian charts: `line`, `bar`, `scatter`, `area`.
+- On `--chart line`: generates a **layered spec** — a shaded `errorband` layer (`extent: "stderr"`, `opacity: 0.25`) drawn behind the line. This is the shaded uncertainty band expected for learning curves.
+- On `bar`, `scatter`, `area`: maps to `encoding.yError` (per-point error), unchanged.
 - **Not allowed** with `heatmap`, `boxplot`, or `--aggregate`.
 - Field must differ from `--x`, `--y`, `--color`, and `--facet`.
+
+**Error band vs error bars:** a band is a continuous shaded region around a line — use it for metrics over epochs/steps. Error bars are per-point whiskers, which is what `yError` produces on non-line marks.
 
 ## Examples in this repo
 
