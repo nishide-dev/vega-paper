@@ -296,7 +296,9 @@ async function createPanelWorkspace(): Promise<{
   return { workspace, panelA, panelB };
 }
 
-async function runCli(args: string[]): Promise<{ exitCode: number; stdout: string; stderr: string }> {
+async function runCli(
+  args: string[],
+): Promise<{ exitCode: number; stdout: string; stderr: string }> {
   const proc = Bun.spawn(["bun", "run", CLI_ENTRY, ...args], {
     cwd: REPO_ROOT,
     stdout: "pipe",

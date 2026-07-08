@@ -130,10 +130,9 @@ describe("template command", () => {
 
   test("rejects unknown template names", async () => {
     await expect(
-      runTemplateCommand(
-        ["template", "violin", "data.csv", "--spec-out", "chart.vl.json"],
-        { loadTable: stubLoadTable },
-      ),
+      runTemplateCommand(["template", "violin", "data.csv", "--spec-out", "chart.vl.json"], {
+        loadTable: stubLoadTable,
+      }),
     ).rejects.toThrow(
       new VegaPaperError(
         'Unknown template "violin". Expected one of: benchmark-heatmap, pareto-frontier, scaling-law, calibration-curve, multipanel.',
@@ -326,10 +325,9 @@ describe("template command", () => {
     ).rejects.toThrow(new VegaPaperError('The "--theme" option requires "--out <path>".'));
 
     await expect(
-      runTemplateCommand(
-        ["template", "scaling-law", "data.csv", "--x", "flops", "--y", "loss"],
-        { loadTable: stubLoadTable },
-      ),
+      runTemplateCommand(["template", "scaling-law", "data.csv", "--x", "flops", "--y", "loss"], {
+        loadTable: stubLoadTable,
+      }),
     ).rejects.toThrow(
       new VegaPaperError(
         'Missing output destination. Use "--spec-out <path>" and/or "--out <path>".',

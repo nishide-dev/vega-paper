@@ -14,6 +14,9 @@ Small datasets and reference Vega-Lite specs for trying the CLI. Each folder has
 | [ablation-bar/](ablation-bar/) | `infer` bar; ablation and grouped benchmark comparison |
 | [benchmark-heatmap/](benchmark-heatmap/) | `infer` heatmap; hand-written labeled variant (rect + text) |
 | [run-distribution/](run-distribution/) | `infer` boxplot over seeds; hand-written boxplot + raw points overlay |
+| [pareto-frontier/](pareto-frontier/) | `template` Pareto frontier scatter with log-x and frontier overlay |
+| [scaling-law/](scaling-law/) | `template` scaling law with log-x and optional regression fit |
+| [calibration-curve/](calibration-curve/) | `template` reliability diagram with ECE annotation |
 | [theme-samples/](theme-samples/) | Same spec rendered with every built-in theme |
 
 ## Gallery
@@ -32,6 +35,9 @@ Committed PNG previews (`paper-clean` unless noted). Theme comparison: [root REA
 | [ablation-bar/](ablation-bar/) | ![ablation-bar](../docs/assets/gallery/examples/ablation-bar.png) |
 | [benchmark-heatmap/](benchmark-heatmap/) | ![benchmark-heatmap](../docs/assets/gallery/examples/benchmark-heatmap.png) |
 | [run-distribution/](run-distribution/) | ![run-distribution](../docs/assets/gallery/examples/run-distribution.png) |
+| [pareto-frontier/](pareto-frontier/) | ![pareto-frontier](../docs/assets/gallery/examples/pareto-frontier.png) |
+| [scaling-law/](scaling-law/) | ![scaling-law](../docs/assets/gallery/examples/scaling-law.png) |
+| [calibration-curve/](calibration-curve/) | ![calibration-curve](../docs/assets/gallery/examples/calibration-curve.png) |
 | [custom-theme/](custom-theme/) | ![custom-theme](../docs/assets/gallery/examples/custom-theme.png) |
 | [multipanel-paper-figure/](multipanel-paper-figure/) | ![multipanel-paper-figure](../docs/assets/gallery/examples/multipanel-paper-figure.png) |
 
@@ -57,6 +63,7 @@ From the repo root:
 
 ```bash
 bun run infer:examples
+bun run template:examples
 ```
 
 This overwrites committed `chart*.vl.json` files under `examples/`. See each folder README for individual commands.

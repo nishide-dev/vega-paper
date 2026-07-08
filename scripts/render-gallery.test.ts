@@ -15,6 +15,9 @@ const EXAMPLE_PREVIEWS = [
   "ablation-bar",
   "benchmark-heatmap",
   "run-distribution",
+  "pareto-frontier",
+  "scaling-law",
+  "calibration-curve",
   "custom-theme",
   "multipanel-paper-figure",
 ];

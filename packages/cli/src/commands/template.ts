@@ -14,11 +14,6 @@ import { type RenderRequest, type RenderResult, renderChart } from "../core/rend
 import { buildRenderRequest } from "../core/render-format";
 import { detectSpecType, type JsonObject, loadJsonSpec } from "../core/spec";
 import {
-  type MultipanelLayout,
-  type MultipanelPanel,
-  rebaseDataUrl,
-} from "../core/templates/multipanel";
-import {
   buildTemplateSpec,
   parseTemplateName,
   TEMPLATE_NAMES,
@@ -27,6 +22,11 @@ import {
   type TemplateRequest,
   type TemplateTable,
 } from "../core/template";
+import {
+  type MultipanelLayout,
+  type MultipanelPanel,
+  rebaseDataUrl,
+} from "../core/templates/multipanel";
 import { toSiblingSpecPath, writeSpecFile } from "./infer";
 
 type TemplateCommandOptions = {

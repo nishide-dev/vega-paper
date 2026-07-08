@@ -27,7 +27,7 @@ Metadata matches `packages/themes`. Pass the **`name`** value to `--theme`. Seri
 | `monochrome-print` | Monochrome Print | _(grayscale)_ | paper | print |
 | `poster-dark` | Poster Dark | `catppuccin-mocha` | poster | dark |
 
-MVP output is **SVG only**. Themes adjust Vega-Lite `config` (fonts, colors, default view size); they do not change data or encodings.
+Rendered output formats are **SVG**, **PNG**, and **PDF** (`--format` on `render`/`infer`). Themes adjust Vega-Lite `config` (fonts, colors, default view size); they do not change data or encodings.
 
 ## Choosing a theme
 

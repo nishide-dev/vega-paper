@@ -1,6 +1,6 @@
 ---
 name: vega-paper
-description: Generate publication-ready academic figures with the vega-paper CLI (infer, lint, render, themes). Use when building paper figures from CSV/JSON, Vega-Lite specs, training curves, heatmaps, boxplots, or when the user mentions vega-paper, Vega-Lite charts, or figure meta sidecars.
+description: Generate publication-ready academic figures with the vega-paper CLI (infer, template, lint, render, themes). Use when building paper figures from CSV/JSON, Vega-Lite specs, training curves, heatmaps, boxplots, Pareto/scaling/calibration figures, multipanel layouts, or when the user mentions vega-paper, Vega-Lite charts, or figure meta sidecars.
 disable-model-invocation: true
 ---
 
@@ -45,7 +45,17 @@ Before running `infer`, make these explicit (ask the user if unclear):
 
 Optional flags: `--facet`, `--aggregate`, `--error-band`, `--title`, `--width`, `--height`, `--inline-data`, `--x-type`, `--y-type`, `--color-type`.
 
-**Do not** invent Vega-Lite JSON for the primary path. Let `infer` build the spec deterministically.
+**Do not** invent Vega-Lite JSON for the primary path. Let `infer` or `template` build the spec deterministically.
+
+## When to use `infer` vs `template` vs hand-written specs
+
+| Path | Use when |
+|------|----------|
+| **`infer`** | Tabular CSV/JSON and one of the six `--chart` types fits (line, bar, scatter, area, heatmap, boxplot) |
+| **`template`** | Structured ML figures needing layers, labels, computed overlays, or log scales — e.g. labeled heatmap, Pareto frontier, scaling law, calibration curve, multipanel composition |
+| **Hand-written `.vl.json` + `render`** | Custom layouts `infer`/`template` do not cover yet; edit committed examples under `examples/` |
+
+See [Chart selection](references/chart-selection.md) for `infer` charts; template names: `benchmark-heatmap`, `pareto-frontier`, `scaling-law`, `calibration-curve`, `multipanel`.
 
 ## Chart selection
 
@@ -119,6 +129,36 @@ figures/f1.meta.json   # provenance: command, infer snapshot, versions
 
 If `--strict` lint fails, the command exits before render and **no** `.meta.json` is written.
 
+## Template workflow (structured ML figures)
+
+Use when the figure needs layers, annotations, or computed fields that `infer` does not emit:
+
+```bash
+vega-paper template pareto-frontier examples/pareto-frontier/data.csv \
+  --x latency_ms \
+  --y score \
+  --label model \
+  --color family \
+  --x-scale log \
+  --frontier max-y-min-x \
+  --title "Score vs latency" \
+  --spec-out figures/pareto.vl.json \
+  --theme paper-clean \
+  --out figures/pareto.svg
+```
+
+Compose existing specs into a labeled multi-panel figure (no CSV argument):
+
+```bash
+vega-paper template multipanel \
+  --panel figures/curve.vl.json:a:Training \
+  --panel figures/ablation.vl.json:b:Ablation \
+  --layout hconcat \
+  --spec-out figures/composite.vl.json
+```
+
+Regenerate committed template examples from the repo root: `bun run template:examples`. For ML-specific lint rules (panel labels, series count, log-scale hints), add `--domain ml` to standalone `lint`.
+
 ## Secondary workflow (render)
 
 Use when the user already has a Vega-Lite spec. Read [Vega-Lite patterns](references/vega-lite-patterns.md) for when to prefer `render`, spec requirements, repo examples, and hand-written lint.
@@ -155,8 +195,9 @@ vega-paper doctor
 ## Agent checklist
 
 - [ ] Data columns match `--x`, `--y`, `--color`, etc.
-- [ ] Chart type fits the user's analytical goal
-- [ ] `--lint-profile paper` on infer (and `--strict` only if requested)
+- [ ] Chart type fits the user's analytical goal (`infer`, `template`, or hand-written path chosen deliberately)
+- [ ] `--lint-profile paper` on infer/template render path (and `--strict` only if requested)
+- [ ] For ML conference figures, consider `vega-paper lint SPEC.vl.json --profile paper --domain ml`
 - [ ] Output format matches user goal (`svg` for papers; `png` / `pdf` when requested)
 - [ ] Commands in notes use `vega-paper`, not monorepo `bun run` paths
 - [ ] Final deliverable includes rendered output and mention `.meta.json` for reproducibility
