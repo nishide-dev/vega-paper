@@ -252,6 +252,113 @@ describe("ml-too-many-series", () => {
   });
 });
 
+describe("ml-log-scale-candidate", () => {
+  test("warns when x spans more than three orders of magnitude", () => {
+    const spec = scalingSpec();
+
+    expect(
+      mlIssues(
+        runMlRules(spec, { domain: "ml", externalDataRows: flopsRows(["1", "500", "1001"]) }),
+        "ml-log-scale-candidate",
+      ),
+    ).toEqual([
+      {
+        severity: "warning",
+        ruleId: "ml-log-scale-candidate",
+        path: "$.encoding.x.scale",
+        message: 'X field "flops" spans more than 3 orders of magnitude (max/min > 1000).',
+        suggestion: 'Set encoding.x.scale.type to "log" for scaling or Pareto figures.',
+      },
+    ]);
+  });
+
+  test("does not warn at the ratio boundary", () => {
+    expect(
+      mlIssues(
+        runMlRules(scalingSpec(), { domain: "ml", externalDataRows: flopsRows(["1", "1000"]) }),
+        "ml-log-scale-candidate",
+      ),
+    ).toEqual([]);
+  });
+
+  test("parses scientific-notation CSV strings", () => {
+    expect(
+      mlIssues(
+        runMlRules(scalingSpec(), {
+          domain: "ml",
+          externalDataRows: flopsRows(["1.2e20", "5.4e23"]),
+        }),
+        "ml-log-scale-candidate",
+      ),
+    ).toHaveLength(1);
+  });
+
+  test("ignores non-positive and non-numeric values", () => {
+    expect(
+      mlIssues(
+        runMlRules(scalingSpec(), {
+          domain: "ml",
+          externalDataRows: flopsRows(["-5", "0", "n/a", "1", "1001"]),
+        }),
+        "ml-log-scale-candidate",
+      ),
+    ).toHaveLength(1);
+    expect(
+      mlIssues(
+        runMlRules(scalingSpec(), { domain: "ml", externalDataRows: flopsRows(["-5", "0"]) }),
+        "ml-log-scale-candidate",
+      ),
+    ).toEqual([]);
+  });
+
+  test("does not warn when a log scale is already set", () => {
+    const spec = scalingSpec({ scale: { type: "log" } });
+
+    expect(
+      mlIssues(
+        runMlRules(spec, { domain: "ml", externalDataRows: flopsRows(["1", "1001"]) }),
+        "ml-log-scale-candidate",
+      ),
+    ).toEqual([]);
+  });
+
+  test("warns once per field across layers", () => {
+    const layerUnit = {
+      mark: "line",
+      encoding: {
+        x: { field: "flops", type: "quantitative", title: "FLOPs" },
+        y: { field: "loss", type: "quantitative", title: "Loss" },
+      },
+    };
+    const spec = cleanVegaLiteSpec({
+      data: { url: "data.csv" },
+      layer: [layerUnit, structuredClone(layerUnit)],
+    });
+    delete spec.mark;
+    delete spec.encoding;
+
+    expect(
+      mlIssues(
+        runMlRules(spec, { domain: "ml", externalDataRows: flopsRows(["1", "1001"]) }),
+        "ml-log-scale-candidate",
+      ),
+    ).toHaveLength(1);
+  });
+
+  test("does not run without domain ml", () => {
+    const spec = scalingSpec({
+      data: {
+        values: [
+          { flops: 1, loss: 2.8 },
+          { flops: 1001, loss: 2.1 },
+        ],
+      },
+    });
+
+    expect(mlIssues(runMlRules(spec), "ml-log-scale-candidate")).toEqual([]);
+  });
+});
+
 describe("loadLintDataRows", () => {
   test("loads CSV rows relative to the spec file", async () => {
     await withTemporaryWorkspace(async (workspacePath) => {
@@ -431,6 +538,28 @@ function seriesRows(seriesCount: number): JsonObject[] {
     accuracy: `${0.5 + index / 100}`,
     model: `model-${index}`,
   }));
+}
+
+function scalingSpec(overrides: JsonObject = {}): JsonObject {
+  const { scale, ...rest } = overrides as { scale?: JsonObject } & JsonObject;
+
+  return cleanVegaLiteSpec({
+    data: { url: "data.csv" },
+    encoding: {
+      x: {
+        field: "flops",
+        type: "quantitative",
+        title: "FLOPs",
+        ...(scale === undefined ? {} : { scale }),
+      },
+      y: { field: "loss", type: "quantitative", title: "Loss" },
+    },
+    ...rest,
+  });
+}
+
+function flopsRows(flopsValues: string[]): JsonObject[] {
+  return flopsValues.map((flops, index) => ({ flops, loss: `${3 - index / 10}` }));
 }
 
 async function withTemporaryWorkspace(callback: (workspacePath: string) => Promise<void>) {

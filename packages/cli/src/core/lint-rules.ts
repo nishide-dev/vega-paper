@@ -35,6 +35,7 @@ export const mlLintRules: LintRule[] = [
   checkMlPanelLabels,
   checkMlCrowdedLabels,
   checkMlTooManySeries,
+  checkMlLogScaleCandidate,
 ];
 
 export function runLintRules(context: LintRuleContext): LintIssue[] {
@@ -492,6 +493,68 @@ function checkMlTooManySeries({
   return issues;
 }
 
+const LOG_SCALE_SPAN_RATIO = 1000;
+
+function checkMlLogScaleCandidate({
+  spec,
+  specType,
+  externalDataRows,
+}: LintRuleContext): LintIssue[] {
+  if (specType !== "vega-lite") {
+    return [];
+  }
+
+  const issues: LintIssue[] = [];
+  const rootValues = getInlineDataValues(spec);
+  const reportedFields = new Set<string>();
+
+  for (const unit of collectVegaLiteUnitSpecs(spec)) {
+    const encoding = getObject(unit.spec, "encoding");
+    const x = encoding ? getObject(encoding, "x") : undefined;
+
+    if (!x || typeof x.field !== "string" || x.type !== "quantitative") {
+      continue;
+    }
+
+    if (reportedFields.has(x.field)) {
+      continue;
+    }
+
+    const scale = getObject(x, "scale");
+
+    if (scale?.type === "log") {
+      continue;
+    }
+
+    const values = getRuleDataValues(unit.spec, spec, rootValues, externalDataRows);
+
+    if (!values) {
+      continue;
+    }
+
+    const numbers = collectPositiveNumbers(values, x.field);
+
+    if (numbers.length < 2) {
+      continue;
+    }
+
+    if (Math.max(...numbers) / Math.min(...numbers) <= LOG_SCALE_SPAN_RATIO) {
+      continue;
+    }
+
+    reportedFields.add(x.field);
+    issues.push({
+      severity: "warning",
+      ruleId: "ml-log-scale-candidate",
+      path: joinJsonPath(unit.path, "encoding.x.scale"),
+      message: `X field "${x.field}" spans more than 3 orders of magnitude (max/min > 1000).`,
+      suggestion: 'Set encoding.x.scale.type to "log" for scaling or Pareto figures.',
+    });
+  }
+
+  return issues;
+}
+
 type ExplicitColor = {
   path: string;
   color: string;
@@ -565,6 +628,26 @@ function countDistinctFieldValues(values: unknown[], field: string): number {
   }
 
   return categories.size;
+}
+
+function collectPositiveNumbers(values: unknown[], field: string): number[] {
+  const numbers: number[] = [];
+
+  for (const row of values) {
+    if (!isPlainObject(row)) {
+      continue;
+    }
+
+    const raw = row[field];
+    const value =
+      typeof raw === "number" ? raw : typeof raw === "string" ? Number(raw) : Number.NaN;
+
+    if (Number.isFinite(value) && value > 0) {
+      numbers.push(value);
+    }
+  }
+
+  return numbers;
 }
 
 function isGrayscaleColor(color: string): boolean {
