@@ -268,4 +268,21 @@ describe("examples", () => {
       { regression: "loss", on: "flops", method: "log", groupby: ["family"] },
     ]);
   });
+
+  test("calibration-curve chart includes diagonal reference and ECE annotation", async () => {
+    const spec = await readExampleSpec("examples/calibration-curve/chart.vl.json");
+    const layer = spec.layer as Array<Record<string, unknown>>;
+
+    expect(spec.data).toEqual({ url: "data.csv" });
+    expect(layer).toHaveLength(4);
+    expect(layer[0]?.encoding).toEqual({
+      x: { datum: 0 },
+      y: { datum: 0 },
+      x2: { datum: 1 },
+      y2: { datum: 1 },
+    });
+    expect(layer[3]?.encoding).toMatchObject({
+      text: { value: "ECE = 0.041" },
+    });
+  });
 });
