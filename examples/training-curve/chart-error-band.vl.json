@@ -3,26 +3,51 @@
   "data": {
     "url": "data-with-error.csv"
   },
-  "mark": "line",
   "width": 360,
   "height": 240,
-  "encoding": {
-    "x": {
-      "field": "epoch",
-      "type": "quantitative"
+  "layer": [
+    {
+      "mark": {
+        "type": "errorband",
+        "extent": "stderr",
+        "opacity": 0.25
+      },
+      "encoding": {
+        "x": {
+          "field": "epoch",
+          "type": "quantitative"
+        },
+        "y": {
+          "field": "f1",
+          "type": "quantitative"
+        },
+        "color": {
+          "field": "model",
+          "type": "nominal"
+        },
+        "yError": {
+          "field": "f1_se",
+          "type": "quantitative"
+        }
+      }
     },
-    "y": {
-      "field": "f1",
-      "type": "quantitative"
-    },
-    "color": {
-      "field": "model",
-      "type": "nominal"
-    },
-    "yError": {
-      "field": "f1_se",
-      "type": "quantitative"
+    {
+      "mark": "line",
+      "encoding": {
+        "x": {
+          "field": "epoch",
+          "type": "quantitative"
+        },
+        "y": {
+          "field": "f1",
+          "type": "quantitative"
+        },
+        "color": {
+          "field": "model",
+          "type": "nominal"
+        }
+      }
     }
-  },
+  ],
   "title": "Training F1 with standard error"
 }

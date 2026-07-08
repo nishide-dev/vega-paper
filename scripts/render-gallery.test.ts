@@ -7,6 +7,7 @@ const GALLERY = "docs/assets/gallery";
 const EXAMPLE_PREVIEWS = [
   "basic-line",
   "training-curve",
+  "training-curve-error-band",
   "confusion-matrix",
   "faceted-training",
   "boxplot",

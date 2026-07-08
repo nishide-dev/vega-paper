@@ -26,6 +26,11 @@ const exampleJobs: GalleryJob[] = [
     out: `${GALLERY}/examples/training-curve.png`,
   },
   {
+    spec: "examples/training-curve/chart-error-band.vl.json",
+    theme: "paper-clean",
+    out: `${GALLERY}/examples/training-curve-error-band.png`,
+  },
+  {
     spec: "examples/confusion-matrix/chart.vl.json",
     theme: "paper-clean",
     out: `${GALLERY}/examples/confusion-matrix.png`,

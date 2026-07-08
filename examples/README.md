@@ -5,7 +5,7 @@ Small datasets and reference Vega-Lite specs for trying the CLI. Each folder has
 | Folder | Demonstrates |
 |--------|----------------|
 | [basic-line/](basic-line/) | Hand-written spec; `render` and `lint` |
-| [training-curve/](training-curve/) | `infer` line chart; `--aggregate mean`; `--error-band` |
+| [training-curve/](training-curve/) | `infer` line chart; `--aggregate mean`; `--error-band` shaded band |
 | [confusion-matrix/](confusion-matrix/) | `infer` heatmap; sum aggregation from trial rows |
 | [faceted-training/](faceted-training/) | `infer` with `--facet` small multiples |
 | [boxplot/](boxplot/) | `infer` boxplot from raw sample rows; optional `--color` grouping |
@@ -20,6 +20,7 @@ Committed PNG previews (`paper-clean` unless noted). Theme comparison: [root REA
 |---------|---------|
 | [basic-line/](basic-line/) | ![basic-line](../docs/assets/gallery/examples/basic-line.png) |
 | [training-curve/](training-curve/) | ![training-curve](../docs/assets/gallery/examples/training-curve.png) |
+| [training-curve/](training-curve/) error band | ![training-curve-error-band](../docs/assets/gallery/examples/training-curve-error-band.png) |
 | [confusion-matrix/](confusion-matrix/) | ![confusion-matrix](../docs/assets/gallery/examples/confusion-matrix.png) |
 | [faceted-training/](faceted-training/) | ![faceted-training](../docs/assets/gallery/examples/faceted-training.png) |
 | [boxplot/](boxplot/) | ![boxplot](../docs/assets/gallery/examples/boxplot.png) |
