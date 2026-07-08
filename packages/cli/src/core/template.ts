@@ -1,4 +1,9 @@
 import { VegaPaperError } from "./errors";
+import type { JsonObject } from "./spec";
+import { buildBenchmarkHeatmapSpec } from "./templates/benchmark-heatmap";
+import { buildCalibrationCurveSpec } from "./templates/calibration-curve";
+import { buildParetoFrontierSpec } from "./templates/pareto-frontier";
+import { buildScalingLawSpec } from "./templates/scaling-law";
 
 export const TEMPLATE_NAMES = [
   "benchmark-heatmap",
@@ -92,4 +97,17 @@ export function parseTemplateName(value: string): TemplateName {
   throw new VegaPaperError(
     `Unknown template "${value}". Expected one of: ${TEMPLATE_NAMES.join(", ")}.`,
   );
+}
+
+export function buildTemplateSpec(request: TemplateRequest): JsonObject {
+  switch (request.template) {
+    case "benchmark-heatmap":
+      return buildBenchmarkHeatmapSpec(request);
+    case "pareto-frontier":
+      return buildParetoFrontierSpec(request);
+    case "scaling-law":
+      return buildScalingLawSpec(request);
+    case "calibration-curve":
+      return buildCalibrationCurveSpec(request);
+  }
 }
