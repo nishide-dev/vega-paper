@@ -179,6 +179,79 @@ describe("ml-crowded-labels", () => {
   });
 });
 
+describe("ml-too-many-series", () => {
+  test("warns when external rows have more series than the paper threshold", () => {
+    const spec = cleanVegaLiteSpec({ data: { url: "data.csv" } });
+
+    expect(
+      mlIssues(
+        runMlRules(spec, { domain: "ml", externalDataRows: seriesRows(9) }),
+        "ml-too-many-series",
+      ),
+    ).toEqual([
+      {
+        severity: "warning",
+        ruleId: "ml-too-many-series",
+        path: "$.encoding.color",
+        message: 'Color field "model" has 9 series; more than 8 is hard to read in a paper figure.',
+        suggestion: "Filter to key methods, facet the chart, or group minor series.",
+      },
+    ]);
+  });
+
+  test("does not warn at the threshold boundary", () => {
+    const spec = cleanVegaLiteSpec({ data: { url: "data.csv" } });
+
+    expect(
+      mlIssues(
+        runMlRules(spec, { domain: "ml", externalDataRows: seriesRows(8) }),
+        "ml-too-many-series",
+      ),
+    ).toEqual([]);
+  });
+
+  test("uses profile-specific series thresholds", () => {
+    const spec = cleanVegaLiteSpec({ data: { url: "data.csv" } });
+    const rows = seriesRows(9);
+
+    expect(
+      mlIssues(
+        runMlRules(spec, { domain: "ml", profileName: "web", externalDataRows: rows }),
+        "ml-too-many-series",
+      ),
+    ).toEqual([]);
+    expect(
+      mlIssues(
+        runMlRules(spec, { domain: "ml", profileName: "print", externalDataRows: rows }),
+        "ml-too-many-series",
+      ),
+    ).toHaveLength(1);
+  });
+
+  test("counts inline data rows too", () => {
+    const spec = cleanVegaLiteSpec({ data: { values: seriesRows(9) } });
+
+    expect(mlIssues(runMlRules(spec, { domain: "ml" }), "ml-too-many-series")).toHaveLength(1);
+  });
+
+  test("ignores marks that are not line, bar, or point", () => {
+    const spec = cleanVegaLiteSpec({ data: { url: "data.csv" }, mark: "rect" });
+
+    expect(
+      mlIssues(
+        runMlRules(spec, { domain: "ml", externalDataRows: seriesRows(9) }),
+        "ml-too-many-series",
+      ),
+    ).toEqual([]);
+  });
+
+  test("does not run without domain ml", () => {
+    const spec = cleanVegaLiteSpec({ data: { values: seriesRows(9) } });
+
+    expect(mlIssues(runMlRules(spec), "ml-too-many-series")).toEqual([]);
+  });
+});
+
 describe("loadLintDataRows", () => {
   test("loads CSV rows relative to the spec file", async () => {
     await withTemporaryWorkspace(async (workspacePath) => {
@@ -350,6 +423,14 @@ function textLabelSpec(rowCount: number): JsonObject {
   delete spec.mark;
   delete spec.encoding;
   return spec;
+}
+
+function seriesRows(seriesCount: number): JsonObject[] {
+  return Array.from({ length: seriesCount }, (_, index) => ({
+    epoch: "1",
+    accuracy: `${0.5 + index / 100}`,
+    model: `model-${index}`,
+  }));
 }
 
 async function withTemporaryWorkspace(callback: (workspacePath: string) => Promise<void>) {

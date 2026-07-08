@@ -31,7 +31,11 @@ export const paperLintRules: LintRule[] = [
   checkColorOnlySeriesDistinction,
 ];
 
-export const mlLintRules: LintRule[] = [checkMlPanelLabels, checkMlCrowdedLabels];
+export const mlLintRules: LintRule[] = [
+  checkMlPanelLabels,
+  checkMlCrowdedLabels,
+  checkMlTooManySeries,
+];
 
 export function runLintRules(context: LintRuleContext): LintIssue[] {
   const rules = context.domain === "ml" ? [...paperLintRules, ...mlLintRules] : paperLintRules;
@@ -438,6 +442,56 @@ function checkMlCrowdedLabels({
   return issues;
 }
 
+function checkMlTooManySeries({
+  spec,
+  specType,
+  profile,
+  externalDataRows,
+}: LintRuleContext): LintIssue[] {
+  if (specType !== "vega-lite") {
+    return [];
+  }
+
+  const issues: LintIssue[] = [];
+  const rootValues = getInlineDataValues(spec);
+
+  for (const unit of collectVegaLiteUnitSpecs(spec)) {
+    if (!isLineMark(unit.spec.mark) && !isBarMark(unit.spec.mark) && !isPointMark(unit.spec.mark)) {
+      continue;
+    }
+
+    const encoding = getObject(unit.spec, "encoding");
+    const color = encoding ? getObject(encoding, "color") : undefined;
+    const field = typeof color?.field === "string" ? color.field : undefined;
+
+    if (!field) {
+      continue;
+    }
+
+    const values = getRuleDataValues(unit.spec, spec, rootValues, externalDataRows);
+
+    if (!values) {
+      continue;
+    }
+
+    const count = countDistinctFieldValues(values, field);
+
+    if (count <= profile.mlMaxSeries) {
+      continue;
+    }
+
+    issues.push({
+      severity: "warning",
+      ruleId: "ml-too-many-series",
+      path: joinJsonPath(unit.path, "encoding.color"),
+      message: `Color field "${field}" has ${count} series; more than ${profile.mlMaxSeries} is hard to read in a ${profile.name} figure.`,
+      suggestion: "Filter to key methods, facet the chart, or group minor series.",
+    });
+  }
+
+  return issues;
+}
+
 type ExplicitColor = {
   path: string;
   color: string;
@@ -582,6 +636,14 @@ function isTextMark(mark: unknown): boolean {
   }
 
   return isPlainObject(mark) && mark.type === "text";
+}
+
+function isPointMark(mark: unknown): boolean {
+  if (mark === "point" || mark === "circle") {
+    return true;
+  }
+
+  return isPlainObject(mark) && (mark.type === "point" || mark.type === "circle");
 }
 
 function getRuleDataValues(
