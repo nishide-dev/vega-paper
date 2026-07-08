@@ -1,0 +1,24 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "data": {
+    "url": "data.csv"
+  },
+  "mark": "bar",
+  "width": 420,
+  "height": 240,
+  "encoding": {
+    "x": {
+      "field": "component",
+      "type": "nominal"
+    },
+    "y": {
+      "field": "score",
+      "type": "quantitative"
+    },
+    "color": {
+      "field": "method",
+      "type": "nominal"
+    }
+  },
+  "title": "Ablation study"
+}

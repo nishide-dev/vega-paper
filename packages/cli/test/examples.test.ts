@@ -122,4 +122,30 @@ describe("examples", () => {
     expect(spec.width).toBe(360);
     expect(spec.height).toBe(360);
   });
+
+  test("ablation-bar chart is a bar chart of score by component and method", async () => {
+    const spec = await readExampleSpec("examples/ablation-bar/chart.vl.json");
+
+    expect(spec.data).toEqual({ url: "data.csv" });
+    expect(spec.mark).toBe("bar");
+    expect(spec.encoding).toMatchObject({
+      x: { field: "component", type: "nominal" },
+      y: { field: "score", type: "quantitative" },
+      color: { field: "method", type: "nominal" },
+    });
+    expect(spec.width).toBe(420);
+    expect(spec.height).toBe(240);
+  });
+
+  test("ablation-bar grouped chart compares methods across datasets", async () => {
+    const spec = await readExampleSpec("examples/ablation-bar/chart-grouped.vl.json");
+
+    expect(spec.data).toEqual({ url: "grouped.csv" });
+    expect(spec.mark).toBe("bar");
+    expect(spec.encoding).toMatchObject({
+      x: { field: "dataset", type: "nominal" },
+      y: { field: "score", type: "quantitative" },
+      color: { field: "method", type: "nominal" },
+    });
+  });
 });

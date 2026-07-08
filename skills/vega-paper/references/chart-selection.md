@@ -15,7 +15,7 @@ Choose `--chart` and encoding fields **before** running `infer`. This guide cove
 
 Supported values for `--chart`: `line`, `bar`, `scatter`, `area`, `heatmap`, `boxplot`.
 
-There is no dedicated `examples/` folder for `bar` or `area` yet; `scatter` is covered by [embedding-scatter/](../../../examples/embedding-scatter/).
+There is no dedicated `examples/` folder for `area` yet; `bar` is covered by [ablation-bar/](../../../examples/ablation-bar/) and `scatter` by [embedding-scatter/](../../../examples/embedding-scatter/).
 
 ## Decision guide
 
@@ -81,6 +81,7 @@ Copy-paste commands live in each folder README.
 | [faceted-training/](../../../examples/faceted-training/) | `line` | `--facet`, `--color` |
 | [boxplot/](../../../examples/boxplot/) | `boxplot` | optional `--color` grouping |
 | [embedding-scatter/](../../../examples/embedding-scatter/) | `scatter` | `--color` for class/cluster labels |
+| [ablation-bar/](../../../examples/ablation-bar/) | `bar` | ablation and grouped benchmark comparison with `--color` |
 | [basic-line/](../../../examples/basic-line/) | (hand-written spec) | `render` / `lint` only — not `infer` |
 
 Index: [examples/README.md](../../../examples/README.md).
