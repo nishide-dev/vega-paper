@@ -263,7 +263,10 @@ export function normalizeInferOptions(
   };
 }
 
-async function writeSpecFile(specOutputPath: string, spec: InferResult["spec"]): Promise<void> {
+export async function writeSpecFile(
+  specOutputPath: string,
+  spec: InferResult["spec"],
+): Promise<void> {
   await mkdir(dirname(specOutputPath), { recursive: true });
   await writeFile(specOutputPath, `${JSON.stringify(spec, null, 2)}\n`, "utf8");
 }
@@ -459,7 +462,7 @@ function parseFieldType(
   );
 }
 
-function toSiblingSpecPath(outputPath: string): string {
+export function toSiblingSpecPath(outputPath: string): string {
   const parsedPath = parse(outputPath);
   return join(parsedPath.dir, `${parsedPath.name}.vl.json`);
 }
