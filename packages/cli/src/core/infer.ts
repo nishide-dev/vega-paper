@@ -471,7 +471,7 @@ function parseChartType(chart: string): InferChartType {
   );
 }
 
-function findFieldIndex(header: string[], field: string): number {
+export function findFieldIndex(header: string[], field: string): number {
   const index = header.indexOf(field);
 
   if (index === -1) {
@@ -506,7 +506,7 @@ function getCell(row: string[], index: number): string {
   return row[index] ?? "";
 }
 
-function toRelativeDataUrl(specOutputPath: string, inputPath: string): string {
+export function toRelativeDataUrl(specOutputPath: string, inputPath: string): string {
   return relative(dirname(specOutputPath), inputPath).replaceAll("\\", "/");
 }
 

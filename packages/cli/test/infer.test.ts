@@ -3,7 +3,14 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { VegaPaperError } from "../src/core/errors";
-import { type InferRequest, inferVegaLiteSpec, parseCsv, parseJsonArray } from "../src/core/infer";
+import {
+  findFieldIndex,
+  type InferRequest,
+  inferVegaLiteSpec,
+  parseCsv,
+  parseJsonArray,
+  toRelativeDataUrl,
+} from "../src/core/infer";
 
 const temporaryDirectories: string[] = [];
 
@@ -1081,3 +1088,27 @@ async function createWorkspace(): Promise<string> {
   temporaryDirectories.push(workspace);
   return workspace;
 }
+
+describe("findFieldIndex", () => {
+  test("returns the index of an existing field", () => {
+    expect(findFieldIndex(["model", "task", "score"], "task")).toBe(1);
+  });
+
+  test("throws VegaPaperError for a missing field", () => {
+    expect(() => findFieldIndex(["model", "task"], "score")).toThrow(
+      new VegaPaperError('Field "score" was not found.'),
+    );
+  });
+});
+
+describe("toRelativeDataUrl", () => {
+  test("computes the data url relative to the spec directory", () => {
+    expect(
+      toRelativeDataUrl(
+        "examples/pareto-frontier/chart.vl.json",
+        "examples/pareto-frontier/data.csv",
+      ),
+    ).toBe("data.csv");
+    expect(toRelativeDataUrl("figures/chart.vl.json", "results.csv")).toBe("../results.csv");
+  });
+});
