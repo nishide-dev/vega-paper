@@ -1,0 +1,77 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "data": {
+    "url": "data.csv"
+  },
+  "width": 360,
+  "height": 240,
+  "layer": [
+    {
+      "mark": {
+        "type": "line",
+        "point": true
+      },
+      "encoding": {
+        "x": {
+          "field": "flops",
+          "type": "quantitative",
+          "scale": {
+            "type": "log"
+          }
+        },
+        "y": {
+          "field": "loss",
+          "type": "quantitative",
+          "scale": {
+            "zero": false
+          }
+        },
+        "color": {
+          "field": "family",
+          "type": "nominal"
+        }
+      }
+    },
+    {
+      "transform": [
+        {
+          "regression": "loss",
+          "on": "flops",
+          "method": "log",
+          "groupby": [
+            "family"
+          ]
+        }
+      ],
+      "mark": {
+        "type": "line",
+        "strokeDash": [
+          4,
+          3
+        ],
+        "opacity": 0.6
+      },
+      "encoding": {
+        "x": {
+          "field": "flops",
+          "type": "quantitative",
+          "scale": {
+            "type": "log"
+          }
+        },
+        "y": {
+          "field": "loss",
+          "type": "quantitative",
+          "scale": {
+            "zero": false
+          }
+        },
+        "color": {
+          "field": "family",
+          "type": "nominal"
+        }
+      }
+    }
+  ],
+  "title": "Scaling behavior"
+}

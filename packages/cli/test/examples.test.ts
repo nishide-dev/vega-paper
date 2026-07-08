@@ -254,4 +254,18 @@ describe("examples", () => {
       text: { field: "model", type: "nominal" },
     });
   });
+
+  test("scaling-law chart uses a log x scale with a grouped regression layer", async () => {
+    const spec = await readExampleSpec("examples/scaling-law/chart.vl.json");
+    const layer = spec.layer as Array<Record<string, unknown>>;
+
+    expect(spec.data).toEqual({ url: "data.csv" });
+    expect(layer).toHaveLength(2);
+    expect(layer[0]?.encoding).toMatchObject({
+      x: { field: "flops", type: "quantitative", scale: { type: "log" } },
+    });
+    expect(layer[1]?.transform).toEqual([
+      { regression: "loss", on: "flops", method: "log", groupby: ["family"] },
+    ]);
+  });
 });
