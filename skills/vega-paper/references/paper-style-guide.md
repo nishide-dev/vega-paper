@@ -47,6 +47,67 @@ Starting points inside each profile range:
 
 If `size-out-of-range` fires, shrink or grow within the profile table above rather than switching profiles without reason.
 
+## Multi-panel figures
+
+Composite figures — Figure 2(a), 2(b), 2(c) — built with Vega-Lite `hconcat`
+/ `vconcat`. Reference example:
+[examples/multipanel-paper-figure/](../../../examples/multipanel-paper-figure/).
+
+### Facet vs concat vs separate files
+
+| Approach | Use when |
+|----------|----------|
+| `facet` (or `infer --facet`) | Same chart repeated over one field's values; shared scales/legend |
+| `hconcat` / `vconcat` | Different chart types or datasets in one figure with one caption |
+| Separate files + LaTeX `subfigure` | Panels floated, sized, or reused independently in LaTeX |
+
+### Panel label conventions
+
+- Label every panel `(a)`, `(b)`, `(c)` — lowercase, parenthesized, in reading
+  order (left→right for `hconcat`, top→bottom for `vconcat`).
+- Put the label in the panel `title`, left-anchored and bold:
+
+  ```json
+  "title": { "text": "(a) Training", "anchor": "start", "fontWeight": "bold" }
+  ```
+
+- Keep the panel title to a 1–3 word cue after the label; the full description
+  belongs in the LaTeX caption (`\caption{... (a) Training curve. (b) ...}`).
+- Compose existing specs with panel labels via the CLI:
+
+  ```bash
+  vega-paper template multipanel \
+    --panel path/to/first.vl.json:a:Training \
+    --panel path/to/second.vl.json:b:Ablation \
+    --layout hconcat \
+    --spec-out figure.vl.json
+  ```
+
+### Sizing for single- vs double-column layouts
+
+Total rendered width ≈ sum of per-panel `width` + roughly 40–60px per panel
+for axes, legends, and concat spacing. Set explicit `width`/`height` on
+**every panel view**: lint's `size-out-of-range` only reads top-level
+dimensions (which concat specs do not have), and `size-missing` will warn on
+the missing top-level size regardless — treat that warning as a reminder to
+size each panel, not as something to fix at the top level.
+
+| Layout target | Lint profile | Total width budget | Panels (`hconcat`) | Per-panel `width` | Per-panel `height` |
+|---------------|--------------|-------------------|--------------------|-------------------|--------------------|
+| Single column (~360pt, e.g. one ACL/two-column column) | `acl` (240–480 width range) | ≤ 360 | 1–2 | 120–160 | 140–200 |
+| Double column / full page width (~700pt) | `paper` (180–720 width range) | ≤ 700 | 2–3 | 180–220 | 150–200 |
+
+Lint the composed spec with the profile matching the layout target:
+`vega-paper lint figure.vl.json --lint-profile acl` for single-column,
+`--lint-profile paper` (the default) for double-column figures.
+
+- More than 3 panels in one row is rarely readable at paper scale — switch to
+  `vconcat`, a 2×2 grid (`vconcat` of `hconcat` rows), or separate files.
+- For `vconcat`, budget total height instead: keep it under ~540 for `paper`
+  profile pages (matches the profile height cap).
+- Themes apply once at render (`--theme` merges into top-level `config`) and
+  style all panels uniformly — never bake per-panel fonts/colors into views.
+
 ## `--strict` vs default
 
 | Mode | Behavior |

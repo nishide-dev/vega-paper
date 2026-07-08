@@ -76,6 +76,7 @@ Copy-paste commands live in each folder README.
 
 | Folder | `--chart` | Also demonstrates |
 |--------|-----------|-------------------|
+| [multipanel-paper-figure/](../../../examples/multipanel-paper-figure/) | (hand-written `hconcat` spec) | panel labels `(a)`–`(c)`; sizing in [paper-style-guide.md](paper-style-guide.md#multi-panel-figures) — not `infer` |
 | [training-curve/](../../../examples/training-curve/) | `line` | `--color`; variants with `--aggregate mean`, `--error-band` |
 | [confusion-matrix/](../../../examples/confusion-matrix/) | `heatmap` | `--aggregate sum` from trial rows |
 | [faceted-training/](../../../examples/faceted-training/) | `line` | `--facet`, `--color` |
