@@ -51,6 +51,21 @@ const exampleJobs: GalleryJob[] = [
     out: `${GALLERY}/examples/embedding-scatter.png`,
   },
   {
+    spec: "examples/ablation-bar/chart.vl.json",
+    theme: "paper-clean",
+    out: `${GALLERY}/examples/ablation-bar.png`,
+  },
+  {
+    spec: "examples/benchmark-heatmap/chart-labeled.vl.json",
+    theme: "paper-clean",
+    out: `${GALLERY}/examples/benchmark-heatmap.png`,
+  },
+  {
+    spec: "examples/run-distribution/chart-points.vl.json",
+    theme: "paper-clean",
+    out: `${GALLERY}/examples/run-distribution.png`,
+  },
+  {
     spec: "examples/custom-theme/chart.vl.json",
     theme: "examples/custom-theme/theme.json",
     out: `${GALLERY}/examples/custom-theme.png`,

@@ -12,6 +12,9 @@ const EXAMPLE_PREVIEWS = [
   "faceted-training",
   "boxplot",
   "embedding-scatter",
+  "ablation-bar",
+  "benchmark-heatmap",
+  "run-distribution",
   "custom-theme",
 ];
 

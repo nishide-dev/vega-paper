@@ -10,6 +10,9 @@ Small datasets and reference Vega-Lite specs for trying the CLI. Each folder has
 | [faceted-training/](faceted-training/) | `infer` with `--facet` small multiples |
 | [boxplot/](boxplot/) | `infer` boxplot from raw sample rows; optional `--color` grouping |
 | [embedding-scatter/](embedding-scatter/) | `infer` scatter; 2D embedding with `--color` |
+| [ablation-bar/](ablation-bar/) | `infer` bar; ablation and grouped benchmark comparison |
+| [benchmark-heatmap/](benchmark-heatmap/) | `infer` heatmap; hand-written labeled variant (rect + text) |
+| [run-distribution/](run-distribution/) | `infer` boxplot over seeds; hand-written boxplot + raw points overlay |
 | [theme-samples/](theme-samples/) | Same spec rendered with every built-in theme |
 
 ## Gallery
@@ -25,6 +28,9 @@ Committed PNG previews (`paper-clean` unless noted). Theme comparison: [root REA
 | [faceted-training/](faceted-training/) | ![faceted-training](../docs/assets/gallery/examples/faceted-training.png) |
 | [boxplot/](boxplot/) | ![boxplot](../docs/assets/gallery/examples/boxplot.png) |
 | [embedding-scatter/](embedding-scatter/) | ![embedding-scatter](../docs/assets/gallery/examples/embedding-scatter.png) |
+| [ablation-bar/](ablation-bar/) | ![ablation-bar](../docs/assets/gallery/examples/ablation-bar.png) |
+| [benchmark-heatmap/](benchmark-heatmap/) | ![benchmark-heatmap](../docs/assets/gallery/examples/benchmark-heatmap.png) |
+| [run-distribution/](run-distribution/) | ![run-distribution](../docs/assets/gallery/examples/run-distribution.png) |
 | [custom-theme/](custom-theme/) | ![custom-theme](../docs/assets/gallery/examples/custom-theme.png) |
 
 Regenerate: `bun run render:gallery`
