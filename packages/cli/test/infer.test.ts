@@ -873,29 +873,49 @@ describe("inferVegaLiteSpec", () => {
     ).rejects.toThrow('The "--aggregate" option cannot be used with --chart boxplot.');
   });
 
-  test("adds yError encoding when errorBandField is set on a line chart", async () => {
+  test("generates a layered errorband and line spec when errorBandField is set on a line chart", async () => {
     const workspace = await createWorkspace();
     const inputPath = join(workspace, "data.csv");
     const specOutputPath = join(workspace, "chart.vl.json");
 
-    await Bun.write(inputPath, "epoch,f1,f1_se\n1,0.61,0.02\n2,0.68,0.015\n");
+    await Bun.write(inputPath, "epoch,f1,f1_se,model\n1,0.61,0.02,base\n2,0.68,0.015,base\n");
 
     const result = await inferVegaLiteSpec({
       inputPath,
       chart: "line",
       xField: "epoch",
       yField: "f1",
+      colorField: "model",
       errorBandField: "f1_se",
       specOutputPath,
     });
 
-    expect(result.spec.encoding).toMatchObject({
-      y: { field: "f1", type: "quantitative" },
-      yError: { field: "f1_se", type: "quantitative" },
-    });
+    expect(result.spec.mark).toBeUndefined();
+    expect(result.spec.encoding).toBeUndefined();
+    expect(result.spec.width).toBe(360);
+    expect(result.spec.height).toBe(240);
+    expect(result.spec.layer).toEqual([
+      {
+        mark: { type: "errorband", extent: "stderr", opacity: 0.25 },
+        encoding: {
+          x: { field: "epoch", type: "quantitative" },
+          y: { field: "f1", type: "quantitative" },
+          color: { field: "model", type: "nominal" },
+          yError: { field: "f1_se", type: "quantitative" },
+        },
+      },
+      {
+        mark: "line",
+        encoding: {
+          x: { field: "epoch", type: "quantitative" },
+          y: { field: "f1", type: "quantitative" },
+          color: { field: "model", type: "nominal" },
+        },
+      },
+    ]);
   });
 
-  test("places yError on inner spec when facet and errorBandField are set", async () => {
+  test("places errorband layers on the inner spec when facet and errorBandField are set", async () => {
     const workspace = await createWorkspace();
     const inputPath = join(workspace, "data.csv");
     const specOutputPath = join(workspace, "chart.vl.json");
@@ -913,10 +933,90 @@ describe("inferVegaLiteSpec", () => {
     });
 
     expect(result.spec.encoding).toBeUndefined();
+    expect(result.spec.mark).toBeUndefined();
+    expect(result.spec.facet).toEqual({ field: "split", type: "nominal" });
     expect(result.spec.spec).toMatchObject({
-      encoding: {
-        yError: { field: "f1_se", type: "quantitative" },
-      },
+      layer: [
+        {
+          mark: { type: "errorband", extent: "stderr", opacity: 0.25 },
+          encoding: {
+            yError: { field: "f1_se", type: "quantitative" },
+          },
+        },
+        {
+          mark: "line",
+        },
+      ],
+    });
+  });
+
+  test("keeps yError encoding when errorBandField is set on a scatter chart", async () => {
+    const workspace = await createWorkspace();
+    const inputPath = join(workspace, "data.csv");
+    const specOutputPath = join(workspace, "chart.vl.json");
+
+    await Bun.write(inputPath, "latency,f1,f1_se\n10,0.61,0.02\n20,0.68,0.015\n");
+
+    const result = await inferVegaLiteSpec({
+      inputPath,
+      chart: "scatter",
+      xField: "latency",
+      yField: "f1",
+      errorBandField: "f1_se",
+      specOutputPath,
+    });
+
+    expect(result.spec.layer).toBeUndefined();
+    expect(result.spec.mark).toBe("point");
+    expect(result.spec.encoding).toMatchObject({
+      y: { field: "f1", type: "quantitative" },
+      yError: { field: "f1_se", type: "quantitative" },
+    });
+  });
+
+  test("keeps yError encoding when errorBandField is set on a bar chart", async () => {
+    const workspace = await createWorkspace();
+    const inputPath = join(workspace, "data.csv");
+    const specOutputPath = join(workspace, "chart.vl.json");
+
+    await Bun.write(inputPath, "model,f1,f1_se\nbase,0.61,0.02\nours,0.68,0.015\n");
+
+    const result = await inferVegaLiteSpec({
+      inputPath,
+      chart: "bar",
+      xField: "model",
+      yField: "f1",
+      errorBandField: "f1_se",
+      specOutputPath,
+    });
+
+    expect(result.spec.layer).toBeUndefined();
+    expect(result.spec.mark).toBe("bar");
+    expect(result.spec.encoding).toMatchObject({
+      yError: { field: "f1_se", type: "quantitative" },
+    });
+  });
+
+  test("keeps yError encoding when errorBandField is set on an area chart", async () => {
+    const workspace = await createWorkspace();
+    const inputPath = join(workspace, "data.csv");
+    const specOutputPath = join(workspace, "chart.vl.json");
+
+    await Bun.write(inputPath, "epoch,f1,f1_se\n1,0.61,0.02\n2,0.68,0.015\n");
+
+    const result = await inferVegaLiteSpec({
+      inputPath,
+      chart: "area",
+      xField: "epoch",
+      yField: "f1",
+      errorBandField: "f1_se",
+      specOutputPath,
+    });
+
+    expect(result.spec.layer).toBeUndefined();
+    expect(result.spec.mark).toEqual({ type: "area", line: true });
+    expect(result.spec.encoding).toMatchObject({
+      yError: { field: "f1_se", type: "quantitative" },
     });
   });
 
