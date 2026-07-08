@@ -1,11 +1,12 @@
 import { describe, expect, test } from "bun:test";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Command } from "commander";
 import { registerLintCommand } from "../src/commands/lint";
 import type { LintDomain, LintResult } from "../src/core/lint";
 import { lintSpec, parseLintDomain } from "../src/core/lint";
+import { loadLintDataRows } from "../src/core/lint-data";
 import { getLintProfile, type LintProfileName } from "../src/core/lint-profiles";
 import { runLintRules } from "../src/core/lint-rules";
 import type { JsonObject } from "../src/core/spec";
@@ -175,6 +176,82 @@ describe("ml-crowded-labels", () => {
 
   test("does not run without domain ml", () => {
     expect(mlIssues(runMlRules(textLabelSpec(21)), "ml-crowded-labels")).toEqual([]);
+  });
+});
+
+describe("loadLintDataRows", () => {
+  test("loads CSV rows relative to the spec file", async () => {
+    await withTemporaryWorkspace(async (workspacePath) => {
+      const specPath = join(workspacePath, "chart.vl.json");
+      await writeFile(
+        join(workspacePath, "data.csv"),
+        "model,score\nbaseline,71.2\nours,74.8\n",
+        "utf8",
+      );
+
+      const rows = await loadLintDataRows({ data: { url: "data.csv" } }, specPath);
+
+      expect(rows).toEqual([
+        { model: "baseline", score: "71.2" },
+        { model: "ours", score: "74.8" },
+      ]);
+    });
+  });
+
+  test("resolves subdirectory urls relative to the spec file", async () => {
+    await withTemporaryWorkspace(async (workspacePath) => {
+      const specPath = join(workspacePath, "chart.vl.json");
+      await mkdir(join(workspacePath, "data"), { recursive: true });
+      await writeFile(join(workspacePath, "data", "rows.csv"), "model,score\nours,74.8\n", "utf8");
+
+      const rows = await loadLintDataRows({ data: { url: "data/rows.csv" } }, specPath);
+
+      expect(rows).toEqual([{ model: "ours", score: "74.8" }]);
+    });
+  });
+
+  test("returns undefined for a missing CSV file", async () => {
+    await withTemporaryWorkspace(async (workspacePath) => {
+      const specPath = join(workspacePath, "chart.vl.json");
+
+      expect(await loadLintDataRows({ data: { url: "missing.csv" } }, specPath)).toBeUndefined();
+    });
+  });
+
+  test("returns undefined for an unparsable CSV file", async () => {
+    await withTemporaryWorkspace(async (workspacePath) => {
+      const specPath = join(workspacePath, "chart.vl.json");
+      await writeFile(join(workspacePath, "data.csv"), "", "utf8");
+
+      expect(await loadLintDataRows({ data: { url: "data.csv" } }, specPath)).toBeUndefined();
+    });
+  });
+
+  test("ignores non-csv, remote, and inline data definitions", async () => {
+    await withTemporaryWorkspace(async (workspacePath) => {
+      const specPath = join(workspacePath, "chart.vl.json");
+
+      expect(await loadLintDataRows({ data: { url: "data.json" } }, specPath)).toBeUndefined();
+      expect(
+        await loadLintDataRows({ data: { url: "https://example.com/data.csv" } }, specPath),
+      ).toBeUndefined();
+      expect(await loadLintDataRows({ data: { values: [] } }, specPath)).toBeUndefined();
+      expect(await loadLintDataRows({}, specPath)).toBeUndefined();
+    });
+  });
+});
+
+describe("lintSpec data loading degrades gracefully", () => {
+  test("missing data.url file produces no errors under domain ml", async () => {
+    await withTemporaryWorkspace(async (workspacePath) => {
+      const inputPath = join(workspacePath, "chart.vl.json");
+      await writeJson(inputPath, cleanVegaLiteSpec({ data: { url: "missing.csv" } }));
+
+      const result = await lintSpec({ inputPath, domain: "ml" });
+
+      expect(result.errorCount).toBe(0);
+      expect(result.issues.map((issue) => issue.ruleId)).not.toContain("spec-unreadable");
+    });
   });
 });
 

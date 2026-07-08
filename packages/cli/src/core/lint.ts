@@ -1,4 +1,5 @@
 import { VegaPaperError } from "./errors";
+import { loadLintDataRows } from "./lint-data";
 import { getLintProfile } from "./lint-profiles";
 import { runLintRules } from "./lint-rules";
 import { detectSpecType, loadJsonSpec } from "./spec";
@@ -83,6 +84,9 @@ export async function lintSpec(request: LintRequest): Promise<LintResult> {
     throw error;
   }
 
+  const externalDataRows =
+    request.domain === "ml" ? await loadLintDataRows(spec, request.inputPath) : undefined;
+
   return createLintResult(
     runLintRules({
       inputPath: request.inputPath,
@@ -90,6 +94,7 @@ export async function lintSpec(request: LintRequest): Promise<LintResult> {
       specType,
       profile,
       domain: request.domain,
+      externalDataRows,
     }),
   );
 }
