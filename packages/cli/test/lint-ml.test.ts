@@ -6,6 +6,8 @@ import { Command } from "commander";
 import { registerLintCommand } from "../src/commands/lint";
 import type { LintDomain, LintResult } from "../src/core/lint";
 import { lintSpec, parseLintDomain } from "../src/core/lint";
+import { getLintProfile, type LintProfileName } from "../src/core/lint-profiles";
+import { runLintRules } from "../src/core/lint-rules";
 import type { JsonObject } from "../src/core/spec";
 
 describe("parseLintDomain", () => {
@@ -74,7 +76,88 @@ describe("lintSpec with domain", () => {
   });
 });
 
+describe("ml-panel-label-missing", () => {
+  test("warns for each unlabeled panel in a 2-panel hconcat", () => {
+    const spec = multiPanelSpec("hconcat", ["Training", "Ablation"]);
+
+    expect(mlIssues(runMlRules(spec, { domain: "ml" }), "ml-panel-label-missing")).toEqual([
+      {
+        severity: "warning",
+        ruleId: "ml-panel-label-missing",
+        path: "$.hconcat[0].title",
+        message: 'Panel 1 in "hconcat" has no "(a)"-style label in its title.',
+        suggestion:
+          'Prefix each panel title with "(a)", "(b)", ... so captions can reference panels.',
+      },
+      {
+        severity: "warning",
+        ruleId: "ml-panel-label-missing",
+        path: "$.hconcat[1].title",
+        message: 'Panel 2 in "hconcat" has no "(a)"-style label in its title.',
+        suggestion:
+          'Prefix each panel title with "(a)", "(b)", ... so captions can reference panels.',
+      },
+    ]);
+  });
+
+  test("accepts panels with (a)-style labels", () => {
+    const spec = multiPanelSpec("hconcat", ["(a) Training", "(b) Ablation"]);
+
+    expect(mlIssues(runMlRules(spec, { domain: "ml" }), "ml-panel-label-missing")).toEqual([]);
+  });
+
+  test("warns only for the unlabeled panel", () => {
+    const spec = multiPanelSpec("vconcat", ["(a) Training", "Ablation"]);
+
+    expect(
+      mlIssues(runMlRules(spec, { domain: "ml" }), "ml-panel-label-missing").map(
+        (issue) => issue.path,
+      ),
+    ).toEqual(["$.vconcat[1].title"]);
+  });
+
+  test("warns for panels without any title", () => {
+    const spec = multiPanelSpec("concat", [undefined, undefined]);
+
+    expect(mlIssues(runMlRules(spec, { domain: "ml" }), "ml-panel-label-missing")).toHaveLength(2);
+  });
+
+  test("does not warn for a single panel", () => {
+    const spec = multiPanelSpec("hconcat", ["Training"]);
+
+    expect(mlIssues(runMlRules(spec, { domain: "ml" }), "ml-panel-label-missing")).toEqual([]);
+  });
+
+  test("does not run without domain ml", () => {
+    const spec = multiPanelSpec("hconcat", ["Training", "Ablation"]);
+
+    expect(mlIssues(runMlRules(spec), "ml-panel-label-missing")).toEqual([]);
+  });
+});
+
 // --- helpers -------------------------------------------------------------
+
+function runMlRules(
+  spec: JsonObject,
+  options: {
+    profileName?: LintProfileName;
+    domain?: LintDomain;
+    externalDataRows?: JsonObject[];
+  } = {},
+) {
+  return runLintRules({
+    inputPath: "chart.vl.json",
+    spec,
+    specType: "vega-lite",
+    profile: getLintProfile(options.profileName ?? "paper"),
+    domain: options.domain,
+    externalDataRows: options.externalDataRows,
+  });
+}
+
+function mlIssues(issues: ReturnType<typeof runMlRules>, ruleId: string) {
+  return issues.filter((issue) => issue.ruleId === ruleId);
+}
 
 function cleanVegaLiteSpec(overrides: JsonObject = {}): JsonObject {
   return {
@@ -96,6 +179,25 @@ function cleanVegaLiteSpec(overrides: JsonObject = {}): JsonObject {
     },
     ...overrides,
   };
+}
+
+function multiPanelSpec(
+  key: "hconcat" | "vconcat" | "concat",
+  titles: (string | undefined)[],
+): JsonObject {
+  const spec = cleanVegaLiteSpec({
+    [key]: titles.map((title) => ({
+      ...(title === undefined ? {} : { title }),
+      mark: "line",
+      encoding: {
+        x: { field: "epoch", type: "quantitative", title: "Epoch" },
+        y: { field: "accuracy", type: "quantitative", title: "Accuracy" },
+      },
+    })),
+  });
+  delete spec.mark;
+  delete spec.encoding;
+  return spec;
 }
 
 async function withTemporaryWorkspace(callback: (workspacePath: string) => Promise<void>) {

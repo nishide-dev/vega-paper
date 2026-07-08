@@ -31,8 +31,11 @@ export const paperLintRules: LintRule[] = [
   checkColorOnlySeriesDistinction,
 ];
 
+export const mlLintRules: LintRule[] = [checkMlPanelLabels];
+
 export function runLintRules(context: LintRuleContext): LintIssue[] {
-  return paperLintRules.flatMap((rule) => rule(context));
+  const rules = context.domain === "ml" ? [...paperLintRules, ...mlLintRules] : paperLintRules;
+  return rules.flatMap((rule) => rule(context));
 }
 
 function checkTitleLength({ spec, profile }: LintRuleContext): LintIssue[] {
@@ -340,6 +343,53 @@ function checkColorOnlySeriesDistinction({
       suggestion:
         "Add strokeDash or shape encoding, facet, or use monochrome-print with fewer series.",
     });
+  }
+
+  return issues;
+}
+
+const PANEL_LABEL_PATTERN = /\([a-z]\)/i;
+
+function checkMlPanelLabels({ spec, specType }: LintRuleContext): LintIssue[] {
+  if (specType !== "vega-lite") {
+    return [];
+  }
+
+  const issues: LintIssue[] = [];
+
+  for (const key of ["hconcat", "vconcat", "concat"] as const) {
+    const panels = spec[key];
+
+    if (!Array.isArray(panels)) {
+      continue;
+    }
+
+    const objectPanelCount = panels.filter((panel) => isPlainObject(panel)).length;
+
+    if (objectPanelCount < 2) {
+      continue;
+    }
+
+    for (const [index, panel] of panels.entries()) {
+      if (!isPlainObject(panel)) {
+        continue;
+      }
+
+      const titleText = getTitleText(panel.title);
+
+      if (titleText !== undefined && PANEL_LABEL_PATTERN.test(titleText)) {
+        continue;
+      }
+
+      issues.push({
+        severity: "warning",
+        ruleId: "ml-panel-label-missing",
+        path: `$.${key}[${index}].title`,
+        message: `Panel ${index + 1} in "${key}" has no "(a)"-style label in its title.`,
+        suggestion:
+          'Prefix each panel title with "(a)", "(b)", ... so captions can reference panels.',
+      });
+    }
   }
 
   return issues;
