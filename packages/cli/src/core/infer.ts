@@ -64,6 +64,13 @@ type InferEncodingChannel = {
   scale?: { zero: boolean };
 };
 
+type InferEncoding = {
+  x: InferEncodingChannel;
+  y: InferEncodingChannel;
+  color?: InferEncodingChannel;
+  yError?: InferEncodingChannel;
+};
+
 const MARK_BY_CHART: Record<InferChartType, InferMark> = {
   line: "line",
   bar: "bar",
@@ -71,6 +78,12 @@ const MARK_BY_CHART: Record<InferChartType, InferMark> = {
   area: { type: "area", line: true },
   heatmap: "rect",
   boxplot: "boxplot",
+};
+
+const ERROR_BAND_MARK: JsonObject = {
+  type: "errorband",
+  extent: "stderr",
+  opacity: 0.25,
 };
 
 export async function inferVegaLiteSpec(request: InferRequest): Promise<InferResult> {
@@ -90,12 +103,7 @@ export async function inferVegaLiteSpec(request: InferRequest): Promise<InferRes
     findFieldIndex(tabular.header, request.errorBandField);
   }
 
-  let encoding: {
-    x: InferEncodingChannel;
-    y: InferEncodingChannel;
-    color?: InferEncodingChannel;
-    yError?: InferEncodingChannel;
-  };
+  let encoding: InferEncoding;
 
   if (chart === "boxplot" && request.aggregateMethod !== undefined) {
     throw new VegaPaperError('The "--aggregate" option cannot be used with --chart boxplot.');
@@ -172,12 +180,15 @@ export async function inferVegaLiteSpec(request: InferRequest): Promise<InferRes
     ? { values: buildInlineValues(tabular) }
     : { url: toRelativeDataUrl(request.specOutputPath, request.inputPath) };
 
-  const innerSpec: JsonObject = {
-    mark: MARK_BY_CHART[chart],
-    width: request.width ?? DEFAULT_WIDTH,
-    height: request.height ?? DEFAULT_HEIGHT,
-    encoding,
-  };
+  const innerSpec: JsonObject =
+    chart === "line" && request.errorBandField !== undefined
+      ? buildErrorBandLineSpec(request, encoding)
+      : {
+          mark: MARK_BY_CHART[chart],
+          width: request.width ?? DEFAULT_WIDTH,
+          height: request.height ?? DEFAULT_HEIGHT,
+          encoding,
+        };
 
   if (request.aggregateMethod !== undefined) {
     innerSpec.transform = [buildAggregateTransform(chart, request)];
@@ -394,6 +405,23 @@ function assertErrorBandSupported(chart: InferChartType, request: InferRequest):
   }
 }
 
+function buildErrorBandLineSpec(request: InferRequest, encoding: InferEncoding): JsonObject {
+  const lineEncoding: InferEncoding = { x: encoding.x, y: encoding.y };
+
+  if (encoding.color !== undefined) {
+    lineEncoding.color = encoding.color;
+  }
+
+  return {
+    width: request.width ?? DEFAULT_WIDTH,
+    height: request.height ?? DEFAULT_HEIGHT,
+    layer: [
+      { mark: ERROR_BAND_MARK, encoding },
+      { mark: MARK_BY_CHART.line, encoding: lineEncoding },
+    ],
+  };
+}
+
 function buildAggregateTransform(chart: InferChartType, request: InferRequest): JsonObject {
   const method = request.aggregateMethod;
 
@@ -443,7 +471,7 @@ function parseChartType(chart: string): InferChartType {
   );
 }
 
-function findFieldIndex(header: string[], field: string): number {
+export function findFieldIndex(header: string[], field: string): number {
   const index = header.indexOf(field);
 
   if (index === -1) {
@@ -478,7 +506,7 @@ function getCell(row: string[], index: number): string {
   return row[index] ?? "";
 }
 
-function toRelativeDataUrl(specOutputPath: string, inputPath: string): string {
+export function toRelativeDataUrl(specOutputPath: string, inputPath: string): string {
   return relative(dirname(specOutputPath), inputPath).replaceAll("\\", "/");
 }
 

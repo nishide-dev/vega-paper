@@ -7,11 +7,19 @@ const GALLERY = "docs/assets/gallery";
 const EXAMPLE_PREVIEWS = [
   "basic-line",
   "training-curve",
+  "training-curve-error-band",
   "confusion-matrix",
   "faceted-training",
   "boxplot",
   "embedding-scatter",
+  "ablation-bar",
+  "benchmark-heatmap",
+  "run-distribution",
+  "pareto-frontier",
+  "scaling-law",
+  "calibration-curve",
   "custom-theme",
+  "multipanel-paper-figure",
 ];
 
 describe("readme gallery assets", () => {

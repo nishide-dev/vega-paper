@@ -15,7 +15,7 @@ Choose `--chart` and encoding fields **before** running `infer`. This guide cove
 
 Supported values for `--chart`: `line`, `bar`, `scatter`, `area`, `heatmap`, `boxplot`.
 
-There is no dedicated `examples/` folder for `bar` or `area` yet; `scatter` is covered by [embedding-scatter/](../../../examples/embedding-scatter/).
+There is no dedicated `examples/` folder for `area` yet; `bar` is covered by [ablation-bar/](../../../examples/ablation-bar/) and `scatter` by [embedding-scatter/](../../../examples/embedding-scatter/).
 
 ## Decision guide
 
@@ -34,7 +34,7 @@ Then add modifiers if needed:
 |------|----------|-------|
 | Roll up duplicate x rows | `--aggregate <method>` | Not with `boxplot` or `--error-band` |
 | Small multiples by a third field | `--facet <field>` | Must differ from `--x`, `--y`, `--color` |
-| Symmetric uncertainty on y | `--error-band <field>` | Cartesian charts only; not with `--aggregate` |
+| Symmetric uncertainty on y | `--error-band <field>` | Shaded band on `line`; `yError` on `bar`/`scatter`/`area`; not with `--aggregate` |
 
 See repo examples in the table below and [Chart types](#chart-types) for encoding details.
 
@@ -61,11 +61,14 @@ Split the chart into small multiples by `field`.
 
 ### `--error-band <field>`
 
-Symmetric error magnitude on `--y` (maps to `encoding.yError`).
+Symmetric error magnitude on `--y`.
 
-- Allowed on cartesian charts: `line`, `bar`, `scatter`, `area`.
+- On `--chart line`: generates a **layered spec** — a shaded `errorband` layer (`extent: "stderr"`, `opacity: 0.25`) drawn behind the line. This is the shaded uncertainty band expected for learning curves.
+- On `bar`, `scatter`, `area`: maps to `encoding.yError` (per-point error), unchanged.
 - **Not allowed** with `heatmap`, `boxplot`, or `--aggregate`.
 - Field must differ from `--x`, `--y`, `--color`, and `--facet`.
+
+**Error band vs error bars:** a band is a continuous shaded region around a line — use it for metrics over epochs/steps. Error bars are per-point whiskers, which is what `yError` produces on non-line marks.
 
 ## Examples in this repo
 
@@ -73,11 +76,15 @@ Copy-paste commands live in each folder README.
 
 | Folder | `--chart` | Also demonstrates |
 |--------|-----------|-------------------|
+| [multipanel-paper-figure/](../../../examples/multipanel-paper-figure/) | (hand-written `hconcat` spec) | panel labels `(a)`–`(c)`; sizing in [paper-style-guide.md](paper-style-guide.md#multi-panel-figures) — not `infer` |
 | [training-curve/](../../../examples/training-curve/) | `line` | `--color`; variants with `--aggregate mean`, `--error-band` |
 | [confusion-matrix/](../../../examples/confusion-matrix/) | `heatmap` | `--aggregate sum` from trial rows |
 | [faceted-training/](../../../examples/faceted-training/) | `line` | `--facet`, `--color` |
 | [boxplot/](../../../examples/boxplot/) | `boxplot` | optional `--color` grouping |
 | [embedding-scatter/](../../../examples/embedding-scatter/) | `scatter` | `--color` for class/cluster labels |
+| [ablation-bar/](../../../examples/ablation-bar/) | `bar` | ablation and grouped benchmark comparison with `--color` |
+| [benchmark-heatmap/](../../../examples/benchmark-heatmap/) | `heatmap` | model × task scores; hand-written labeled variant (rect + text) |
+| [run-distribution/](../../../examples/run-distribution/) | `boxplot` | seed/run variability; hand-written boxplot + raw points overlay |
 | [basic-line/](../../../examples/basic-line/) | (hand-written spec) | `render` / `lint` only — not `infer` |
 
 Index: [examples/README.md](../../../examples/README.md).

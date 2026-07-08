@@ -1,0 +1,9 @@
+dataset,method,score,stderr
+MMLU,baseline,68.2,0.6
+MMLU,ours,72.4,0.5
+GSM8K,baseline,56.1,1.0
+GSM8K,ours,61.8,0.9
+HellaSwag,baseline,74.5,0.4
+HellaSwag,ours,78.9,0.4
+ARC,baseline,62.3,0.8
+ARC,ours,66.0,0.7

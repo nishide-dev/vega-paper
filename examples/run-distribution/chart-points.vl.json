@@ -1,0 +1,50 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "data": {
+    "url": "data.csv"
+  },
+  "width": 360,
+  "height": 240,
+  "title": "Score distribution over seeds",
+  "encoding": {
+    "x": {
+      "field": "method",
+      "type": "nominal"
+    },
+    "y": {
+      "field": "score",
+      "type": "quantitative",
+      "scale": {
+        "zero": false
+      }
+    }
+  },
+  "layer": [
+    {
+      "mark": {
+        "type": "boxplot",
+        "opacity": 0.5
+      }
+    },
+    {
+      "transform": [
+        {
+          "calculate": "datum.seed / 6",
+          "as": "jitter"
+        }
+      ],
+      "mark": {
+        "type": "point",
+        "filled": true,
+        "size": 40,
+        "opacity": 0.9
+      },
+      "encoding": {
+        "xOffset": {
+          "field": "jitter",
+          "type": "quantitative"
+        }
+      }
+    }
+  ]
+}

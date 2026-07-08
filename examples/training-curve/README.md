@@ -29,7 +29,7 @@ vega-paper infer examples/training-curve/runs.csv \
 
 ## Line chart with error band
 
-`f1_se` is a symmetric error magnitude mapped to `encoding.yError`. Do not combine with `--aggregate`.
+`f1_se` is a symmetric standard-error magnitude. On `--chart line`, `--error-band` generates a layered spec: a shaded `errorband` layer (`extent: "stderr"`, `opacity: 0.25`) drawn behind a `line` layer — the shaded uncertainty band expected for learning curves. Error **bars** (per-point whiskers) are different: on `bar`, `scatter`, and `area` charts the same flag maps to `encoding.yError` instead. Do not combine with `--aggregate`.
 
 ```bash
 vega-paper infer examples/training-curve/data-with-error.csv \

@@ -26,6 +26,11 @@ const exampleJobs: GalleryJob[] = [
     out: `${GALLERY}/examples/training-curve.png`,
   },
   {
+    spec: "examples/training-curve/chart-error-band.vl.json",
+    theme: "paper-clean",
+    out: `${GALLERY}/examples/training-curve-error-band.png`,
+  },
+  {
     spec: "examples/confusion-matrix/chart.vl.json",
     theme: "paper-clean",
     out: `${GALLERY}/examples/confusion-matrix.png`,
@@ -46,9 +51,44 @@ const exampleJobs: GalleryJob[] = [
     out: `${GALLERY}/examples/embedding-scatter.png`,
   },
   {
+    spec: "examples/ablation-bar/chart.vl.json",
+    theme: "paper-clean",
+    out: `${GALLERY}/examples/ablation-bar.png`,
+  },
+  {
+    spec: "examples/benchmark-heatmap/chart-labeled.vl.json",
+    theme: "paper-clean",
+    out: `${GALLERY}/examples/benchmark-heatmap.png`,
+  },
+  {
+    spec: "examples/run-distribution/chart-points.vl.json",
+    theme: "paper-clean",
+    out: `${GALLERY}/examples/run-distribution.png`,
+  },
+  {
+    spec: "examples/pareto-frontier/chart.vl.json",
+    theme: "paper-clean",
+    out: `${GALLERY}/examples/pareto-frontier.png`,
+  },
+  {
+    spec: "examples/scaling-law/chart.vl.json",
+    theme: "paper-clean",
+    out: `${GALLERY}/examples/scaling-law.png`,
+  },
+  {
+    spec: "examples/calibration-curve/chart.vl.json",
+    theme: "paper-clean",
+    out: `${GALLERY}/examples/calibration-curve.png`,
+  },
+  {
     spec: "examples/custom-theme/chart.vl.json",
     theme: "examples/custom-theme/theme.json",
     out: `${GALLERY}/examples/custom-theme.png`,
+  },
+  {
+    spec: "examples/multipanel-paper-figure/chart.vl.json",
+    theme: "paper-clean",
+    out: `${GALLERY}/examples/multipanel-paper-figure.png`,
   },
 ];
 

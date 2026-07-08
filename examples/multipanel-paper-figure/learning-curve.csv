@@ -1,0 +1,11 @@
+epoch,f1,model
+1,0.61,base
+2,0.68,base
+3,0.72,base
+4,0.75,base
+5,0.76,base
+1,0.64,large
+2,0.71,large
+3,0.76,large
+4,0.79,large
+5,0.81,large

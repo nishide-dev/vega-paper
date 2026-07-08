@@ -1,0 +1,5 @@
+method,component,score,stderr
+baseline,none,81.2,0.4
+ours,no retrieval,83.1,0.3
+ours,no reranking,84.0,0.2
+ours,full,85.6,0.2

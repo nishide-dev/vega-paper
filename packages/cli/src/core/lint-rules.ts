@@ -1,4 +1,4 @@
-import type { LintIssue } from "./lint";
+import type { LintDomain, LintIssue } from "./lint";
 import type { LintProfile } from "./lint-profiles";
 import type { JsonObject, SpecType } from "./spec";
 
@@ -7,6 +7,8 @@ export type LintRuleContext = {
   spec: JsonObject;
   specType: SpecType;
   profile: LintProfile;
+  domain?: LintDomain | undefined;
+  externalDataRows?: JsonObject[] | undefined;
 };
 
 export type LintRule = (context: LintRuleContext) => LintIssue[];
@@ -29,8 +31,16 @@ export const paperLintRules: LintRule[] = [
   checkColorOnlySeriesDistinction,
 ];
 
+export const mlLintRules: LintRule[] = [
+  checkMlPanelLabels,
+  checkMlCrowdedLabels,
+  checkMlTooManySeries,
+  checkMlLogScaleCandidate,
+];
+
 export function runLintRules(context: LintRuleContext): LintIssue[] {
-  return paperLintRules.flatMap((rule) => rule(context));
+  const rules = context.domain === "ml" ? [...paperLintRules, ...mlLintRules] : paperLintRules;
+  return rules.flatMap((rule) => rule(context));
 }
 
 function checkTitleLength({ spec, profile }: LintRuleContext): LintIssue[] {
@@ -343,6 +353,208 @@ function checkColorOnlySeriesDistinction({
   return issues;
 }
 
+const PANEL_LABEL_PATTERN = /\([a-z]\)/i;
+
+function checkMlPanelLabels({ spec, specType }: LintRuleContext): LintIssue[] {
+  if (specType !== "vega-lite") {
+    return [];
+  }
+
+  const issues: LintIssue[] = [];
+
+  for (const key of ["hconcat", "vconcat", "concat"] as const) {
+    const panels = spec[key];
+
+    if (!Array.isArray(panels)) {
+      continue;
+    }
+
+    const objectPanelCount = panels.filter((panel) => isPlainObject(panel)).length;
+
+    if (objectPanelCount < 2) {
+      continue;
+    }
+
+    for (const [index, panel] of panels.entries()) {
+      if (!isPlainObject(panel)) {
+        continue;
+      }
+
+      const titleText = getTitleText(panel.title);
+
+      if (titleText !== undefined && PANEL_LABEL_PATTERN.test(titleText)) {
+        continue;
+      }
+
+      issues.push({
+        severity: "warning",
+        ruleId: "ml-panel-label-missing",
+        path: `$.${key}[${index}].title`,
+        message: `Panel ${index + 1} in "${key}" has no "(a)"-style label in its title.`,
+        suggestion:
+          'Prefix each panel title with "(a)", "(b)", ... so captions can reference panels.',
+      });
+    }
+  }
+
+  return issues;
+}
+
+function checkMlCrowdedLabels({
+  spec,
+  specType,
+  profile,
+  externalDataRows,
+}: LintRuleContext): LintIssue[] {
+  if (specType !== "vega-lite") {
+    return [];
+  }
+
+  const issues: LintIssue[] = [];
+  const rootValues = getInlineDataValues(spec);
+
+  for (const unit of collectVegaLiteUnitSpecs(spec)) {
+    if (!isTextMark(unit.spec.mark)) {
+      continue;
+    }
+
+    const encoding = getObject(unit.spec, "encoding");
+    const text = encoding ? getObject(encoding, "text") : undefined;
+
+    if (!text || typeof text.field !== "string") {
+      continue;
+    }
+
+    const values = getRuleDataValues(unit.spec, spec, rootValues, externalDataRows);
+
+    if (!values || values.length <= profile.mlMaxTextLabels) {
+      continue;
+    }
+
+    issues.push({
+      severity: "warning",
+      ruleId: "ml-crowded-labels",
+      path: joinJsonPath(unit.path, "encoding.text"),
+      message: `Text mark labels ${values.length} rows; more than ${profile.mlMaxTextLabels} labels crowd a ${profile.name} figure.`,
+      suggestion: "Label only top-k points, aggregate the data, or drop the text layer.",
+    });
+  }
+
+  return issues;
+}
+
+function checkMlTooManySeries({
+  spec,
+  specType,
+  profile,
+  externalDataRows,
+}: LintRuleContext): LintIssue[] {
+  if (specType !== "vega-lite") {
+    return [];
+  }
+
+  const issues: LintIssue[] = [];
+  const rootValues = getInlineDataValues(spec);
+
+  for (const unit of collectVegaLiteUnitSpecs(spec)) {
+    if (!isLineMark(unit.spec.mark) && !isBarMark(unit.spec.mark) && !isPointMark(unit.spec.mark)) {
+      continue;
+    }
+
+    const encoding = getObject(unit.spec, "encoding");
+    const color = encoding ? getObject(encoding, "color") : undefined;
+    const field = typeof color?.field === "string" ? color.field : undefined;
+
+    if (!field) {
+      continue;
+    }
+
+    const values = getRuleDataValues(unit.spec, spec, rootValues, externalDataRows);
+
+    if (!values) {
+      continue;
+    }
+
+    const count = countDistinctFieldValues(values, field);
+
+    if (count <= profile.mlMaxSeries) {
+      continue;
+    }
+
+    issues.push({
+      severity: "warning",
+      ruleId: "ml-too-many-series",
+      path: joinJsonPath(unit.path, "encoding.color"),
+      message: `Color field "${field}" has ${count} series; more than ${profile.mlMaxSeries} is hard to read in a ${profile.name} figure.`,
+      suggestion: "Filter to key methods, facet the chart, or group minor series.",
+    });
+  }
+
+  return issues;
+}
+
+const LOG_SCALE_SPAN_RATIO = 1000;
+
+function checkMlLogScaleCandidate({
+  spec,
+  specType,
+  externalDataRows,
+}: LintRuleContext): LintIssue[] {
+  if (specType !== "vega-lite") {
+    return [];
+  }
+
+  const issues: LintIssue[] = [];
+  const rootValues = getInlineDataValues(spec);
+  const reportedFields = new Set<string>();
+
+  for (const unit of collectVegaLiteUnitSpecs(spec)) {
+    const encoding = getObject(unit.spec, "encoding");
+    const x = encoding ? getObject(encoding, "x") : undefined;
+
+    if (!x || typeof x.field !== "string" || x.type !== "quantitative") {
+      continue;
+    }
+
+    if (reportedFields.has(x.field)) {
+      continue;
+    }
+
+    const scale = getObject(x, "scale");
+
+    if (scale?.type === "log") {
+      continue;
+    }
+
+    const values = getRuleDataValues(unit.spec, spec, rootValues, externalDataRows);
+
+    if (!values) {
+      continue;
+    }
+
+    const numbers = collectPositiveNumbers(values, x.field);
+
+    if (numbers.length < 2) {
+      continue;
+    }
+
+    if (Math.max(...numbers) / Math.min(...numbers) <= LOG_SCALE_SPAN_RATIO) {
+      continue;
+    }
+
+    reportedFields.add(x.field);
+    issues.push({
+      severity: "warning",
+      ruleId: "ml-log-scale-candidate",
+      path: joinJsonPath(unit.path, "encoding.x.scale"),
+      message: `X field "${x.field}" spans more than 3 orders of magnitude (max/min > 1000).`,
+      suggestion: 'Set encoding.x.scale.type to "log" for scaling or Pareto figures.',
+    });
+  }
+
+  return issues;
+}
+
 type ExplicitColor = {
   path: string;
   color: string;
@@ -418,6 +630,26 @@ function countDistinctFieldValues(values: unknown[], field: string): number {
   return categories.size;
 }
 
+function collectPositiveNumbers(values: unknown[], field: string): number[] {
+  const numbers: number[] = [];
+
+  for (const row of values) {
+    if (!isPlainObject(row)) {
+      continue;
+    }
+
+    const raw = row[field];
+    const value =
+      typeof raw === "number" ? raw : typeof raw === "string" ? Number(raw) : Number.NaN;
+
+    if (Number.isFinite(value) && value > 0) {
+      numbers.push(value);
+    }
+  }
+
+  return numbers;
+}
+
 function isGrayscaleColor(color: string): boolean {
   const rgb = parseRgbComponents(color);
 
@@ -479,6 +711,41 @@ function isLineMark(mark: unknown): boolean {
   }
 
   return isPlainObject(mark) && mark.type === "line";
+}
+
+function isTextMark(mark: unknown): boolean {
+  if (mark === "text") {
+    return true;
+  }
+
+  return isPlainObject(mark) && mark.type === "text";
+}
+
+function isPointMark(mark: unknown): boolean {
+  if (mark === "point" || mark === "circle") {
+    return true;
+  }
+
+  return isPlainObject(mark) && (mark.type === "point" || mark.type === "circle");
+}
+
+function getRuleDataValues(
+  unitSpec: JsonObject,
+  rootSpec: JsonObject,
+  rootValues: unknown[] | undefined,
+  externalDataRows: JsonObject[] | undefined,
+): unknown[] | undefined {
+  const unitValues = getInlineDataValues(unitSpec);
+
+  if (unitValues) {
+    return unitValues;
+  }
+
+  if (unitSpec !== rootSpec && hasDataDefinition(unitSpec)) {
+    return undefined;
+  }
+
+  return rootValues ?? externalDataRows;
 }
 
 function getInlineDataValues(spec: JsonObject): unknown[] | undefined {

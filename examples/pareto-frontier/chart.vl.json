@@ -1,0 +1,111 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "data": {
+    "url": "data.csv"
+  },
+  "width": 360,
+  "height": 240,
+  "layer": [
+    {
+      "data": {
+        "values": [
+          {
+            "latency_ms": 12,
+            "score": 68.1
+          },
+          {
+            "latency_ms": 18,
+            "score": 73
+          },
+          {
+            "latency_ms": 42,
+            "score": 77.2
+          }
+        ]
+      },
+      "mark": {
+        "type": "line",
+        "color": "#888888",
+        "strokeDash": [
+          4,
+          3
+        ]
+      },
+      "encoding": {
+        "x": {
+          "field": "latency_ms",
+          "type": "quantitative",
+          "scale": {
+            "type": "log"
+          }
+        },
+        "y": {
+          "field": "score",
+          "type": "quantitative",
+          "scale": {
+            "zero": false
+          }
+        }
+      }
+    },
+    {
+      "mark": {
+        "type": "point",
+        "filled": true
+      },
+      "encoding": {
+        "x": {
+          "field": "latency_ms",
+          "type": "quantitative",
+          "scale": {
+            "type": "log"
+          }
+        },
+        "y": {
+          "field": "score",
+          "type": "quantitative",
+          "scale": {
+            "zero": false
+          }
+        },
+        "color": {
+          "field": "family",
+          "type": "nominal"
+        },
+        "size": {
+          "field": "params_b",
+          "type": "quantitative"
+        }
+      }
+    },
+    {
+      "mark": {
+        "type": "text",
+        "align": "left",
+        "dx": 6,
+        "dy": -6
+      },
+      "encoding": {
+        "x": {
+          "field": "latency_ms",
+          "type": "quantitative",
+          "scale": {
+            "type": "log"
+          }
+        },
+        "y": {
+          "field": "score",
+          "type": "quantitative",
+          "scale": {
+            "zero": false
+          }
+        },
+        "text": {
+          "field": "model",
+          "type": "nominal"
+        }
+      }
+    }
+  ],
+  "title": "Score vs latency"
+}

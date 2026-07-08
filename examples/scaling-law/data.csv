@@ -1,0 +1,5 @@
+family,params_b,tokens_b,flops,loss,accuracy
+baseline,1.3,300,1.2e20,2.81,61.2
+baseline,7.0,1000,2.8e21,2.34,68.1
+ours,3.0,500,7.0e20,2.42,69.3
+ours,13.0,1200,5.4e21,2.11,74.8

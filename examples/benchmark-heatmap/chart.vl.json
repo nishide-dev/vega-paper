@@ -1,0 +1,24 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "data": {
+    "url": "data.csv"
+  },
+  "mark": "rect",
+  "width": 420,
+  "height": 240,
+  "encoding": {
+    "x": {
+      "field": "task",
+      "type": "ordinal"
+    },
+    "y": {
+      "field": "model",
+      "type": "ordinal"
+    },
+    "color": {
+      "field": "score",
+      "type": "quantitative"
+    }
+  },
+  "title": "Benchmark results"
+}

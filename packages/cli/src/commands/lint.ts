@@ -1,16 +1,21 @@
 import type { Command } from "commander";
 import { formatTable, toPrettyJson } from "../core/format";
-import { type LintResult, lintSpec } from "../core/lint";
+import { type LintDomain, type LintResult, lintSpec, parseLintDomain } from "../core/lint";
 import { getLintProfile } from "../core/lint-profiles";
 
 type LintOptions = {
   json?: boolean;
   profile?: string;
   strict?: boolean;
+  domain?: string;
 };
 
 type WriteOutput = (value: string) => void;
-type RunLint = (inputPath: string, profileName: string | undefined) => Promise<LintResult>;
+type RunLint = (
+  inputPath: string,
+  profileName: string | undefined,
+  domain: LintDomain | undefined,
+) => Promise<LintResult>;
 type SetExitCode = (exitCode: 0 | 1) => void;
 
 export function registerLintCommand(
@@ -18,7 +23,8 @@ export function registerLintCommand(
   writeOutput: WriteOutput = (value) => {
     process.stdout.write(value);
   },
-  runLint: RunLint = (inputPath, profileName) => lintSpec({ inputPath, profileName }),
+  runLint: RunLint = (inputPath, profileName, domain) =>
+    lintSpec({ inputPath, profileName, domain }),
   setExitCode: SetExitCode = (exitCode) => {
     process.exitCode = exitCode;
   },
@@ -29,13 +35,15 @@ export function registerLintCommand(
     .description("Check a Vega or Vega-Lite spec for paper figure issues")
     .option("--json", "print JSON")
     .option("--profile <name>", "lint profile: paper, web, acl, or print")
+    .option("--domain <name>", "lint domain: ml (adds ML paper figure rules)")
     .option("--strict", "exit with code 1 when warnings are present")
     .action(async (inputPath: string, options: LintOptions) => {
       if (options.profile !== undefined) {
         getLintProfile(options.profile);
       }
 
-      const result = await runLint(inputPath, options.profile);
+      const domain = options.domain === undefined ? undefined : parseLintDomain(options.domain);
+      const result = await runLint(inputPath, options.profile, domain);
       const exitCode = getLintExitCode(result, Boolean(options.strict));
 
       if (options.json) {

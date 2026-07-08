@@ -5,6 +5,7 @@ import { registerDoctorCommand } from "./commands/doctor";
 import { registerInferCommand } from "./commands/infer";
 import { registerLintCommand } from "./commands/lint";
 import { registerRenderCommand } from "./commands/render";
+import { registerTemplateCommand } from "./commands/template";
 import { registerThemesCommand } from "./commands/themes";
 import { VegaPaperError } from "./core/errors";
 
@@ -17,6 +18,7 @@ program
 
 registerRenderCommand(program);
 registerInferCommand(program);
+registerTemplateCommand(program);
 registerLintCommand(program);
 registerThemesCommand(program);
 registerDoctorCommand(program);

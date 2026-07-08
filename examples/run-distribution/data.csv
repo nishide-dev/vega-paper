@@ -1,0 +1,11 @@
+method,seed,score
+baseline,1,80.1
+baseline,2,79.4
+baseline,3,80.6
+baseline,4,79.9
+baseline,5,80.3
+ours,1,83.2
+ours,2,84.0
+ours,3,82.7
+ours,4,83.6
+ours,5,84.3

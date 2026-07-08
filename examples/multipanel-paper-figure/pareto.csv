@@ -1,0 +1,5 @@
+model,family,score,latency_ms
+TinyLM,baseline,68.1,12
+BaseLM,baseline,72.4,28
+Ours-S,ours,73.0,18
+Ours-L,ours,77.2,42

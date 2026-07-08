@@ -3,6 +3,7 @@ import {
   buildFigureMeta,
   buildInferSnapshot,
   buildRenderFigureMeta,
+  buildTemplateFigureMeta,
   resolveFigureMetaVersions,
   toSiblingMetaPath,
 } from "../src/core/figure-meta";
@@ -185,5 +186,63 @@ describe("resolveFigureMetaVersions", () => {
     expect(versions.vegaPaperVersion).toBe("0.1.0");
     expect(versions.vegaVersion.length).toBeGreaterThan(0);
     expect(versions.vegaLiteVersion.length).toBeGreaterThan(0);
+  });
+});
+
+describe("buildTemplateFigureMeta", () => {
+  test("builds template provenance with an options snapshot", () => {
+    const meta = buildTemplateFigureMeta({
+      template: "pareto-frontier",
+      inputPath: "examples/pareto-frontier/data.csv",
+      outputPath: "examples/pareto-frontier/output.svg",
+      specOutPath: "examples/pareto-frontier/chart.vl.json",
+      themeName: "paper-clean",
+      format: "svg",
+      options: { x: "latency_ms", y: "score", label: "model", color: "family" },
+      createdAt: new Date("2026-07-08T00:00:00.000Z"),
+      versions: {
+        vegaPaperVersion: "0.1.5",
+        vegaVersion: "6.2.0",
+        vegaLiteVersion: "6.4.1",
+      },
+    });
+
+    expect(meta).toEqual({
+      generatedBy: "vega-paper",
+      command: "template",
+      template: "pareto-frontier",
+      input: "examples/pareto-frontier/data.csv",
+      output: "examples/pareto-frontier/output.svg",
+      specOut: "examples/pareto-frontier/chart.vl.json",
+      createdAt: "2026-07-08T00:00:00.000Z",
+      vegaPaperVersion: "0.1.5",
+      vegaVersion: "6.2.0",
+      vegaLiteVersion: "6.4.1",
+      theme: "paper-clean",
+      format: "svg",
+      options: { x: "latency_ms", y: "score", label: "model", color: "family" },
+    });
+  });
+
+  test("omits theme when unset and records scale only above 1 for raster formats", () => {
+    const meta = buildTemplateFigureMeta({
+      template: "scaling-law",
+      inputPath: "data.csv",
+      outputPath: "output.png",
+      specOutPath: "chart.vl.json",
+      format: "png",
+      scale: 2,
+      options: { x: "flops", y: "loss" },
+      createdAt: new Date("2026-07-08T00:00:00.000Z"),
+      versions: {
+        vegaPaperVersion: "0.1.5",
+        vegaVersion: "6.2.0",
+        vegaLiteVersion: "6.4.1",
+      },
+    });
+
+    expect(meta.theme).toBeUndefined();
+    expect(meta.format).toBe("png");
+    expect(meta.scale).toBe(2);
   });
 });

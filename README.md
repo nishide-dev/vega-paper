@@ -86,8 +86,9 @@ Regenerate: `bun run render:gallery`
 | Command | Purpose |
 |---------|---------|
 | `infer` | Build a Vega-Lite spec from CSV/JSON + chart options |
+| `template` | Build layered ML figure specs (heatmap labels, Pareto frontier, scaling law, calibration, multipanel) |
 | `render` | Render a spec to SVG, PNG, or PDF with an optional theme |
-| `lint` | Check a spec against paper-oriented lint profiles |
+| `lint` | Check a spec against paper-oriented lint profiles (`--domain ml` for ML-paper rules) |
 | `themes` | List built-in themes or `show` a built-in / custom JSON file |
 | `doctor` | Verify render toolchain dependencies |
 
@@ -109,13 +110,28 @@ vega-paper render figures/f1.vl.json \
 vega-paper lint figures/f1.vl.json --profile paper
 ```
 
+### `template` highlights
+
+- **Templates:** `benchmark-heatmap`, `pareto-frontier`, `scaling-law`, `calibration-curve`, `multipanel`
+- **Options:** template-specific field flags (`--x`, `--y`, `--score`, `--frontier`, `--fit`, `--panel`, …) plus shared `--title`, `--width`, `--height`, `--spec-out`, `--out`, `--theme`
+- **`multipanel`:** composes existing `.vl.json` files with `--panel <spec>:<label>[:<title>]` (repeatable); no CSV argument
+
+```bash
+vega-paper template scaling-law examples/scaling-law/data.csv \
+  --x flops \
+  --y loss \
+  --x-scale log \
+  --fit regression \
+  --spec-out figures/scaling.vl.json
+```
+
 ### `infer` highlights
 
 - **Charts:** `line`, `bar`, `scatter`, `area`, `heatmap`, `boxplot`
 - **Options:** `--x`, `--y`, `--color`, `--facet`, `--aggregate`, `--error-band`, type overrides, `--inline-data`
 - **Output:** writes `.vl.json`; optionally renders with `--out` (`.svg`, `.png`, `.pdf`) and `--theme`
 
-See [`examples/`](examples/) for copy-paste commands.
+See [`examples/`](examples/) for copy-paste commands. Regenerate infer-based specs with `bun run infer:examples`; template-based specs with `bun run template:examples`.
 
 ### Output formats
 
@@ -165,6 +181,7 @@ All agent workflows use the installed `vega-paper` CLI — see `SKILL.md` for co
 | `bun run build` | Build workspace packages |
 | `bun run install:smoke` | Test install.sh + render from shims |
 | `bun run infer:examples` | Regenerate committed example specs |
+| `bun run template:examples` | Regenerate template-generated example specs |
 | `bun run render:gallery` | Regenerate README gallery PNGs |
 
 Note: `bun run check` is **code** quality (Biome). `vega-paper lint` is **figure spec** quality (Vega-Lite).

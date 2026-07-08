@@ -8,6 +8,7 @@ import {
   resolveVegaPaperHome,
 } from "./install-root";
 import type { RenderFormat } from "./render-format";
+import type { TemplateName } from "./template";
 
 export type FigureMetaInferSnapshot = {
   chart: InferChartType;
@@ -56,7 +57,26 @@ export type RenderFigureMeta = {
   scale?: number;
 };
 
-export type FigureMeta = InferFigureMeta | RenderFigureMeta;
+export type TemplateOptionsSnapshot = Record<string, string | number | boolean | string[]>;
+
+export type TemplateFigureMeta = {
+  generatedBy: "vega-paper";
+  command: "template";
+  template: TemplateName;
+  input?: string;
+  output: string;
+  specOut: string;
+  createdAt: string;
+  vegaPaperVersion: string;
+  vegaVersion: string;
+  vegaLiteVersion: string;
+  theme?: string;
+  format?: RenderFormat;
+  scale?: number;
+  options: TemplateOptionsSnapshot;
+};
+
+export type FigureMeta = InferFigureMeta | RenderFigureMeta | TemplateFigureMeta;
 
 export type FigureMetaInferOptions = {
   chart?: string;
@@ -82,6 +102,19 @@ export type BuildRenderFigureMetaInput = {
   themeName?: string | undefined;
   format: RenderFormat;
   scale?: number | undefined;
+  createdAt?: Date;
+  versions?: FigureMetaVersions;
+};
+
+export type BuildTemplateFigureMetaInput = {
+  template: TemplateName;
+  inputPath?: string | undefined;
+  outputPath: string;
+  specOutPath: string;
+  themeName?: string | undefined;
+  format: RenderFormat;
+  scale?: number | undefined;
+  options: TemplateOptionsSnapshot;
   createdAt?: Date;
   versions?: FigureMetaVersions;
 };
@@ -223,6 +256,40 @@ export function buildRenderFigureMeta(input: BuildRenderFigureMetaInput): Render
     vegaLiteVersion: versions.vegaLiteVersion,
     format: input.format,
   };
+
+  if (input.themeName !== undefined) {
+    meta.theme = input.themeName;
+  }
+
+  applyOutputFormatMeta(meta, input.format, input.scale ?? 1);
+
+  return meta;
+}
+
+export function buildTemplateFigureMeta(input: BuildTemplateFigureMetaInput): TemplateFigureMeta {
+  const createdAt = input.createdAt ?? new Date();
+  const versions = input.versions;
+
+  if (versions === undefined) {
+    throw new VegaPaperError("Figure meta requires version metadata.");
+  }
+
+  const meta: TemplateFigureMeta = {
+    generatedBy: "vega-paper",
+    command: "template",
+    template: input.template,
+    output: input.outputPath,
+    specOut: input.specOutPath,
+    createdAt: createdAt.toISOString(),
+    vegaPaperVersion: versions.vegaPaperVersion,
+    vegaVersion: versions.vegaVersion,
+    vegaLiteVersion: versions.vegaLiteVersion,
+    options: input.options,
+  };
+
+  if (input.inputPath !== undefined) {
+    meta.input = input.inputPath;
+  }
 
   if (input.themeName !== undefined) {
     meta.theme = input.themeName;
