@@ -26,7 +26,7 @@ The installer downloads **GitHub Release** tarballs for your platform ([latest r
 Pin a version:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/nishide-dev/vega-paper/main/scripts/install.sh | bash -s -- --version 0.1.5
+curl -fsSL https://raw.githubusercontent.com/nishide-dev/vega-paper/main/scripts/install.sh | bash -s -- --version 0.2.0
 ```
 
 Develop from a clone or a locally built tarball:
@@ -199,4 +199,4 @@ docs/superpowers/  design specs and implementation plans
 
 ## License
 
-See repository defaults. Current release: [v0.1.5](https://github.com/nishide-dev/vega-paper/releases/tag/v0.1.5).
+See repository defaults. Current release: [v0.2.0](https://github.com/nishide-dev/vega-paper/releases/tag/v0.2.0).

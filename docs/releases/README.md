@@ -8,6 +8,7 @@ docs/releases/v0.1.2.md   →  tag v0.1.2
 docs/releases/v0.1.3.md   →  tag v0.1.3
 docs/releases/v0.1.4.md   →  tag v0.1.4
 docs/releases/v0.1.5.md   →  tag v0.1.5
+docs/releases/v0.2.0.md   →  tag v0.2.0
 ```
 
 ## Workflow
