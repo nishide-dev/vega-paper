@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# BASH_SOURCE is unset when piped (curl ... | bash); repo-relative paths are
+# only needed for --from-repo / --from-tarball, which run from a checkout.
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-.}")/.." && pwd)"
 VERSION="0.2.0"
 VEGA_PAPER_HOME="${VEGA_PAPER_HOME:-$HOME/.local/share/vega-paper}"
 PREFIX="${PREFIX:-$HOME/.local}"
@@ -169,17 +171,21 @@ else
   TARGET="$(detect_target)"
   ARCHIVE="vega-paper-${VERSION}-${TARGET}.tar.gz"
   URL="https://github.com/${GITHUB_REPO}/releases/download/v${VERSION}/${ARCHIVE}"
-  TMP_ARCHIVE="$(mktemp -t vega-paper-install.XXXXXX.tar.gz)"
+  # BSD mktemp treats a -t template as a prefix and appends its own suffix,
+  # producing a name that does not end in .tar.gz; use a temp directory so the
+  # archive keeps the exact name install_release_layout matches on.
+  TMP_DOWNLOAD_DIR="$(mktemp -d "${TMPDIR:-/tmp}/vega-paper-install.XXXXXX")"
+  TMP_ARCHIVE="${TMP_DOWNLOAD_DIR}/${ARCHIVE}"
 
   echo "Downloading ${URL}..."
   if ! curl -fsSL "$URL" -o "$TMP_ARCHIVE"; then
     echo "Failed to download release asset. Publish v${VERSION} with asset ${ARCHIVE} first." >&2
-    rm -f "$TMP_ARCHIVE"
+    rm -rf "$TMP_DOWNLOAD_DIR"
     exit 1
   fi
 
   install_release_layout "$TMP_ARCHIVE"
-  rm -f "$TMP_ARCHIVE"
+  rm -rf "$TMP_DOWNLOAD_DIR"
   write_release_shims
 fi
 
