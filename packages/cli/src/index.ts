@@ -14,7 +14,7 @@ const program = new Command();
 program
   .name("vega-paper")
   .description("AI-friendly CLI for publication-ready Vega and Vega-Lite figures")
-  .version("0.1.0");
+  .version("0.2.0");
 
 registerRenderCommand(program);
 registerInferCommand(program);

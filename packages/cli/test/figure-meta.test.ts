@@ -183,7 +183,7 @@ describe("resolveFigureMetaVersions", () => {
   test("reads installed package versions", async () => {
     const versions = await resolveFigureMetaVersions();
 
-    expect(versions.vegaPaperVersion).toBe("0.1.0");
+    expect(versions.vegaPaperVersion).toBe("0.2.0");
     expect(versions.vegaVersion.length).toBeGreaterThan(0);
     expect(versions.vegaLiteVersion.length).toBeGreaterThan(0);
   });
