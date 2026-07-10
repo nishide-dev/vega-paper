@@ -48,6 +48,12 @@ describe("normalReferenceBandwidth", () => {
   test("returns 0 for fewer than two values", () => {
     expect(normalReferenceBandwidth([5])).toBe(0);
   });
+
+  test("returns 0 for constant values instead of a magnitude-based guess", () => {
+    // A spread-free group has no meaningful kernel width; falling back to the
+    // value's magnitude (|q25| = 80) would explode the shared extent padding.
+    expect(normalReferenceBandwidth([80, 80, 80])).toBe(0);
+  });
 });
 
 describe("computeViolinDensitySettings", () => {
@@ -73,6 +79,24 @@ describe("computeViolinDensitySettings", () => {
     expect(scaled.extent[1] - scaled.extent[0]).toBeLessThanOrEqual(
       auto.extent[1] - auto.extent[0],
     );
+  });
+
+  test("keeps the extent proportional when every group is constant", () => {
+    const request = createRequest();
+    request.table.rows = [
+      ["a", "1", "80"],
+      ["a", "2", "80"],
+      ["a", "3", "80"],
+      ["b", "1", "85"],
+      ["b", "2", "85"],
+      ["b", "3", "85"],
+    ];
+
+    const settings = computeViolinDensitySettings(request.table, "score", ["method"], undefined);
+
+    // Data range is [80, 85]; with no per-group spread the pad falls back to
+    // 5% of the range, not to a magnitude-derived kernel width.
+    expect(settings.extent).toEqual([79.75, 85.25]);
   });
 
   test("rejects non-numeric measure values", () => {

@@ -3,7 +3,11 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Command } from "commander";
-import { registerTemplateCommand } from "../src/commands/template";
+import {
+  buildTemplateOptionsSnapshot,
+  buildTemplateRequest,
+  registerTemplateCommand,
+} from "../src/commands/template";
 import { VegaPaperError } from "../src/core/errors";
 import type { FigureMeta } from "../src/core/figure-meta";
 import type { RenderRequest, RenderResult } from "../src/core/render";
@@ -470,6 +474,39 @@ describe("template command", () => {
     ).rejects.toThrow(
       new VegaPaperError('Unsupported input format ".json". Template input must be a .csv file.'),
     );
+  });
+
+  test("snapshots violin and ecdf options for figure meta", () => {
+    const table: TemplateTable = {
+      header: ["method", "score"],
+      rows: [["baseline", "80.0"]],
+    };
+
+    const violinRequest = buildTemplateRequest(
+      "violin",
+      "runs.csv",
+      "chart.vl.json",
+      { x: "method", y: "score", bandwidth: "0.5" },
+      table,
+    );
+    expect(buildTemplateOptionsSnapshot(violinRequest)).toEqual({
+      x: "method",
+      y: "score",
+      bandwidth: 0.5,
+    });
+
+    const ecdfRequest = buildTemplateRequest(
+      "ecdf",
+      "runs.csv",
+      "chart.vl.json",
+      { x: "score", color: "method", xScale: "log" },
+      table,
+    );
+    expect(buildTemplateOptionsSnapshot(ecdfRequest)).toEqual({
+      x: "score",
+      color: "method",
+      xScale: "log",
+    });
   });
 });
 
