@@ -1,0 +1,75 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "data": {
+    "url": "runs.csv",
+    "format": {
+      "type": "csv",
+      "parse": {
+        "seed": "number",
+        "score": "number"
+      }
+    }
+  },
+  "facet": {
+    "field": "method",
+    "type": "nominal",
+    "header": {
+      "titleOrient": "bottom",
+      "labelOrient": "bottom",
+      "labelPadding": 2
+    }
+  },
+  "spec": {
+    "width": 100,
+    "height": 240,
+    "transform": [
+      {
+        "density": "score",
+        "groupby": [
+          "method"
+        ],
+        "extent": [
+          78.29585357566657,
+          85.50414642433343
+        ],
+        "as": [
+          "value",
+          "density"
+        ]
+      }
+    ],
+    "mark": {
+      "type": "area",
+      "orient": "horizontal"
+    },
+    "encoding": {
+      "y": {
+        "field": "value",
+        "type": "quantitative",
+        "title": "score",
+        "scale": {
+          "zero": false
+        }
+      },
+      "x": {
+        "field": "density",
+        "type": "quantitative",
+        "stack": "center",
+        "impute": null,
+        "title": null,
+        "axis": {
+          "labels": false,
+          "ticks": false,
+          "grid": false,
+          "domain": false
+        }
+      },
+      "color": {
+        "field": "method",
+        "type": "nominal",
+        "legend": null
+      }
+    }
+  },
+  "title": "Score distribution over seeds"
+}

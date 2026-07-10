@@ -52,10 +52,10 @@ Optional flags: `--facet`, `--aggregate`, `--error-band`, `--title`, `--width`, 
 | Path | Use when |
 |------|----------|
 | **`infer`** | Tabular CSV/JSON and one of the six `--chart` types fits (line, bar, scatter, area, heatmap, boxplot) |
-| **`template`** | Structured ML figures needing layers, labels, computed overlays, or log scales — e.g. labeled heatmap, Pareto frontier, scaling law, calibration curve, multipanel composition |
+| **`template`** | Structured ML figures needing layers, labels, computed overlays, distribution transforms, or log scales — e.g. labeled heatmap, Pareto frontier, scaling law, calibration curve, violin, ECDF, multipanel composition |
 | **Hand-written `.vl.json` + `render`** | Custom layouts `infer`/`template` do not cover yet; edit committed examples under `examples/` |
 
-See [Chart selection](references/chart-selection.md) for `infer` charts; template names: `benchmark-heatmap`, `pareto-frontier`, `scaling-law`, `calibration-curve`, `multipanel`.
+See [Chart selection](references/chart-selection.md) for `infer` charts; template names: `benchmark-heatmap`, `pareto-frontier`, `scaling-law`, `calibration-curve`, `violin`, `ecdf`, `multipanel`.
 
 ## Chart selection
 
@@ -145,6 +145,20 @@ vega-paper template pareto-frontier examples/pareto-frontier/data.csv \
   --spec-out figures/pareto.vl.json \
   --theme paper-clean \
   --out figures/pareto.svg
+```
+
+Distribution over seeds/runs (prefer `violin` for shape with ~15+ runs per group, `ecdf` for percentile reads; `infer --chart boxplot` covers small n):
+
+```bash
+vega-paper template violin examples/run-distribution/runs.csv \
+  --x method \
+  --y score \
+  --spec-out figures/violin.vl.json
+
+vega-paper template ecdf examples/run-distribution/runs.csv \
+  --x score \
+  --color method \
+  --spec-out figures/ecdf.vl.json
 ```
 
 Compose existing specs into a labeled multi-panel figure (no CSV argument):

@@ -22,7 +22,7 @@ There is no dedicated `examples/` folder for `area` yet; `bar` is covered by [ab
 Use this **before** the chart types table when the goal is unclear. Stop at the first matching branch.
 
 1. **Matrix / grid of cell values** (confusion matrix, score grid) → `--chart heatmap` with distinct `--x`, `--y`, `--color`.
-2. **Distribution of one measure across groups** (spread, outliers) → `--chart boxplot` with nominal `--x`, quantitative `--y`.
+2. **Distribution of one measure across groups** (spread, outliers) → `--chart boxplot` with nominal `--x`, quantitative `--y`. With ~15+ samples per group prefer `template violin` (full shape); for percentile / stochastic-dominance reads use `template ecdf` — see [SKILL.md](../SKILL.md#template-workflow-structured-ml-figures).
 3. **Metric over ordered steps, epochs, or time** → `--chart line` or `--area` (filled trend); optional `--color` for series.
 4. **Compare a measure across discrete categories** (no natural time order) → `--chart bar`.
 5. **Relationship between two numeric variables** → `--chart scatter`.
@@ -84,7 +84,7 @@ Copy-paste commands live in each folder README.
 | [embedding-scatter/](../../../examples/embedding-scatter/) | `scatter` | `--color` for class/cluster labels |
 | [ablation-bar/](../../../examples/ablation-bar/) | `bar` | ablation and grouped benchmark comparison with `--color` |
 | [benchmark-heatmap/](../../../examples/benchmark-heatmap/) | `heatmap` | model × task scores; hand-written labeled variant (rect + text) |
-| [run-distribution/](../../../examples/run-distribution/) | `boxplot` | seed/run variability; hand-written boxplot + raw points overlay |
+| [run-distribution/](../../../examples/run-distribution/) | `boxplot` | seed/run variability; `template violin` / `template ecdf` variants; hand-written boxplot + raw points overlay |
 | [basic-line/](../../../examples/basic-line/) | (hand-written spec) | `render` / `lint` only — not `infer` |
 
 Index: [examples/README.md](../../../examples/README.md).

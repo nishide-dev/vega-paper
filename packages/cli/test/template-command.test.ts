@@ -3,7 +3,11 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { Command } from "commander";
-import { registerTemplateCommand } from "../src/commands/template";
+import {
+  buildTemplateOptionsSnapshot,
+  buildTemplateRequest,
+  registerTemplateCommand,
+} from "../src/commands/template";
 import { VegaPaperError } from "../src/core/errors";
 import type { FigureMeta } from "../src/core/figure-meta";
 import type { RenderRequest, RenderResult } from "../src/core/render";
@@ -27,6 +31,15 @@ const PARETO_CSV =
   "BaseLM,baseline,72.4,28,7.0\n" +
   "Ours-S,ours,73.0,18,3.0\n" +
   "Ours-L,ours,77.2,42,13.0\n";
+
+const RUNS_CSV =
+  "method,seed,score\n" +
+  "baseline,1,79.4\n" +
+  "baseline,2,80.1\n" +
+  "baseline,3,80.6\n" +
+  "ours,1,83.2\n" +
+  "ours,2,84.0\n" +
+  "ours,3,83.6\n";
 
 const STUB_TABLE: TemplateTable = { header: ["a"], rows: [] };
 const stubLoadTable = async (): Promise<TemplateTable> => STUB_TABLE;
@@ -133,12 +146,12 @@ describe("template command", () => {
 
   test("rejects unknown template names", async () => {
     await expect(
-      runTemplateCommand(["template", "violin", "data.csv", "--spec-out", "chart.vl.json"], {
+      runTemplateCommand(["template", "sankey", "data.csv", "--spec-out", "chart.vl.json"], {
         loadTable: stubLoadTable,
       }),
     ).rejects.toThrow(
       new VegaPaperError(
-        'Unknown template "violin". Expected one of: benchmark-heatmap, pareto-frontier, scaling-law, calibration-curve, multipanel.',
+        'Unknown template "sankey". Expected one of: benchmark-heatmap, pareto-frontier, scaling-law, calibration-curve, violin, ecdf, multipanel.',
       ),
     );
   });
@@ -307,6 +320,113 @@ describe("template command", () => {
     );
   });
 
+  test("writes a violin spec with panel sizing from the CSV categories", async () => {
+    const workspace = await createWorkspace();
+    const inputPath = join(workspace, "runs.csv");
+    const specOutputPath = join(workspace, "chart-violin.vl.json");
+    await writeFile(inputPath, RUNS_CSV, "utf8");
+
+    await runTemplateCommand([
+      "template",
+      "violin",
+      inputPath,
+      "--x",
+      "method",
+      "--y",
+      "score",
+      "--width",
+      "360",
+      "--spec-out",
+      specOutputPath,
+    ]);
+
+    const spec = (await readJson(specOutputPath)) as {
+      facet: { field: string };
+      spec: { width: number; transform: Array<{ density: string }> };
+    };
+
+    expect(spec.facet.field).toBe("method");
+    expect(spec.spec.transform[0]?.density).toBe("score");
+    // Two categories in RUNS_CSV: (360 - 60) / 2 = 150 per panel.
+    expect(spec.spec.width).toBe(150);
+  });
+
+  test("writes an ecdf spec with color grouping and log x scale", async () => {
+    const workspace = await createWorkspace();
+    const inputPath = join(workspace, "runs.csv");
+    const specOutputPath = join(workspace, "chart-ecdf.vl.json");
+    await writeFile(inputPath, RUNS_CSV, "utf8");
+
+    await runTemplateCommand([
+      "template",
+      "ecdf",
+      inputPath,
+      "--x",
+      "score",
+      "--color",
+      "method",
+      "--x-scale",
+      "log",
+      "--spec-out",
+      specOutputPath,
+    ]);
+
+    const spec = (await readJson(specOutputPath)) as {
+      layer: Array<{
+        transform: Array<Record<string, unknown>>;
+        encoding: { x: { scale: unknown }; color: { field: string } };
+      }>;
+    };
+
+    expect(spec.layer[0]?.transform[0]?.groupby).toEqual(["method"]);
+    expect(spec.layer[0]?.encoding.x.scale).toEqual({ type: "log" });
+    expect(spec.layer[0]?.encoding.color.field).toBe("method");
+  });
+
+  test("rejects --bandwidth outside violin and invalid --bandwidth values", async () => {
+    await expect(
+      runTemplateCommand(
+        [
+          "template",
+          "scaling-law",
+          "data.csv",
+          "--x",
+          "flops",
+          "--y",
+          "loss",
+          "--bandwidth",
+          "0.5",
+          "--spec-out",
+          "chart.vl.json",
+        ],
+        { loadTable: stubLoadTable },
+      ),
+    ).rejects.toThrow(
+      new VegaPaperError('The "--bandwidth" option is not supported by template "scaling-law".'),
+    );
+
+    await expect(
+      runTemplateCommand(
+        [
+          "template",
+          "violin",
+          "data.csv",
+          "--x",
+          "method",
+          "--y",
+          "score",
+          "--bandwidth",
+          "-1",
+          "--spec-out",
+          "chart.vl.json",
+        ],
+        { loadTable: stubLoadTable },
+      ),
+    ).rejects.toThrow(
+      new VegaPaperError('Invalid value "-1" for --bandwidth. Expected a positive finite number.'),
+    );
+  });
+
   test("rejects --theme without --out and missing output destinations", async () => {
     await expect(
       runTemplateCommand(
@@ -354,6 +474,39 @@ describe("template command", () => {
     ).rejects.toThrow(
       new VegaPaperError('Unsupported input format ".json". Template input must be a .csv file.'),
     );
+  });
+
+  test("snapshots violin and ecdf options for figure meta", () => {
+    const table: TemplateTable = {
+      header: ["method", "score"],
+      rows: [["baseline", "80.0"]],
+    };
+
+    const violinRequest = buildTemplateRequest(
+      "violin",
+      "runs.csv",
+      "chart.vl.json",
+      { x: "method", y: "score", bandwidth: "0.5" },
+      table,
+    );
+    expect(buildTemplateOptionsSnapshot(violinRequest)).toEqual({
+      x: "method",
+      y: "score",
+      bandwidth: 0.5,
+    });
+
+    const ecdfRequest = buildTemplateRequest(
+      "ecdf",
+      "runs.csv",
+      "chart.vl.json",
+      { x: "score", color: "method", xScale: "log" },
+      table,
+    );
+    expect(buildTemplateOptionsSnapshot(ecdfRequest)).toEqual({
+      x: "score",
+      color: "method",
+      xScale: "log",
+    });
   });
 });
 

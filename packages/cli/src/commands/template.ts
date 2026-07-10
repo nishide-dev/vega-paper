@@ -44,6 +44,7 @@ type TemplateCommandOptions = {
   xScale?: string;
   frontier?: string;
   fit?: string;
+  bandwidth?: string;
   title?: string;
   width?: string;
   height?: string;
@@ -91,6 +92,7 @@ export function registerTemplateCommand(
     .option("--x-scale <type>", "x axis scale: linear or log")
     .option("--frontier <mode>", "Pareto frontier mode: max-y-min-x")
     .option("--fit <method>", "fitted trend overlay: regression")
+    .option("--bandwidth <factor>", "KDE smoothing multiplier of the auto bandwidth (violin)")
     .option(
       "--panel <value>",
       "multipanel panel as <spec-path>:<label>[:<title>] (repeatable)",
@@ -211,6 +213,7 @@ const TEMPLATE_OPTION_FLAGS = {
   xScale: "--x-scale",
   frontier: "--frontier",
   fit: "--fit",
+  bandwidth: "--bandwidth",
 } as const;
 
 type TemplateOptionKey = keyof typeof TEMPLATE_OPTION_FLAGS;
@@ -220,6 +223,8 @@ const ALLOWED_OPTIONS_BY_TEMPLATE: Record<TemplateName, readonly TemplateOptionK
   "pareto-frontier": ["x", "y", "label", "color", "size", "xScale", "frontier"],
   "scaling-law": ["x", "y", "color", "xScale", "fit"],
   "calibration-curve": ["confidence", "accuracy", "count", "ece"],
+  violin: ["x", "y", "bandwidth"],
+  ecdf: ["x", "color", "xScale"],
   multipanel: [],
 };
 
@@ -285,6 +290,30 @@ export function buildTemplateRequest(
     };
   }
 
+  if (template === "violin") {
+    return {
+      ...common,
+      template,
+      options: {
+        xField: requireOption(options.x, "--x <field>"),
+        yField: requireOption(options.y, "--y <field>"),
+        bandwidth: parseBandwidthFactor(options.bandwidth),
+      },
+    };
+  }
+
+  if (template === "ecdf") {
+    return {
+      ...common,
+      template,
+      options: {
+        xField: requireOption(options.x, "--x <field>"),
+        colorField: options.color,
+        xScale: parseAxisScale(options.xScale),
+      },
+    };
+  }
+
   if (template === "multipanel") {
     throw new VegaPaperError(
       "The multipanel template is handled separately and does not use CSV input.",
@@ -301,6 +330,22 @@ export function buildTemplateRequest(
       ece: parseEce(options.ece),
     },
   };
+}
+
+function parseBandwidthFactor(value: string | undefined): number | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  const numericValue = Number(value);
+
+  if (!Number.isFinite(numericValue) || numericValue <= 0) {
+    throw new VegaPaperError(
+      `Invalid value "${value}" for --bandwidth. Expected a positive finite number.`,
+    );
+  }
+
+  return numericValue;
 }
 
 export function buildTemplateOptionsSnapshot(request: TemplateRequest): TemplateOptionsSnapshot {
@@ -380,6 +425,31 @@ export function buildTemplateOptionsSnapshot(request: TemplateRequest): Template
 
       if (options.ece !== undefined) {
         snapshot.ece = options.ece;
+      }
+
+      break;
+    }
+    case "violin": {
+      const options = request.options;
+      snapshot.x = options.xField;
+      snapshot.y = options.yField;
+
+      if (options.bandwidth !== undefined) {
+        snapshot.bandwidth = options.bandwidth;
+      }
+
+      break;
+    }
+    case "ecdf": {
+      const options = request.options;
+      snapshot.x = options.xField;
+
+      if (options.colorField !== undefined) {
+        snapshot.color = options.colorField;
+      }
+
+      if (options.xScale !== undefined) {
+        snapshot.xScale = options.xScale;
       }
 
       break;

@@ -112,8 +112,8 @@ vega-paper lint figures/f1.vl.json --profile paper
 
 ### `template` highlights
 
-- **Templates:** `benchmark-heatmap`, `pareto-frontier`, `scaling-law`, `calibration-curve`, `multipanel`
-- **Options:** template-specific field flags (`--x`, `--y`, `--score`, `--frontier`, `--fit`, `--panel`, …) plus shared `--title`, `--width`, `--height`, `--spec-out`, `--out`, `--theme`
+- **Templates:** `benchmark-heatmap`, `pareto-frontier`, `scaling-law`, `calibration-curve`, `violin`, `ecdf`, `multipanel`
+- **Options:** template-specific field flags (`--x`, `--y`, `--score`, `--frontier`, `--fit`, `--bandwidth`, `--panel`, …) plus shared `--title`, `--width`, `--height`, `--spec-out`, `--out`, `--theme`
 - **`multipanel`:** composes existing `.vl.json` files with `--panel <spec>:<label>[:<title>]` (repeatable); no CSV argument
 
 ```bash

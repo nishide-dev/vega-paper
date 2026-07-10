@@ -61,6 +61,34 @@ describe("render integration", () => {
     }
   });
 
+  test("renders the violin example with visible density areas", async () => {
+    const violinOutputPath = "examples/run-distribution/output-violin.svg";
+
+    if (!(await hasVegaLiteSvgBinary())) {
+      console.warn("Skipping render integration: no vl2svg binary is installed.");
+      return;
+    }
+
+    await rm(violinOutputPath, { force: true });
+
+    try {
+      await renderChart({
+        inputPath: "examples/run-distribution/chart-violin.vl.json",
+        outputPath: violinOutputPath,
+        format: "svg",
+      });
+
+      const svg = await readFile(violinOutputPath, "utf8");
+
+      // A broken density transform (bad extent/bandwidth or string-typed CSV
+      // values) degrades to an empty or NaN path instead of erroring.
+      expect(svg).not.toContain("NaN");
+      expect(svg).toContain("mark-area");
+    } finally {
+      await rm(violinOutputPath, { force: true });
+    }
+  });
+
   test("renders specs with relative data.url using the source spec directory", async () => {
     const boxplotOutputPath = "examples/boxplot/output.svg";
 
