@@ -13,7 +13,7 @@ Small datasets and reference Vega-Lite specs for trying the CLI. Each folder has
 | [multipanel-paper-figure/](multipanel-paper-figure/) | Hand-written `hconcat` spec with `(a)`/`(b)`/`(c)` panel labels; `template multipanel` composition |
 | [ablation-bar/](ablation-bar/) | `infer` bar; ablation and grouped benchmark comparison |
 | [benchmark-heatmap/](benchmark-heatmap/) | `infer` heatmap; hand-written labeled variant (rect + text) |
-| [run-distribution/](run-distribution/) | `infer` boxplot over seeds; hand-written boxplot + raw points overlay |
+| [run-distribution/](run-distribution/) | `infer` boxplot over seeds; hand-written boxplot + raw points overlay; `template` violin and ECDF |
 | [pareto-frontier/](pareto-frontier/) | `template` Pareto frontier scatter with log-x and frontier overlay |
 | [scaling-law/](scaling-law/) | `template` scaling law with log-x and optional regression fit |
 | [calibration-curve/](calibration-curve/) | `template` reliability diagram with ECE annotation |
@@ -35,6 +35,8 @@ Committed PNG previews (`paper-clean` unless noted). Theme comparison: [root REA
 | [ablation-bar/](ablation-bar/) | ![ablation-bar](../docs/assets/gallery/examples/ablation-bar.png) |
 | [benchmark-heatmap/](benchmark-heatmap/) | ![benchmark-heatmap](../docs/assets/gallery/examples/benchmark-heatmap.png) |
 | [run-distribution/](run-distribution/) | ![run-distribution](../docs/assets/gallery/examples/run-distribution.png) |
+| [run-distribution/](run-distribution/) violin | ![run-distribution-violin](../docs/assets/gallery/examples/run-distribution-violin.png) |
+| [run-distribution/](run-distribution/) ECDF | ![run-distribution-ecdf](../docs/assets/gallery/examples/run-distribution-ecdf.png) |
 | [pareto-frontier/](pareto-frontier/) | ![pareto-frontier](../docs/assets/gallery/examples/pareto-frontier.png) |
 | [scaling-law/](scaling-law/) | ![scaling-law](../docs/assets/gallery/examples/scaling-law.png) |
 | [calibration-curve/](calibration-curve/) | ![calibration-curve](../docs/assets/gallery/examples/calibration-curve.png) |

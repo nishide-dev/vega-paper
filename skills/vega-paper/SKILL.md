@@ -55,7 +55,7 @@ Optional flags: `--facet`, `--aggregate`, `--error-band`, `--title`, `--width`, 
 | **`template`** | Structured ML figures needing layers, labels, computed overlays, or log scales — e.g. labeled heatmap, Pareto frontier, scaling law, calibration curve, multipanel composition |
 | **Hand-written `.vl.json` + `render`** | Custom layouts `infer`/`template` do not cover yet; edit committed examples under `examples/` |
 
-See [Chart selection](references/chart-selection.md) for `infer` charts; template names: `benchmark-heatmap`, `pareto-frontier`, `scaling-law`, `calibration-curve`, `multipanel`.
+See [Chart selection](references/chart-selection.md) for `infer` charts; template names: `benchmark-heatmap`, `pareto-frontier`, `scaling-law`, `calibration-curve`, `violin`, `ecdf`, `multipanel`.
 
 ## Chart selection
 

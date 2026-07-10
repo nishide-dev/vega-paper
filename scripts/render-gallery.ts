@@ -66,6 +66,16 @@ const exampleJobs: GalleryJob[] = [
     out: `${GALLERY}/examples/run-distribution.png`,
   },
   {
+    spec: "examples/run-distribution/chart-violin.vl.json",
+    theme: "paper-clean",
+    out: `${GALLERY}/examples/run-distribution-violin.png`,
+  },
+  {
+    spec: "examples/run-distribution/chart-ecdf.vl.json",
+    theme: "paper-clean",
+    out: `${GALLERY}/examples/run-distribution-ecdf.png`,
+  },
+  {
     spec: "examples/pareto-frontier/chart.vl.json",
     theme: "paper-clean",
     out: `${GALLERY}/examples/pareto-frontier.png`,

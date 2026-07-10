@@ -4,17 +4,19 @@ import { buildTemplateSpec, parseTemplateName, type TemplateRequest } from "../s
 import { parseNumericCell } from "../src/core/templates/shared";
 
 describe("parseTemplateName", () => {
-  test("accepts the four initial template names", () => {
+  test("accepts the CSV-based template names", () => {
     expect(parseTemplateName("benchmark-heatmap")).toBe("benchmark-heatmap");
     expect(parseTemplateName("pareto-frontier")).toBe("pareto-frontier");
     expect(parseTemplateName("scaling-law")).toBe("scaling-law");
     expect(parseTemplateName("calibration-curve")).toBe("calibration-curve");
+    expect(parseTemplateName("violin")).toBe("violin");
+    expect(parseTemplateName("ecdf")).toBe("ecdf");
   });
 
   test("rejects unknown template names", () => {
-    expect(() => parseTemplateName("violin")).toThrow(
+    expect(() => parseTemplateName("sankey")).toThrow(
       new VegaPaperError(
-        'Unknown template "violin". Expected one of: benchmark-heatmap, pareto-frontier, scaling-law, calibration-curve, multipanel.',
+        'Unknown template "sankey". Expected one of: benchmark-heatmap, pareto-frontier, scaling-law, calibration-curve, violin, ecdf, multipanel.',
       ),
     );
   });

@@ -1,7 +1,7 @@
 import { VegaPaperError } from "../errors";
 import { buildCsvNumberParse, toRelativeDataUrl } from "../infer";
 import type { JsonObject } from "../spec";
-import type { TemplateCommonRequest } from "../template";
+import type { TemplateCommonRequest, TemplateTable } from "../template";
 
 export const TEMPLATE_VEGA_LITE_SCHEMA = "https://vega.github.io/schema/vega-lite/v6.json";
 export const TEMPLATE_DEFAULT_WIDTH = 360;
@@ -22,22 +22,27 @@ export function parseNumericCell(value: string, field: string): number {
   return numericValue;
 }
 
-export function buildTemplateFrame(
-  request: TemplateCommonRequest,
-  layer: JsonObject[],
-): JsonObject {
-  const data: JsonObject = {
-    url: toRelativeDataUrl(request.specOutputPath, request.inputPath),
-  };
-  const parse = buildCsvNumberParse(request.table.header, request.table.rows);
+export function buildTemplateDataBlock(url: string, table: TemplateTable): JsonObject {
+  const data: JsonObject = { url };
+  const parse = buildCsvNumberParse(table.header, table.rows);
 
   if (parse !== undefined) {
     data.format = { type: "csv", parse };
   }
 
+  return data;
+}
+
+export function buildTemplateFrame(
+  request: TemplateCommonRequest,
+  layer: JsonObject[],
+): JsonObject {
   const spec: JsonObject = {
     $schema: TEMPLATE_VEGA_LITE_SCHEMA,
-    data,
+    data: buildTemplateDataBlock(
+      toRelativeDataUrl(request.specOutputPath, request.inputPath),
+      request.table,
+    ),
     width: request.width ?? TEMPLATE_DEFAULT_WIDTH,
     height: request.height ?? TEMPLATE_DEFAULT_HEIGHT,
     layer,

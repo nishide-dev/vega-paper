@@ -1,0 +1,86 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "data": {
+    "url": "runs.csv",
+    "format": {
+      "type": "csv",
+      "parse": {
+        "seed": "number",
+        "score": "number"
+      }
+    }
+  },
+  "width": 360,
+  "height": 240,
+  "layer": [
+    {
+      "transform": [
+        {
+          "window": [
+            {
+              "op": "count",
+              "as": "__ecdf_count"
+            }
+          ],
+          "sort": [
+            {
+              "field": "score",
+              "order": "ascending"
+            }
+          ],
+          "groupby": [
+            "method"
+          ],
+          "frame": [
+            null,
+            0
+          ]
+        },
+        {
+          "joinaggregate": [
+            {
+              "op": "count",
+              "as": "__ecdf_total"
+            }
+          ],
+          "groupby": [
+            "method"
+          ]
+        },
+        {
+          "calculate": "datum['__ecdf_count'] / datum['__ecdf_total']",
+          "as": "__ecdf"
+        }
+      ],
+      "mark": {
+        "type": "line",
+        "interpolate": "step-after"
+      },
+      "encoding": {
+        "x": {
+          "field": "score",
+          "type": "quantitative",
+          "scale": {
+            "zero": false
+          }
+        },
+        "y": {
+          "field": "__ecdf",
+          "type": "quantitative",
+          "scale": {
+            "domain": [
+              0,
+              1
+            ]
+          },
+          "title": "Cumulative proportion"
+        },
+        "color": {
+          "field": "method",
+          "type": "nominal"
+        }
+      }
+    }
+  ],
+  "title": "Score ECDF by method"
+}

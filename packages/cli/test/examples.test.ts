@@ -223,6 +223,70 @@ describe("examples", () => {
     });
   });
 
+  test("run-distribution violin chart facets mirrored densities per method", async () => {
+    const spec = await readExampleSpec("examples/run-distribution/chart-violin.vl.json");
+
+    expect(spec.data).toEqual(csvData("runs.csv", { seed: "number", score: "number" }));
+    expect(spec.facet).toEqual({
+      field: "method",
+      type: "nominal",
+      header: { titleOrient: "bottom", labelOrient: "bottom", labelPadding: 2 },
+    });
+
+    const inner = spec.spec as {
+      width: number;
+      transform: Array<{ density: string; groupby: string[]; extent: [number, number] }>;
+      mark: unknown;
+      encoding: { x: { stack: string; axis: Record<string, boolean> } };
+    };
+
+    // Three methods: (360 - 60) / 3 = 100 per panel.
+    expect(inner.width).toBe(100);
+    expect(inner.mark).toEqual({ type: "area", orient: "horizontal" });
+    expect(inner.transform[0]?.density).toBe("score");
+    expect(inner.transform[0]?.groupby).toEqual(["method"]);
+    // Data spans [79.1, 84.7]; the extent must be padded past it so violins taper.
+    expect(inner.transform[0]?.extent[0]).toBeLessThan(79.1);
+    expect(inner.transform[0]?.extent[1]).toBeGreaterThan(84.7);
+    expect(inner.encoding.x.stack).toBe("center");
+    expect(inner.encoding.x.axis).toEqual({
+      labels: false,
+      ticks: false,
+      grid: false,
+      domain: false,
+    });
+  });
+
+  test("run-distribution ecdf chart computes cumulative proportions per method", async () => {
+    const spec = await readExampleSpec("examples/run-distribution/chart-ecdf.vl.json");
+    const layer = spec.layer as Array<{
+      transform: Array<Record<string, unknown>>;
+      mark: unknown;
+      encoding: Record<string, Record<string, unknown>>;
+    }>;
+
+    expect(spec.data).toEqual(csvData("runs.csv", { seed: "number", score: "number" }));
+    expect(layer).toHaveLength(1);
+    expect(layer[0]?.mark).toEqual({ type: "line", interpolate: "step-after" });
+    expect(layer[0]?.transform).toEqual([
+      {
+        window: [{ op: "count", as: "__ecdf_count" }],
+        sort: [{ field: "score", order: "ascending" }],
+        groupby: ["method"],
+        frame: [null, 0],
+      },
+      { joinaggregate: [{ op: "count", as: "__ecdf_total" }], groupby: ["method"] },
+      { calculate: "datum['__ecdf_count'] / datum['__ecdf_total']", as: "__ecdf" },
+    ]);
+    expect(layer[0]?.encoding.y).toEqual({
+      field: "__ecdf",
+      type: "quantitative",
+      scale: { domain: [0, 1] },
+      title: "Cumulative proportion",
+    });
+    expect(layer[0]?.encoding.color).toEqual({ field: "method", type: "nominal" });
+  });
+
   test("benchmark-heatmap template chart layers rect, text, and best-cell outline", async () => {
     const spec = await readExampleSpec("examples/benchmark-heatmap/chart-template.vl.json");
     const layer = spec.layer as Array<Record<string, unknown>>;

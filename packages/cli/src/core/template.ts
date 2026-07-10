@@ -2,15 +2,19 @@ import { VegaPaperError } from "./errors";
 import type { JsonObject } from "./spec";
 import { buildBenchmarkHeatmapSpec } from "./templates/benchmark-heatmap";
 import { buildCalibrationCurveSpec } from "./templates/calibration-curve";
+import { buildEcdfSpec } from "./templates/ecdf";
 import { buildMultipanelSpec, type MultipanelRequest } from "./templates/multipanel";
 import { buildParetoFrontierSpec } from "./templates/pareto-frontier";
 import { buildScalingLawSpec } from "./templates/scaling-law";
+import { buildViolinSpec } from "./templates/violin";
 
 export const TEMPLATE_NAMES = [
   "benchmark-heatmap",
   "pareto-frontier",
   "scaling-law",
   "calibration-curve",
+  "violin",
+  "ecdf",
   "multipanel",
 ] as const;
 
@@ -65,6 +69,18 @@ export type CalibrationCurveOptions = {
   ece?: number | undefined;
 };
 
+export type ViolinOptions = {
+  xField: string;
+  yField: string;
+  bandwidth?: number | undefined;
+};
+
+export type EcdfOptions = {
+  xField: string;
+  colorField?: string | undefined;
+  xScale?: TemplateAxisScale | undefined;
+};
+
 export type BenchmarkHeatmapRequest = TemplateCommonRequest & {
   template: "benchmark-heatmap";
   options: BenchmarkHeatmapOptions;
@@ -85,6 +101,16 @@ export type CalibrationCurveRequest = TemplateCommonRequest & {
   options: CalibrationCurveOptions;
 };
 
+export type ViolinRequest = TemplateCommonRequest & {
+  template: "violin";
+  options: ViolinOptions;
+};
+
+export type EcdfRequest = TemplateCommonRequest & {
+  template: "ecdf";
+  options: EcdfOptions;
+};
+
 export type MultipanelTemplateRequest = { template: "multipanel" } & MultipanelRequest;
 
 export type TemplateRequest =
@@ -92,6 +118,8 @@ export type TemplateRequest =
   | ParetoFrontierRequest
   | ScalingLawRequest
   | CalibrationCurveRequest
+  | ViolinRequest
+  | EcdfRequest
   | MultipanelTemplateRequest;
 
 export function parseTemplateName(value: string): TemplateName {
@@ -114,6 +142,10 @@ export function buildTemplateSpec(request: TemplateRequest): JsonObject {
       return buildScalingLawSpec(request);
     case "calibration-curve":
       return buildCalibrationCurveSpec(request);
+    case "violin":
+      return buildViolinSpec(request);
+    case "ecdf":
+      return buildEcdfSpec(request);
     case "multipanel":
       return buildMultipanelSpec(request);
   }
